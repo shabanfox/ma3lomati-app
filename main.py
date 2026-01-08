@@ -1,177 +1,163 @@
 import streamlit as st
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="معلومات البروكر | عقارماب ستايل", layout="wide")
+st.set_page_config(page_title="بروكر مصر | عقارماب ستايل", layout="wide")
 
-# 2. تصميم عقارماب (CSS)
+# 2. تصميم عقارماب الفعلي (Real Aqarmap UX)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
-    /* الأساسيات للعربية */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
+    /* الأساسيات */
+    [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
+    
+    html, body, [data-testid="stAppViewContainer"] {
         direction: RTL;
         text-align: right;
         font-family: 'Cairo', sans-serif;
-        background-color: #f7f8fa !important; /* خلفية عقارماب */
+        background-color: #f2f4f7 !important;
     }
 
-    /* إخفاء الزوائد */
-    [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
-
-    /* الهيدر الثابت */
-    .aqarmap-header {
-        background-color: white;
-        padding: 15px 40px;
-        border-bottom: 1px solid #e0e0e0;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
+    /* الهيدر الأبيض النظيف */
+    .aqar-nav {
+        background: white;
+        padding: 10px 60px;
+        border-bottom: 1px solid #e5e7eb;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .aqarmap-logo {
-        font-size: 1.8rem;
-        font-weight: 900;
-        color: #1e3a8a; /* أزرق عقارماب */
+        position: sticky; top: 0; z-index: 999;
     }
 
-    /* فلتر السايد بار */
-    [data-testid="stSidebar"] {
-        background-color: white !important;
-        border-left: 1px solid #e0e0e0;
-        box-shadow: -2px 0 8px rgba(0,0,0,0.02);
-        padding-top: 20px;
-    }
-    .sidebar-title {
-        color: #1e3a8a;
-        font-weight: 700;
-        margin-bottom: 20px;
-        font-size: 1.3rem;
-        text-align: center;
-    }
-
-    /* كروت المشاريع (Aqarmap Card) */
-    .aqarmap-project-card {
+    /* بار البحث العريض (زي عقارماب) */
+    .search-container {
         background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #e0e0e0;
+        padding: 30px 60px;
         margin-bottom: 20px;
-        transition: all 0.2s ease-in-out;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .aqarmap-project-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transform: translateY(-5px);
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .project-image {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-        border-bottom: 1px solid #e0e0e0;
+    /* كروت المشاريع الاحترافية */
+    .aqar-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+        display: flex; /* عرض عرضي للموبايل واللاب */
+        transition: 0.3s;
+        cursor: pointer;
+        overflow: hidden;
     }
-    .project-details {
-        padding: 15px;
+    .aqar-card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border-color: #2b59ff;
     }
-    .project-price {
-        color: #1e3a8a;
+
+    .card-img {
+        width: 300px;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+    }
+
+    .card-body {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .price-style {
+        color: #2b59ff;
         font-weight: 900;
-        font-size: 1.2rem;
-        margin-bottom: 8px;
+        font-size: 1.4rem;
     }
+
     .project-name {
+        font-size: 1.2rem;
         font-weight: 700;
-        font-size: 1rem;
-        color: #333;
-        margin-bottom: 5px;
+        color: #1f2937;
+        margin: 5px 0;
     }
-    .project-location {
-        color: #666;
+
+    .location-tag {
+        color: #6b7280;
         font-size: 0.9rem;
     }
-    
-    /* Tabs Customization (Aqarmap Style) */
-    .stTabs [data-testid="stTab"] {
-        background-color: #f0f2f5;
-        color: #333;
-        border-radius: 8px 8px 0 0;
-        margin: 0 5px;
-        padding: 10px 20px;
-        font-weight: 700;
-        transition: all 0.2s ease;
-    }
-    .stTabs [data-testid="stTab"][aria-selected="true"] {
-        background-color: white;
-        color: #1e3a8a;
-        border-bottom: 3px solid #1e3a8a;
+
+    /* أزرار الفلترة */
+    .filter-btn {
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-left: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. الهيدر (عقارماب)
-st.markdown('<div class="aqarmap-header"><div class="aqarmap-logo">معلومات البروكر</div><small>منصة احترافية</small></div>', unsafe_allow_html=True)
+# 3. الهيدر
+st.markdown("""
+    <div class="aqar-nav">
+        <div style="font-size: 24px; font-weight: 900; color: #2b59ff;">AQAR<span style="color:#1f2937">MAP</span> CLONE</div>
+        <div style="display: flex; gap: 20px; font-weight: 600;">
+            <span>بحث</span>
+            <span>دليل المطورين</span>
+            <span>أسعار المناطق</span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-# 4. السايد بار (فلتر عقارماب)
-with st.sidebar:
-    st.markdown('<div class="sidebar-title">تصفية البحث</div>', unsafe_allow_html=True)
-    st.text_input("ابحث عن مطور أو مشروع")
-    st.multiselect("المناطق", ["القاهرة الجديدة", "العاصمة الإدارية", "أكتوبر", "الشيخ زايد", "المعادي", "مدينة نصر"])
-    st.selectbox("نوع العقار", ["كل الأنواع", "سكني", "تجاري", "إداري"])
-    st.slider("نطاق السعر (مليون جنيه)", 1, 30, (3, 15))
-    st.button("تطبيق الفلاتر", use_container_width=True)
+# 4. منطقة البحث (Horizontal Search)
+st.markdown('<div class="search-container">', unsafe_allow_html=True)
+c1, c2, c3, c4 = st.columns([2, 1, 1, 0.5])
+with c1: st.text_input("ابحث عن منطقة، مطور، أو مشروع...", placeholder="مثلاً: التجمع الخامس")
+with c2: st.selectbox("نوع العقار", ["شقة", "فيلا", "تجاري", "إداري"])
+with c3: st.selectbox("السعر من", ["الكل", "1 مليون", "3 مليون", "5 مليون"])
+with c4: st.button("بحث", use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. المحتوى الرئيسي (كروت المشاريع)
-st.markdown('<div style="padding: 20px 40px;">', unsafe_allow_html=True) # padding للمحتوى عشان ميكنش لازق في الأطراف
+# 5. عرض النتائج
+col_main, col_sidebar = st.columns([3, 1], gap="large")
 
-st.subheader("أحدث المشاريع العقارية")
-
-# التبويبات زي عقارماب (مثلاً: مشاريع سكنية، تجارية)
-tab_residential, tab_commercial = st.tabs(["مشاريع سكنية", "مشاريع تجارية"])
-
-with tab_residential:
-    # شبكة كروت المشاريع (3 أعمدة)
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("""
-            <div class="aqarmap-project-card">
-                <img src="https://via.placeholder.com/400x180?text=Project+Image" class="project-image">
-                <div class="project-details">
-                    <div class="project-price">5,800,000 ج.م</div>
-                    <div class="project-name">كمبوند ذا سكوير</div>
-                    <div class="project-location">📍 القاهرة الجديدة</div>
+with col_main:
+    st.markdown("### نتائج البحث عن مشاريع")
+    
+    # دالة كارت عقارماب الحقيقي
+    def aqar_card(title, loc, price, dev):
+        st.markdown(f"""
+            <div class="aqar-card">
+                <div class="card-img">صورة المشروع</div>
+                <div class="card-body">
+                    <div>
+                        <div class="price-style">{price} ج.م</div>
+                        <h3 class="project-name">{title}</h3>
+                        <div class="location-tag">📍 {loc}</div>
+                        <div style="margin-top:10px; font-size:0.85rem; color:#4b5563;">المطور: <b>{dev}</b></div>
+                    </div>
+                    <div style="text-align: left;">
+                        <button style="background:#2b59ff; color:white; border:none; padding:8px 20px; border-radius:6px; cursor:pointer;">التفاصيل</button>
+                    </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-    with col2:
-        st.markdown("""
-            <div class="aqarmap-project-card">
-                <img src="https://via.placeholder.com/400x180?text=Project+Image" class="project-image">
-                <div class="project-details">
-                    <div class="project-price">7,200,000 ج.م</div>
-                    <div class="project-name">كمبوند لافيستا سيتي</div>
-                    <div class="project-location">📍 العاصمة الإدارية</div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown("""
-            <div class="aqarmap-project-card">
-                <img src="https://via.placeholder.com/400x180?text=Project+Image" class="project-image">
-                <div class="project-details">
-                    <div class="project-price">4,500,000 ج.م</div>
-                    <div class="project-name">أب فيلاز - Upville</div>
-                    <div class="project-location">📍 مدينة 6 أكتوبر</div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    # تقدر تضيف المزيد من الكروت بنفس الطريقة
 
-with tab_commercial:
-    st.info("لا توجد مشاريع تجارية حالياً.")
+    aqar_card("كمبوند نايل بوليفارد", "القاهرة الجديدة - التجمع", "7,500,000", "النيل للتطوير العقاري")
+    aqar_card("كمبوند بادية بالم هيلز", "مدينة 6 أكتوبر", "9,200,000", "بالم هيلز")
+    aqar_card("تاج سيتي - Taj City", "القاهرة الجديدة - أمام المطار", "5,400,000", "مدينة مصر")
 
-st.markdown('</div>', unsafe_allow_html=True) # قفلة الـ padding
+with col_sidebar:
+    st.markdown("""
+        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e5e7eb;">
+            <h4>لماذا تستخدم هذه الأداة؟</h4>
+            <ul style="padding-right:20px; font-size:0.9rem; color:#4b5563;">
+                <li>داتا محدثة يومياً</li>
+                <li>تواصل مباشر مع المطورين</li>
+                <li>تحليل أسعار السوق</li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
