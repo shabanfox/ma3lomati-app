@@ -3,17 +3,14 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة - يجب أن يكون أول سطر
+# 1. إعدادات المنصة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
-# رابط البيانات (تأكد من أنه رابط Raw CSV)
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
+# روابط البيانات
+PROJECTS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
+FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScC7Xz_0_JafB1WwTzyC4LJs1vXclpTU3YY_Bl2rPO_Q1S3tA/formResponse"
 
-# إدارة الدخول
-if 'auth' not in st.session_state:
-    st.session_state['auth'] = False
-
-# 2. التنسيق الفخم (CSS) مع شريط التمرير العريض
+# 2. التنسيق (CSS) - شريط التمرير العريض وتصميم فخم
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -21,66 +18,101 @@ st.markdown("""
     .stApp { background-color: #0d1117; color: white; }
     [data-testid="stSidebar"] { display: none; }
     
-    /* شريط التمرير العريض جداً */
-    ::-webkit-scrollbar { width: 25px !important; }
+    /* شريط التمرير العريض الذهبي */
+    ::-webkit-scrollbar { width: 22px !important; }
     ::-webkit-scrollbar-track { background: #161b22 !important; }
-    ::-webkit-scrollbar-thumb { background: #d4af37 !important; border-radius: 10px; border: 5px solid #161b22; }
-
+    ::-webkit-scrollbar-thumb { background: #d4af37 !important; border-radius: 10px; border: 4px solid #161b22; }
+    
     .login-box {
         background: #161b22; border: 2px solid #d4af37; border-radius: 25px;
         padding: 40px; text-align: center; margin: 50px auto; max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
+    .gold { color: #d4af37 !important; font-weight: 900; }
     .project-card {
         background: #1c2128; border: 1px solid #30363d; border-radius: 15px;
-        padding: 25px; margin-bottom: 20px; transition: 0.3s;
+        padding: 25px; margin-bottom: 20px;
     }
-    .project-card:hover { border-color: #d4af37; }
-    .gold { color: #d4af37 !important; font-weight: 900; }
     .price-badge { background: #d4af37; color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; float: left; }
-    .info-box { background: rgba(212,175,55,0.05); border-right: 4px solid #d4af37; padding: 15px; border-radius: 5px; margin: 15px 0; }
     </style>
     """, unsafe_allow_html=True)
 
-# دالة تحميل البيانات
-@st.cache_data(ttl=10)
+if 'auth' not in st.session_state:
+    st.session_state['auth'] = False
+
+# دالة إرسال البيانات لجوجل فورم (التسجيل الفعلي)
+def send_to_google_form(name, email, phone, password):
+    payload = {
+        "entry.231920038": name,
+        "entry.1705607062": email,
+        "entry.1693892837": phone,
+        "entry.1843336341": password
+    }
+    try:
+        requests.post(FORM_URL, data=payload)
+        return True
+    except:
+        return False
+
+@st.cache_data(ttl=5)
 def load_data():
     try:
-        res = requests.get(CSV_URL)
+        res = requests.get(PROJECTS_URL)
         res.encoding = 'utf-8'
         df = pd.read_csv(StringIO(res.text))
         df.columns = [str(c).strip() for c in df.columns]
         return df.astype(str).replace(['nan', 'NaN'], 'غير مدرج')
-    except Exception as e:
-        return pd.DataFrame()
+    except: return pd.DataFrame()
 
-# 3. منطق الصفحات
+# --- الصفحات ---
+
 if not st.session_state['auth']:
-    st.markdown('<div class="login-box"><h1 class="gold">منصة معلوماتي</h1><p>بوابة بروكرز مصر العقارية</p>', unsafe_allow_html=True)
-    t1, t2 = st.tabs(["🔐 دخول", "✉️ تسجيل"])
-    with t1:
-        st.text_input("الإيميل")
-        st.text_input("الباسورد", type="password")
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<h1 class="gold">🏠 منصة معلوماتي</h1>', unsafe_allow_html=True)
+    
+    choice = st.tabs(["🔐 دخول", "✨ حساب جديد"])
+    
+    with choice[0]:
+        email_in = st.text_input("البريد الإلكتروني")
+        pass_in = st.text_input("كلمة المرور", type="password")
         if st.button("دخول للمنصة", use_container_width=True):
-            st.session_state['auth'] = True
-            st.rerun()
-    with t2:
-        st.text_input("الاسم")
-        st.button("إنشاء حساب", use_container_width=True)
+            if email_in and pass_in:
+                st.session_state['auth'] = True
+                st.rerun()
+            else:
+                st.error("أدخل بيانات الدخول")
+                
+    with choice[1]:
+        n_name = st.text_input("الاسم بالكامل")
+        n_email = st.text_input("الإيميل")
+        n_phone = st.text_input("رقم الواتساب")
+        n_pass = st.text_input("اختر كلمة مرور", type="password")
+        
+        if st.button("تأكيد التسجيل الفعلي", use_container_width=True):
+            if n_name and n_email and n_pass:
+                if send_to_google_form(n_name, n_email, n_phone, n_pass):
+                    st.balloons()
+                    st.success("تم حفظ بياناتك في جدول الإكسيل بنجاح! يمكنك الدخول الآن.")
+                else:
+                    st.error("حدث خطأ في الاتصال")
+            else:
+                st.warning("يرجى ملء جميع الخانات")
     st.markdown('</div>', unsafe_allow_html=True)
+
 else:
-    # زر الخروج فوق
-    c_out1, c_out2 = st.columns([0.9, 0.1])
-    with c_out2:
+    # الصفحة الرئيسية
+    top1, top2 = st.columns([0.9, 0.1])
+    with top2:
         if st.button("خروج"):
             st.session_state['auth'] = False
             st.rerun()
-
+            
     st.markdown("<h2 class='gold' style='text-align:center;'>🏠 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
     
-    # البحث في المنتصف
+    # البحث
     _, s_col, _ = st.columns([1, 2, 1])
     with s_col:
-        search = st.text_input("", placeholder="🔍 ابحث هنا...")
+        search = st.text_input("", placeholder="🔍 ابحث هنا عن أي شيء...")
 
     df = load_data()
     if not df.empty:
@@ -92,14 +124,10 @@ else:
                 <div class="project-card">
                     <div class="price-badge">{row.get('السعر', 'اتصل')}</div>
                     <div class="gold" style="font-size:0.8em;">PROJECT REPORT</div>
-                    <h2 style="margin:10px 0;">{row.get('المشروع', '-')}</h2>
+                    <h2 style="margin:5px 0;">{row.get('المشروع', '-')}</h2>
                     <p>📍 {row.get('المنطقة', '-')} | 🏢 {row.get('المطور', '-')}</p>
-                    <div class="info-box">
+                    <div style="background:rgba(212,175,55,0.05); border-right:4px solid #d4af37; padding:15px; margin:15px 0; border-radius:5px;">
                         <b class="gold">📜 سابقة الأعمال:</b><br>{row.get('سابقة_الأعمال', '-')}
-                    </div>
-                    <div style="display:flex; gap:30px; border-top:1px solid #333; padding-top:10px; font-size:0.9em;">
-                        <div><span class="gold">👤 المالك:</span> {row.get('المالك', '-')}</div>
-                        <div><span class="gold">💳 السداد:</span> {row.get('السداد', '-')}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
