@@ -1,61 +1,75 @@
 import streamlit as st
-import pandas as pd # مكتبة التعامل مع البيانات
+import pandas as pd
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. حالة الجلسة
+# 2. حالة الجلسة (الحماية)
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. دالة لجلب البيانات من ملف الإكسل
+# 3. دالة لجلب البيانات (من خلف الكواليس)
 def load_data():
     try:
-        # هنا بنقرأ ملف الإكسل
-        df = pd.read_csv('data.csv') 
-        return df
+        return pd.read_csv('data.csv')
     except:
-        # لو الملف مش موجود، بنعمل بيانات وهمية عشان الموقع ميعطلش
-        data = {
-            'المشروع': ['مشروع تجريبي 1', 'مشروع تجريبي 2'],
-            'المنطقة': ['القاهرة', 'الجيزة'],
-            'السعر': ['5,000,000', '7,000,000'],
-            'الصورة': ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400', 'https://images.unsplash.com/photo-1580587767526-cf36ce1308d4?w=400']
-        }
-        return pd.DataFrame(data)
+        # بيانات افتراضية بنفس تصميمك عشان الدنيا متخربش
+        return pd.DataFrame({
+            'المشروع': ['كمبوند ايفوري جولي', 'مشروع الجوهرة'],
+            'المنطقة': ['الشيخ زايد الجديدة', 'القاهرة الجديدة'],
+            'السعر': ['9,200,000', '12,500,000'],
+            'الصورة': ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400']
+        })
 
-# 4. التنسيق الفخم (محفوظ كما هو)
+# 4. التصميم الفخم المعتمد (لن يتغير)
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+    
     .block-container { padding-top: 0.6rem !important; padding-left: 0rem !important; padding-right: 0rem !important; }
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
-    html, body, [data-testid="stAppViewContainer"] { direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f4f7fa !important; }
     
-    .header-nav { background: white; height: 75px; padding: 0 8%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; }
+    html, body, [data-testid="stAppViewContainer"] {
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif;
+        background-color: #f4f7fa !important;
+    }
+
+    .header-nav {
+        background: white; height: 75px; padding: 0 8%;
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1000;
+    }
+    
+    .logo-container { display: flex; align-items: center; gap: 12px; }
     .logo-main { color: #003366; font-weight: 900; font-size: 1.8rem; }
     .logo-sub { color: #D4AF37; font-weight: 700; }
     
     .hero-outer { padding: 0 8%; margin-top: 10px; }
     .hero-inner {
-        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200');
-        background-size: cover; background-position: center; height: 300px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80');
+        background-size: cover; background-position: center; height: 320px;
+        border-radius: 12px; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; color: white;
     }
-    
-    .project-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; height: 180px; margin-bottom: 15px; overflow: hidden; }
-    .card-img-box { width: 250px; background-size: cover; background-position: center; }
+
+    .project-card {
+        background: white; border-radius: 12px; border: 1px solid #e2e8f0;
+        display: flex; height: 190px; margin-bottom: 15px; overflow: hidden;
+    }
+    .card-img-box { width: 260px; background-size: cover; background-position: center; }
     .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     .price { color: #003366; font-weight: 900; font-size: 1.4rem; }
     </style>
 """, unsafe_allow_html=True)
 
 if not st.session_state.logged_in:
-    # صفحة الدخول
-    st.markdown('<div class="header-nav"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div>', unsafe_allow_html=True)
-    _, login_col, _ = st.columns([1, 1.2, 1])
-    with login_col:
-        st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
+    # صفحة الدخول (بنفس اللوجو الفخم)
+    st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
+    _, col, _ = st.columns([1, 1.2, 1])
+    with col:
+        st.markdown("<div style='margin-top:80px;'></div>", unsafe_allow_html=True)
         u = st.text_input("اسم المستخدم")
         p = st.text_input("كلمة المرور", type="password")
         if st.button("دخول", use_container_width=True):
@@ -64,26 +78,16 @@ if not st.session_state.logged_in:
                 st.rerun()
 else:
     # الهيدر الفخم
-    st.markdown('<div class="header-nav"><div class="logo-main"><i class="fa-solid fa-city"></i> معلوماتى <span class="logo-sub">العقارية</span></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-nav"><div class="logo-container"><i class="fa-solid fa-city" style="color:#003366;font-size:1.6rem;"></i><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div><div style="color:#475569;font-weight:600;">الرئيسية</div></div>', unsafe_allow_html=True)
 
     # الهيرو
-    st.markdown('<div class="hero-outer"><div class="hero-inner"><h1>بوابتك لأدق البيانات العقارية</h1></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-outer"><div class="hero-inner"><h1 style="font-weight:900; font-size:2.5rem;">بوابتك لأدق البيانات العقارية</h1></div></div>', unsafe_allow_html=True)
 
-    # تحميل البيانات من الإكسل
+    # تحميل وعرض البيانات
     df = load_data()
-
-    # شريط البحث (فلتر)
     st.markdown('<div style="padding: 0 8%; margin-top:25px;">', unsafe_allow_html=True)
-    search_query = st.text_input("📍 ابحث باسم المشروع أو المنطقة", placeholder="اكتب هنا للبحث...")
     
-    # فلترة البيانات بناءً على البحث
-    if search_query:
-        df = df[df['المشروع'].str.contains(search_query) | df['المنطقة'].str.contains(search_query)]
-
-    st.markdown(f"<h3>أحدث المشاريع ({len(df)})</h3>", unsafe_allow_html=True)
-
-    # عرض المشاريع من الإكسل داخل التصميم الفخم
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         st.markdown(f"""
             <div class="project-card">
                 <div class="card-img-box" style="background-image: url('{row['الصورة']}')"></div>
@@ -99,5 +103,4 @@ else:
                 </div>
             </div>
         """, unsafe_allow_html=True)
-    
     st.markdown('</div>', unsafe_allow_html=True)
