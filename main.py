@@ -1,11 +1,10 @@
 import streamlit as st
 
-# 1. إعدادات الصفحة
+# 1. إعداد الصفحة (عشان الموقع يفهم إنه تطبيق مش ملف نصي)
 st.set_page_config(page_title="معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم الملكي (CSS) - تأكد من نسخه كاملاً
+# 2. هنا بنقول للموقع: "خد الأكواد دي نفذها كشكل وألوان"
 st.markdown("""
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
@@ -39,29 +38,41 @@ st.markdown("""
     .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
     .price-tag { color: #003366; font-weight: 900; font-size: 1.4rem; }
     .dev-name { font-weight: 700; font-size: 1.3rem; margin-top: 5px; color: #1e293b; }
+    
+    .btn-view {
+        background: #003366; color: white; border: none; padding: 10px 20px; 
+        border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # 3. عرض الهيدر
-st.markdown('<div class="header-nav"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div><div>الرئيسية</div></div>', unsafe_allow_html=True)
+st.markdown('<div class="header-nav"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div><div style="font-weight:700;">الرئيسية</div></div>', unsafe_allow_html=True)
 
-# 4. العنوان
+# 4. العنوان الرئيسي
 st.markdown('<h2 style="padding: 25px 8% 10px 8%; color:#003366;">المطورين المعتمدين (ناوي)</h2>', unsafe_allow_html=True)
 
-# 5. عرض الشركات (الداتا اللي سحبناها)
-developers = ["أورا (Ora Developers)", "سوديك (SODIC)", "إعمار مصر", "طلعت مصطفى", "ماونتن فيو", "بالم هيلز"]
+# 5. قائمة المطورين
+developers = [
+    {"name": "أورا (Ora Developers)", "status": "مطور معتمد"},
+    {"name": "سوديك (SODIC)", "status": "مطور معتمد"},
+    {"name": "إعمار مصر", "status": "مطور معتمد"},
+    {"name": "طلعت مصطفى", "status": "مطور معتمد"},
+    {"name": "ماونتن فيو", "status": "مطور معتمد"},
+    {"name": "بالم هيلز", "status": "مطور معتمد"}
+]
 
 for dev in developers:
     st.markdown(f'''
         <div class="project-card">
             <div class="card-img"></div>
             <div class="card-body">
-                <div class="price-tag">مطور معتمد</div>
-                <div class="dev-name">{dev}</div>
-                <div style="color:#64748b; font-size:0.9rem; margin-top:5px;">📍 متاح كامل المشاريع والأسعار المحدثة</div>
+                <div class="price-tag">{dev['status']}</div>
+                <div class="dev-name">{dev['name']}</div>
+                <div style="color:#64748b; font-size:0.9rem; margin-top:5px;">📍 متاح كامل المشروعات والأسعار المحدثة</div>
             </div>
             <div style="display:flex; align-items:center; padding-left:30px;">
-                <button style="background:#003366; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer;">عرض المشاريع</button>
+                <div class="btn-view">عرض المشاريع</div>
             </div>
         </div>
     ''', unsafe_allow_html=True)
