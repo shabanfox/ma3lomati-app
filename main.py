@@ -3,19 +3,20 @@ import streamlit as st
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. هندسة التصميم (CSS) - مع تصفير المسافات العلوية
+# 2. هندسة التصميم (CSS) - ضبط المسافة العلوية بدقة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
-    /* تصفير المسافة البيضاء في أعلى الصفحة تماماً */
+    /* ضبط المسافة العلوية لتكون "صغيرة خالص" */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 0.5rem !important; /* المسافة الصغيرة اللي طلبتها */
         padding-bottom: 0rem !important;
         padding-left: 0rem !important;
         padding-right: 0rem !important;
     }
     
+    /* إخفاء الهيدر الافتراضي لستريمليت */
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
     html, body, [data-testid="stAppViewContainer"] {
@@ -37,7 +38,8 @@ st.markdown("""
         position: sticky;
         top: 0;
         z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        margin: 0 10px; /* مسافة بسيطة من الجوانب ليعطي شكل "عائم" قليلاً */
+        border-radius: 8px;
     }
     .logo { color: #0056b3; font-weight: 900; font-size: 1.6rem; text-decoration: none; }
     
@@ -63,6 +65,7 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         color: white;
+        margin-top: 10px;
     }
     
     .main-content { padding: 0 60px; margin-top: 30px; }
@@ -83,7 +86,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. الهيدر (دلوقتي هيلزق في السقف)
+# 3. الهيدر (بمسافة علوية 0.5rem)
 st.markdown("""
     <div class="header-nav">
         <div class="logo">معلوماتى <span style="color:#1e293b">العقارية</span></div>
@@ -98,32 +101,32 @@ st.markdown("""
 st.markdown("""
     <div class="hero-container">
         <h1 style="font-weight:900; font-size:2.5rem; text-shadow: 2px 2px 10px rgba(0,0,0,0.5);">منصة معلوماتي العقارية</h1>
-        <p style="font-size:1.2rem; font-weight:600;">كل ما يحتاجه البروكر المحترف في مكان واحد</p>
+        <p style="font-size:1.2rem; font-weight:600;">بيانات السوق العقاري بين يديك</p>
     </div>
 """, unsafe_allow_html=True)
 
 # 5. محرك البحث والنتائج
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 c1, c2, c3, c4 = st.columns([2.5, 1, 1, 0.7])
-with c1: st.text_input("أين تبحث؟", placeholder="التجمع، زايد...")
-with c2: st.selectbox("النوع", ["شقة", "فيلا"])
-with c3: st.selectbox("السعر", ["الكل"])
-with c4: st.markdown('<button style="width:100%; height:45px; margin-top:28px; background:#0056b3; color:white; border:none; border-radius:8px; font-weight:bold;">بحث</button>', unsafe_allow_html=True)
+with c1: st.text_input("أين تبحث؟", key="search_input")
+with c2: st.selectbox("النوع", ["شقة", "فيلا"], key="type_select")
+with c3: st.selectbox("السعر", ["الكل"], key="price_select")
+with c4: st.markdown('<button style="width:100%; height:45px; margin-top:28px; background:#0056b3; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">بحث</button>', unsafe_allow_html=True)
 
-st.markdown("<h3 style='margin-top:30px;'>أحدث المشاريع</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin-top:30px;'>أحدث المشاريع المتاحة</h3>", unsafe_allow_html=True)
 
-# مثال لكارت واحد
+# الكارت الاحترافي
 st.markdown("""
     <div class="project-card">
         <div class="card-img"></div>
         <div class="card-details">
             <div>
-                <div class="price">8,500,000 ج.م</div>
-                <div style="font-weight:700; font-size:1.2rem;">كمبوند ايفوري - الشيخ زايد</div>
-                <div style="color:#64748b;">📍 الشيخ زايد الجديدة</div>
+                <div class="price">9,200,000 ج.م</div>
+                <div style="font-weight:700; font-size:1.2rem;">كمبوند ايفوري جولي</div>
+                <div style="color:#64748b;">📍 التجمع الخامس، القاهرة الجديدة</div>
             </div>
             <div style="text-align: left;">
-                <button style="background:#0056b3; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:700;">التفاصيل</button>
+                <button style="background:#0056b3; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:700; cursor:pointer;">عرض التفاصيل</button>
             </div>
         </div>
     </div>
