@@ -3,17 +3,17 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة - يجب أن يكون أول سطر
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
-# رابط البيانات
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfBy extraction/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
+# رابط البيانات (تأكد من أنه رابط Raw CSV)
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
 
-# حالة الدخول
+# إدارة الدخول
 if 'auth' not in st.session_state:
     st.session_state['auth'] = False
 
-# 2. التنسيق (CSS) المتطور مع تعديل الـ Scrollbar
+# 2. التنسيق الفخم (CSS) مع شريط التمرير العريض
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -21,47 +21,28 @@ st.markdown("""
     .stApp { background-color: #0d1117; color: white; }
     [data-testid="stSidebar"] { display: none; }
     
-    /* --- تعديل شريط التمرير (Scrollbar) ليصبح عريضاً وذهبياً --- */
-    ::-webkit-scrollbar {
-        width: 20px; /* جعل الشريط عريضاً */
-    }
-    ::-webkit-scrollbar-track {
-        background: #161b22; /* لون خلفية المجرى */
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #d4af37; /* لون المقبض (الزر) ذهبي */
-        border-radius: 10px;
-        border: 4px solid #161b22; /* إضافة مساحة حول المقبض لجعله بارزاً */
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #f1c40f; /* يتغير لونه عند الوقوف عليه ليكون أكثر لمعاناً */
-    }
+    /* شريط التمرير العريض جداً */
+    ::-webkit-scrollbar { width: 25px !important; }
+    ::-webkit-scrollbar-track { background: #161b22 !important; }
+    ::-webkit-scrollbar-thumb { background: #d4af37 !important; border-radius: 10px; border: 5px solid #161b22; }
 
-    /* تنسيق كادر الدخول */
     .login-box {
         background: #161b22; border: 2px solid #d4af37; border-radius: 25px;
-        padding: 40px; text-align: center; margin-top: 50px;
+        padding: 40px; text-align: center; margin: 50px auto; max-width: 500px;
     }
-    
-    /* تنسيق كروت المشاريع */
     .project-card {
         background: #1c2128; border: 1px solid #30363d; border-radius: 15px;
-        padding: 25px; margin-bottom: 20px;
+        padding: 25px; margin-bottom: 20px; transition: 0.3s;
     }
+    .project-card:hover { border-color: #d4af37; }
     .gold { color: #d4af37 !important; font-weight: 900; }
     .price-badge { background: #d4af37; color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; float: left; }
     .info-box { background: rgba(212,175,55,0.05); border-right: 4px solid #d4af37; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    
-    /* حقل البحث */
-    .stTextInput > div > div > input {
-        background-color: #161b22 !important; color: white !important;
-        border: 2px solid #30363d !important; border-radius: 12px !important;
-        height: 50px; text-align: center;
-    }
     </style>
     """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=5)
+# دالة تحميل البيانات
+@st.cache_data(ttl=10)
 def load_data():
     try:
         res = requests.get(CSV_URL)
@@ -69,36 +50,36 @@ def load_data():
         df = pd.read_csv(StringIO(res.text))
         df.columns = [str(c).strip() for c in df.columns]
         return df.astype(str).replace(['nan', 'NaN'], 'غير مدرج')
-    except: return pd.DataFrame()
+    except Exception as e:
+        return pd.DataFrame()
 
-# 3. عرض الصفحات
+# 3. منطق الصفحات
 if not st.session_state['auth']:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.2, 1])
-    with c2:
-        st.markdown('<div class="login-box"><h1 class="gold">منصة معلوماتي</h1><p>بوابة بروكرز مصر</p></div>', unsafe_allow_html=True)
-        tab1, tab2 = st.tabs(["🔐 دخول", "✉️ تسجيل"])
-        with tab1:
-            st.text_input("الإيميل")
-            st.text_input("الباسورد", type="password")
-            if st.button("دخول المنصة", use_container_width=True):
-                st.session_state['auth'] = True
-                st.rerun()
-        with tab2:
-            st.text_input("الاسم")
-            st.button("إنشاء حساب", use_container_width=True)
+    st.markdown('<div class="login-box"><h1 class="gold">منصة معلوماتي</h1><p>بوابة بروكرز مصر العقارية</p>', unsafe_allow_html=True)
+    t1, t2 = st.tabs(["🔐 دخول", "✉️ تسجيل"])
+    with t1:
+        st.text_input("الإيميل")
+        st.text_input("الباسورد", type="password")
+        if st.button("دخول للمنصة", use_container_width=True):
+            st.session_state['auth'] = True
+            st.rerun()
+    with t2:
+        st.text_input("الاسم")
+        st.button("إنشاء حساب", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 else:
-    # الصفحة الرئيسية (بعد الدخول)
-    top_col1, top_col2 = st.columns([0.9, 0.1])
-    with top_col2:
+    # زر الخروج فوق
+    c_out1, c_out2 = st.columns([0.9, 0.1])
+    with c_out2:
         if st.button("خروج"):
             st.session_state['auth'] = False
             st.rerun()
 
     st.markdown("<h2 class='gold' style='text-align:center;'>🏠 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
     
-    col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
-    with col_s2:
+    # البحث في المنتصف
+    _, s_col, _ = st.columns([1, 2, 1])
+    with s_col:
         search = st.text_input("", placeholder="🔍 ابحث هنا...")
 
     df = load_data()
