@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة (Nawy Clean UI)
+# 1. نظام التصميم (Nawy Professional Layout)
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide")
 
 st.markdown("""
@@ -12,121 +12,107 @@ st.markdown("""
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: #f0f2f5 !important;
+        background-color: #f7f9fc !important;
         font-family: 'Cairo', sans-serif;
-        direction: ltr !important;
     }
 
-    /* الهيدر الأبيض */
-    .header-nawy {
-        background: white;
-        padding: 15px 40px;
-        border-bottom: 1px solid #e1e4e8;
-        margin-bottom: 25px;
+    .nawy-bar {
+        background: white; padding: 20px 40px; border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 30px; display: flex; align-items: center;
     }
 
-    /* كارت المطور على اليمين */
-    .dev-panel {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        border: 1px solid #e1e4e8;
-        position: sticky; top: 20px;
+    .info-panel {
+        background: white; border-radius: 15px; padding: 25px;
+        border: 1px solid #e2e8f0; position: sticky; top: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
 
-    /* كروت المشاريع على الشمال */
-    .projects-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 15px;
+    .inventory-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
     }
 
-    .project-card {
-        background: white;
-        border-radius: 12px;
-        padding: 18px;
-        border: 1px solid #e1e4e8;
-        transition: 0.3s;
+    .nawy-card {
+        background: white; border-radius: 12px; border: 1px solid #e2e8f0;
+        padding: 24px; transition: 0.3s ease; display: flex;
+        flex-direction: column; justify-content: space-between; min-height: 180px;
     }
-    .project-card:hover {
-        border-color: #0056b3;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    .nawy-card:hover {
+        border-color: #0052cc; transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     }
 
-    .price-tag { color: #0056b3; font-weight: 800; font-size: 1.1rem; }
-    .project-title { font-weight: 700; font-size: 1rem; color: #1c1e21; margin: 8px 0; }
-    .location-tag { color: #65676b; font-size: 0.85rem; }
+    .price-val { color: #0052cc; font-weight: 900; font-size: 1.3rem; }
+    .proj-title { font-weight: 700; font-size: 1.1rem; color: #1e293b; margin: 10px 0; }
+    .loc-val { color: #64748b; font-size: 0.9rem; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. جلب الداتا بأمان
-@st.cache_data(ttl=1)
+# 2. جلب البيانات (أمان 100%)
+@st.cache_data(ttl=2)
 def load_data():
     URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8MmnRw6KGRVIKIfp_-o8KyvhJKVhHLIZKpFngWHeN0WTsjupFMILryY7EKv6m0vPCD0jwcBND-pvk/pub?output=csv"
     try:
-        res = requests.get(URL)
-        res.encoding = 'utf-8'
-        df = pd.read_csv(StringIO(res.text))
+        r = requests.get(URL); r.encoding = 'utf-8'
+        df = pd.read_csv(StringIO(r.text))
         return df.fillna("-")
     except: return pd.DataFrame()
 
 df = load_data()
 
-# الهيدر
-st.markdown('<div class="header-nawy"><h2 style="margin:0; color:#0056b3;">MA3LOMATI <span style="color:#1c1e21">PRO</span></h2></div>', unsafe_allow_html=True)
+st.markdown('<div class="nawy-bar"><h2 style="margin:0; color:#0052cc;">MA3LOMATI <span style="color:#1e293b">PRO</span></h2></div>', unsafe_allow_html=True)
 
 if not df.empty and len(df.columns) >= 6:
-    # إجبار الكود على قراءة الأعمدة بالترتيب (0، 1، 2...) عشان نهرب من الـ KeyError
-    dev_col = df.columns[0]   # المطور
-    owner_col = df.columns[1] # الاونر
-    bio_col = df.columns[2]   # السيرة
-    proj_col = df.columns[3]  # المشروع
-    reg_col = df.columns[4]   # المنطقة
-    price_col = df.columns[5] # السعر
-
     # الفلاتر
     st.markdown('<div style="padding: 0 40px;">', unsafe_allow_html=True)
     c1, c2 = st.columns([2, 1])
-    with c1: s_dev = st.selectbox("Search Developer", sorted(df[dev_col].unique().tolist()))
-    with c2: s_reg = st.selectbox("Area", ["All Areas"] + sorted(df[reg_col].unique().tolist()))
+    with c1: 
+        developers = sorted(df.iloc[:, 0].unique().tolist())
+        s_dev = st.selectbox("Search Developer", developers)
+    with c2: 
+        regions = ["All Egypt"] + sorted(df.iloc[:, 4].unique().tolist())
+        s_reg = st.selectbox("Location", regions)
     st.markdown('</div><br>', unsafe_allow_html=True)
 
-    # التقسيم (يسار مشاريع | يمين معلومات)
-    col_projects, col_info = st.columns([2.5, 1], gap="medium")
+    # التقسيم
+    left_side, right_side = st.columns([2.5, 1], gap="large")
+    
+    dev_df = df[df.iloc[:, 0] == s_dev]
 
-    dev_data = df[df[dev_col] == s_dev]
-
-    with col_info:
-        # كارت المطور الثابت على اليمين
-        first_row = dev_data.iloc[0]
+    with right_side:
+        # كارت المطور الثابت (يمين)
+        res = dev_df.iloc[0]
         st.markdown(f"""
-            <div class="dev-panel">
-                <p style="color:#0056b3; font-size:12px; font-weight:800; margin-bottom:5px;">CORPORATE PROFILE</p>
-                <h2 style="margin:0 0 15px 0;">{s_dev}</h2>
-                <div style="background:#f0f2f5; padding:12px; border-radius:10px; margin-bottom:15px;">
-                    <small style="color:#65676b;">Chairman / Owner</small><br>
-                    <b style="color:#1c1e21;">{first_row[owner_col]}</b>
+            <div class="info-panel">
+                <p style="color:#0052cc; font-size:12px; font-weight:900; margin-bottom:10px;">CORPORATE DATA</p>
+                <h2 style="margin:0 0 20px 0; color:#1a202c;">{s_dev}</h2>
+                <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:20px; border-right: 5px solid #0052cc;">
+                    <small style="color:#64748b;">Chairman / Owner</small><br>
+                    <b style="color:#1e293b; font-size:1.1rem;">{res.iloc[1]}</b>
                 </div>
-                <p style="color:#4b4d50; font-size:14px; line-height:1.6;">{first_row[bio_col]}</p>
+                <p style="color:#475569; font-size:14px; line-height:1.7;">{res.iloc[2]}</p>
             </div>
         """, unsafe_allow_html=True)
 
-    with col_projects:
-        # شبكة المشاريع على اليسار
-        filt_df = dev_data
-        if s_reg != "All Areas": filt_df = dev_data[dev_data[reg_col] == s_reg]
+    with left_side:
+        # شبكة المشاريع (يسار)
+        show_df = dev_df
+        if s_reg != "All Egypt": 
+            show_df = dev_df[dev_df.iloc[:, 4] == s_reg]
         
-        st.markdown(f"<p style='color:#65676b; margin-bottom:15px; padding-left:10px;'>Projects ({len(filt_df)})</p>", unsafe_allow_html=True)
-        st.markdown('<div class="projects-grid">', unsafe_allow_html=True)
-        for _, r in filt_df.iterrows():
-            if str(r[proj_col]) != "-":
+        st.markdown(f"<p style='color:#64748b; font-weight:600; margin-bottom:15px; padding-left:10px;'>Projects ({len(show_df)})</p>", unsafe_allow_html=True)
+        st.markdown('<div class="inventory-grid">', unsafe_allow_html=True)
+        for _, r in show_df.iterrows():
+            if str(r.iloc[3]) != "-":
                 st.markdown(f"""
-                    <div class="project-card">
-                        <div class="price-tag">EGP {r[price_col]}</div>
-                        <div class="project-title">{r[proj_col]}</div>
-                        <div class="location-tag">📍 {r[reg_col]}</div>
+                    <div class="nawy-card">
+                        <div>
+                            <div class="price-val">EGP {r.iloc[5]}</div>
+                            <div class="proj-title">{r.iloc[3]}</div>
+                        </div>
+                        <div class="loc-val">📍 {r.iloc[4]}</div>
                     </div>
                 """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.warning("Data structure mismatch. Ensure you have at least 6 columns in your Sheet.")
+    st.error("Data syncing issue. Please check the sheet columns.")
