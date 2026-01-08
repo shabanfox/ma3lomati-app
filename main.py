@@ -3,180 +3,119 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
-# الروابط الخاصة بك
+# رابط البيانات الأساسي
 PROJECTS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
-FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScC7Xz_0_JafB1WwTzyC4LJs1vXclpTU3YY_Bl2rPO_Q1S3tA/formResponse"
 
-# 2. التنسيق الجمالي (CSS)
+# 2. التنسيق (CSS) - شريط التمرير الذهبي وتصميم الكروت الاحترافي
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
-    /* الخط والاتجاه */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     html, body, [class*="st-"] { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
     .stApp { background-color: #0d1117; color: white; }
     
-    /* إخفاء القائمة الجانبية */
-    [data-testid="stSidebar"] { display: none; }
-
-    /* --- شريط التمرير العريض جداً والذهبي --- */
-    ::-webkit-scrollbar { width: 25px !important; }
+    /* شريط التمرير العريض */
+    ::-webkit-scrollbar { width: 22px !important; }
     ::-webkit-scrollbar-track { background: #161b22 !important; }
-    ::-webkit-scrollbar-thumb { 
-        background: #d4af37 !important; 
-        border-radius: 12px; 
-        border: 5px solid #161b22; 
-    }
-    ::-webkit-scrollbar-thumb:hover { background: #f1c40f !important; }
-
-    /* حاوية الدخول */
-    .login-box {
-        background: #161b22; border: 2px solid #d4af37; border-radius: 25px;
-        padding: 40px; text-align: center; margin: 50px auto; max-width: 550px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-    }
+    ::-webkit-scrollbar-thumb { background: #d4af37 !important; border-radius: 10px; border: 4px solid #161b22; }
     
-    .gold { color: #d4af37 !important; font-weight: 900; }
-    
-    /* كروت المشاريع */
+    /* كروت المشاريع المطورة */
     .project-card {
-        background: #1c2128; border: 1px solid #30363d; border-radius: 20px;
-        padding: 30px; margin-bottom: 25px; transition: 0.3s ease;
+        background: linear-gradient(145deg, #1c2128, #161b22);
+        border: 1px solid #30363d;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        transition: 0.3s ease;
     }
-    .project-card:hover { border-color: #d4af37; transform: translateY(-5px); }
-    
-    .price-badge { 
-        background: #d4af37; color: black; padding: 8px 20px; 
-        border-radius: 10px; font-weight: 800; float: left; font-size: 1.1em;
-    }
-
-    .info-box {
-        background: rgba(212, 175, 55, 0.05);
-        border-right: 5px solid #d4af37;
-        padding: 20px; margin: 20px 0; border-radius: 8px;
+    .project-card:hover { 
+        border-color: #d4af37; 
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(212, 175, 55, 0.1);
     }
     
-    /* تنسيق خانة البحث */
+    .gold-title { color: #d4af37; font-weight: 900; font-size: 1.5em; margin-bottom: 10px; }
+    .price-tag { 
+        background: #d4af37; color: #000; padding: 5px 15px; 
+        border-radius: 8px; font-weight: bold; float: left;
+    }
+    .location-box { font-size: 0.9em; opacity: 0.8; margin-bottom: 15px; }
+    .details-grid { 
+        display: grid; grid-template-columns: 1fr 1fr; 
+        gap: 15px; border-top: 1px solid #30363d; padding-top: 15px;
+    }
+    .detail-item { font-size: 0.85em; }
+    .detail-label { color: #d4af37; font-weight: bold; }
+    
+    /* تنسيق البحث */
     .stTextInput > div > div > input {
         background-color: #161b22 !important; color: white !important;
         border: 2px solid #30363d !important; border-radius: 15px !important;
-        height: 55px; text-align: center; font-size: 1.2em;
+        height: 55px; text-align: center;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# إدارة حالة الجلسة
-if 'auth' not in st.session_state:
-    st.session_state['auth'] = False
-
-# دالة إرسال البيانات لجوجل فورم
-def save_to_google(name, email, phone, password):
-    # الأرقام المستخرجة من الفورم الخاص بك
-    payload = {
-        "entry.231920038": name,
-        "entry.1705607062": email,
-        "entry.1693892837": phone,
-        "entry.1843336341": password
-    }
-    try:
-        requests.post(FORM_URL, data=payload)
-        return True
-    except:
-        return False
-
-# دالة تحميل بيانات المشاريع
 @st.cache_data(ttl=10)
-def load_projects():
+def load_data():
     try:
         res = requests.get(PROJECTS_URL)
         res.encoding = 'utf-8'
         df = pd.read_csv(StringIO(res.text))
         df.columns = [str(c).strip() for c in df.columns]
         return df.astype(str).replace(['nan', 'NaN'], 'غير مدرج')
-    except:
-        return pd.DataFrame()
+    except: return pd.DataFrame()
 
-# --- منطق عرض الصفحات ---
+# --- محتوى الصفحة ---
 
-if not st.session_state['auth']:
-    # صفحة تسجيل الدخول / إنشاء الحساب
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<h1 class="gold">🏢 منصة معلوماتي</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="opacity:0.8;">بوابة بروكرز مصر العقارية</p>', unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center; color:#d4af37;'>🏢 منصة معلوماتي العقارية</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; opacity:0.7;'>دليل المشروعات الذكي لبروكرز مصر</p>", unsafe_allow_html=True)
+
+# 1. قسم البحث والفلاتر
+df = load_data()
+
+if not df.empty:
+    col_search, col_filter = st.columns([2, 1])
     
-    tab_login, tab_signup = st.tabs(["🔐 دخول", "✨ حساب جديد"])
+    with col_search:
+        search = st.text_input("", placeholder="🔍 ابحث باسم المشروع، المطور، أو المنطقة...")
     
-    with tab_login:
-        login_email = st.text_input("البريد الإلكتروني", key="l_email")
-        login_pass = st.text_input("كلمة المرور", type="password", key="l_pass")
-        if st.button("دخول للمنصة الآن", use_container_width=True):
-            if login_email and login_pass:
-                st.session_state['auth'] = True
-                st.rerun()
-            else:
-                st.warning("الرجاء إدخال بيانات الدخول")
+    with col_filter:
+        # فلاتر سريعة (بناءً على المناطق الموجودة في الشيت)
+        regions = ["الكل"] + sorted(df['المنطقة'].unique().tolist())
+        selected_region = st.selectbox("تصفية حسب المنطقة:", regions)
+
+    # تطبيق الفلاتر
+    filtered_df = df.copy()
+    if search:
+        filtered_df = filtered_df[filtered_df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
+    if selected_region != "الكل":
+        filtered_df = filtered_df[filtered_df['المنطقة'] == selected_region]
+
+    st.markdown(f"---")
+    st.markdown(f"**عدد المشاريع المتاحة: {len(filtered_df)}**")
+
+    # 2. عرض المشاريع في كروت
+    for _, row in filtered_df.iterrows():
+        st.markdown(f"""
+            <div class="project-card">
+                <div class="price-tag">💰 {row.get('السعر', 'اتصل')}</div>
+                <div class="gold-title">{row.get('المشروع', '-')}</div>
+                <div class="location-box">📍 {row.get('المنطقة', '-')} | 🏢 المطور: {row.get('المطور', '-')}</div>
                 
-    with tab_signup:
-        s_name = st.text_input("الاسم بالكامل")
-        s_email = st.text_input("الإيميل")
-        s_phone = st.text_input("رقم الواتساب")
-        s_pass = st.text_input("اختر كلمة مرور", type="password")
-        
-        if st.button("إنشاء حسابي وتفعيل العضوية", use_container_width=True):
-            if s_name and s_email and s_pass:
-                # إرسال فعلي للبيانات
-                save_to_google(s_name, s_email, s_phone, s_pass)
-                st.balloons()
-                st.success("تم تسجيل بياناتك بنجاح! يمكنك الآن تسجيل الدخول.")
-            else:
-                st.error("برجاء ملء الخانات الأساسية")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-else:
-    # الصفحة الرئيسية بعد الدخول
-    c1, c2 = st.columns([0.9, 0.1])
-    with c2:
-        if st.button("خروج 🚪"):
-            st.session_state['auth'] = False
-            st.rerun()
-            
-    st.markdown("<h1 class='gold' style='text-align:center;'>📂 دليل المشاريع والمطورين</h1>", unsafe_allow_html=True)
-    
-    # محرك البحث في المنتصف
-    _, s_box, _ = st.columns([1, 2, 1])
-    with s_box:
-        search_term = st.text_input("", placeholder="🔍 ابحث عن المطور، المنطقة، أو اسم المشروع...")
-
-    df_data = load_projects()
-    
-    if not df_data.empty:
-        # فلترة البيانات بناءً على البحث
-        if search_term:
-            df_data = df_data[df_data.apply(lambda r: search_term.lower() in str(r).lower(), axis=1)]
-        
-        st.markdown(f"<p style='text-align:center; opacity:0.7;'>تم إيجاد {len(df_data)} نتيجة</p>", unsafe_allow_html=True)
-
-        for _, row in df_data.iterrows():
-            st.markdown(f"""
-                <div class="project-card">
-                    <div class="price-badge">{row.get('السعر', 'اتصل')}</div>
-                    <div class="gold" style="font-size: 0.8em; font-weight: bold;">PROJECT DATA SHEET</div>
-                    <h2 style="margin: 10px 0;">{row.get('المشروع', '-')}</h2>
-                    <p style="font-size: 1.1em; opacity: 0.9;">📍 {row.get('المنطقة', '-')} | 🏢 {row.get('المطور', '-')}</p>
-                    
-                    <div class="info-box">
-                        <b class="gold">📜 سابقة الأعمال والخبرة:</b><br>
-                        {row.get('سابقة_الأعمال', 'لا توجد بيانات متاحة')}
-                    </div>
-                    
-                    <div style="display: flex; gap: 40px; border-top: 1px solid #30363d; padding-top: 15px; font-size: 0.9em;">
-                        <div><span class="gold">👤 المالك:</span> {row.get('المالك', '-')}</div>
-                        <div><span class="gold">💳 نظام السداد:</span> {row.get('السداد', '-')}</div>
-                    </div>
+                <div style="background: rgba(212,175,55,0.03); padding: 15px; border-right: 3px solid #d4af37; border-radius: 5px; margin-bottom: 15px;">
+                    <b style="color:#d4af37;">📜 تفاصيل المشروع:</b><br>
+                    {row.get('سابقة_الأعمال', 'لا توجد تفاصيل إضافية')}
                 </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.warning("جاري مزامنة البيانات من الإكسيل...")
+                
+                <div class="details-grid">
+                    <div class="detail-item"><span class="detail-label">👤 المالك:</span> {row.get('المالك', '-')}</div>
+                    <div class="detail-item"><span class="detail-label">💳 السداد:</span> {row.get('السداد', '-')}</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+else:
+    st.warning("⚠️ جاري تحميل البيانات من جدول جوجل... تأكد من استقرار الإنترنت.")
