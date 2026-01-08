@@ -6,9 +6,9 @@ from io import StringIO
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="M A S T E R _ R A D A R", layout="wide")
 
-# الرابط الصحيح (محول ليقرأ البيانات الخام فقط)
-SHEET_ID = "1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx"
-CSV_URL = f"https://docs.google.com/spreadsheets/d/e/2PACX-{SHEET_ID}/pub?output=csv"
+# --- التعديل الجوهري هنا ---
+# الرابط المباشر بصيغة CSV لضمان عدم قراءة أكواد HTML من جوجل
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
 
 @st.cache_data(ttl=5)
 def load_and_clean_data():
@@ -16,11 +16,12 @@ def load_and_clean_data():
         response = requests.get(CSV_URL)
         response.encoding = 'utf-8'
         if response.status_code == 200:
+            # قراءة البيانات مع تجاهل الأسطر الفارغة
             df = pd.read_csv(StringIO(response.text))
-            # تنظيف أسماء الأعمدة من أي مسافات مخفية
+            # تنظيف أسماء الأعمدة من أي مسافات
             df.columns = [str(c).strip() for c in df.columns]
             # تحويل البيانات لنصوص لمنع أخطاء النوع
-            df = df.astype(str).replace(['nan', 'NaN', 'None'], 'غير مدرج')
+            df = df.astype(str).replace(['nan', 'NaN', 'None', 'nan '], 'غير مدرج')
             return df
         return pd.DataFrame()
     except Exception as e:
@@ -45,7 +46,6 @@ st.markdown("""
     }
     
     .card:hover { border-color: #d4af37; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1); }
-    
     .gold { color: #d4af37 !important; font-weight: 900; }
     
     .price-tag { 
@@ -60,9 +60,6 @@ st.markdown("""
         border-radius: 5px 12px 12px 5px;
         margin: 15px 0;
     }
-    
-    /* منع ظهور الـ HTML كـ نص عادي */
-    .stMarkdown div { line-height: 1.6; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -78,7 +75,6 @@ if not df.empty:
         st.markdown("<h2 class='gold'>فلترة البيانات</h2>", unsafe_allow_html=True)
         search = st.text_input("🔍 ابحث عن (مطور، مشروع، مالك)")
         
-        # محاولة التعرف على عمود المنطقة
         region_col = next((c for c in df.columns if 'المنطقة' in c), None)
         if region_col:
             regions = ["الكل"] + sorted([r for r in df[region_col].unique() if r != "غير مدرج"])
@@ -92,10 +88,35 @@ if not df.empty:
     if sel_region != "الكل" and region_col:
         f_df = f_df[f_df[region_col] == sel_region]
 
-    # عرض البيانات
     st.write(f"المتاح حالياً: **{len(f_df)}** مطور ومشروع")
     
     for _, row in f_df.iterrows():
-        # استخراج البيانات بأسماء مرنة
-        name = row.get('المطور', row.get('مطور', '-'))
-        project
+        # جلب البيانات بأسماء مرنة
+        name = row.get('المطور', '-')
+        project = row.get('المشروع', '-')
+        owner = row.get('المالك', '-')
+        history = row.get('سابقة_الأعمال', 'لا توجد بيانات')
+        price = row.get('السعر', 'اتصل')
+        loc = row.get('المنطقة', '-')
+        pay = row.get('السداد', '-')
+
+        st.markdown(f"""
+            <div class="card">
+                <div class="price-tag">{price}</div>
+                <div class="gold" style="font-size: 0.8em; letter-spacing: 2px;">REAL ESTATE PROFILE</div>
+                <h2 style="margin: 10px 0;">{project}</h2>
+                <p style="opacity: 0.7;">🏢 {name} | 📍 {loc}</p>
+                
+                <div class="history-box">
+                    <b class="gold">📜 سابقة الأعمال والخبرة:</b><br>
+                    {history}
+                </div>
+                
+                <div style="display: flex; gap: 30px; font-size: 0.9em; border-top: 1px solid #333; padding-top: 15px;">
+                    <div><span class="gold">👤 المالك:</span> {owner}</div>
+                    <div><span class="gold">💳 السداد:</span> {pay}</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+else:
+    st.error("⚠️ لم نتمكن من قراءة البيانات. تأكد أن ملف Google Sheets 'منشور للويب' (Publish to Web) بصيغة CSV وليس رابط HTML عادي.")
