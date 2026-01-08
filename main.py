@@ -7,7 +7,7 @@ st.set_page_config(page_title="منصة معلوماتي العقارية", layo
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. التنسيق الفخم الأصلي (CSS)
+# 3. التصميم الفخم (CSS) - النسخة المعتمدة
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -15,7 +15,6 @@ st.markdown("""
     
     .block-container {
         padding-top: 0.6rem !important;
-        padding-bottom: 2rem !important;
         padding-left: 0rem !important;
         padding-right: 0rem !important;
     }
@@ -41,7 +40,7 @@ st.markdown("""
     .hero-outer { padding: 0 8%; margin-top: 10px; }
     .hero-inner {
         background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
-        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200');
         background-size: cover; background-position: center; height: 320px;
         border-radius: 12px; display: flex; flex-direction: column;
         justify-content: center; align-items: center; color: white;
@@ -52,22 +51,22 @@ st.markdown("""
         background: white; border-radius: 12px; border: 1px solid #e2e8f0;
         display: flex; height: 190px; margin-bottom: 15px; overflow: hidden;
     }
-    .card-img { width: 260px; background: #eee url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=80') center/cover; }
+    .card-img { width: 260px; background: #eee url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400') center/cover; }
     .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     .price { color: #003366; font-weight: 900; font-size: 1.4rem; }
     </style>
 """, unsafe_allow_html=True)
 
+# 4. منطق الصفحات
 if not st.session_state.logged_in:
-    # صفحة تسجيل الدخول
+    # صفحة الدخول
     st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
-    _, login_col, _ = st.columns([1, 1.2, 1])
-    with login_col:
+    _, col, _ = st.columns([1, 1.2, 1])
+    with col:
         st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align:center; color:#003366;'>دخول المنصة</h2>", unsafe_allow_html=True)
         u = st.text_input("اسم المستخدم", placeholder="admin")
         p = st.text_input("كلمة المرور", type="password", placeholder="123")
-        if st.button("دخول", use_container_width=True):
+        if st.button("دخول المنصة", use_container_width=True):
             if u == "admin" and p == "123":
                 st.session_state.logged_in = True
                 st.rerun()
@@ -79,40 +78,29 @@ else:
                 <i class="fa-solid fa-city" style="color:#003366; font-size:1.6rem;"></i>
                 <div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div>
             </div>
-            <div style="color:#475569; font-weight:600; font-size:1rem;">الرئيسية</div>
+            <div style="color:#475569; font-weight:600;">الرئيسية</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # قسم الهيرو
+    # الهيرو
     st.markdown("""
         <div class="hero-outer">
             <div class="hero-inner">
-                <h1 style="font-weight:900; font-size:2.5rem; margin-bottom:10px;">بوابتك لأدق البيانات العقارية</h1>
-                <p style="font-size:1.2rem; opacity:0.95;">المرجع الأول للمحترفين في السوق المصري</p>
+                <h1 style="font-weight:900; font-size:2.5rem;">بوابتك لأدق البيانات العقارية</h1>
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # المحتوى بمسافات 8%
+    # عرض البيانات (مثال)
     st.markdown('<div style="padding: 0 8%; margin-top:25px;">', unsafe_allow_html=True)
-    
-    s1, s2, s3, s4 = st.columns([2, 1, 1, 0.6])
-    with s1: st.text_input("📍 ابحث هنا...", label_visibility="collapsed")
-    with s2: st.selectbox("النوع", ["كل الأنواع"], label_visibility="collapsed")
-    with s3: st.selectbox("السعر", ["الكل"], label_visibility="collapsed")
-    with s4: st.button("بحث", use_container_width=True)
-
-    st.markdown("<h3 style='margin: 30px 0 20px 0; color:#003366;'>أحدث المشاريع</h3>", unsafe_allow_html=True)
-
-    # كارت مثال ثابت
     st.markdown("""
         <div class="project-card">
             <div class="card-img"></div>
             <div class="card-body">
                 <div>
                     <div class="price">9,200,000 ج.م</div>
-                    <div style="font-weight: 700; font-size: 1.2rem; color: #1e293b; margin-top:5px;">كمبوند ايفوري جولي</div>
-                    <div style="color:#64748b; font-size:0.95rem; margin-top:5px;">📍 الشيخ زايد الجديدة</div>
+                    <div style="font-weight: 700; font-size: 1.2rem; color: #1e293b;">كمبوند ايفوري جولي</div>
+                    <div style="color:#64748b; font-size:0.95rem;">📍 الشيخ زايد الجديدة</div>
                 </div>
                 <div style="text-align: left;">
                     <button style="background:#003366; border:none; color:white; padding:8px 20px; border-radius:6px; font-weight:700;">عرض التفاصيل</button>
@@ -120,5 +108,4 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
-    
     st.markdown('</div>', unsafe_allow_html=True)
