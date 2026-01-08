@@ -4,125 +4,103 @@ import requests
 from io import StringIO
 
 # 1. إعداد الصفحة
-st.set_page_config(page_title="منصة معلوماتي - دليل المطورين", layout="wide", page_icon="🏢")
+st.set_page_config(page_title="منصة معلوماتي - الموسوعة العقارية", layout="wide", page_icon="🏢")
 
-# 2. رابط الشيت (تأكد من نشره بصيغة CSV)
+# 2. رابط الشيت (بصيغة CSV)
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0vzgtd_E2feFVen6GGR02lYcB7kUASgyLyvqBGA7pAHseUf9KxAyEyDHU935VLFEWQot2p5FBFSwv/pub?output=csv"
 
-# 3. التنسيق الجمالي (CSS)
+# 3. تصميم CSS احترافي
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     #MainMenu, header, footer, .stDeployButton {visibility: hidden;}
     html, body, [data-testid="stAppViewContainer"] {
-        direction: rtl !important;
-        font-family: 'Cairo', sans-serif;
+        direction: rtl !important; font-family: 'Cairo', sans-serif;
         background-color: #0d1117; color: white; text-align: right;
-    }
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; justify-content: center; }
-    .stTabs [data-baseweb="tab"] { 
-        background-color: #1c2128; border-radius: 10px; padding: 10px 25px; color: #d4af37;
-    }
-    .stTabs [aria-selected="true"] { background-color: #d4af37 !important; color: black !important; }
-    .dev-card {
-        background: linear-gradient(135deg, #1c2128 0%, #0d1117 100%);
-        border-right: 5px solid #d4af37; border-radius: 15px; padding: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;
-    }
-    .project-card {
-        background: #1c2128; border: 1px solid #30363d; border-radius: 12px;
-        padding: 20px; margin-bottom: 15px; border-right: 4px solid #d4af37;
     }
     .stats-box {
         background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37;
-        border-radius: 15px; padding: 15px; text-align: center;
+        border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 10px;
     }
-    label { color: #d4af37 !important; font-size: 1.1em !important; }
+    .project-card {
+        background: #1c2128; border-right: 5px solid #d4af37;
+        border-radius: 10px; padding: 20px; margin-bottom: 15px;
+    }
+    .dev-profile {
+        background: linear-gradient(135deg, #1c2128 0%, #0d1117 100%);
+        border: 1px solid #d4af37; border-radius: 15px; padding: 25px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 4. دالة جلب البيانات مع تنظيف أسماء الأعمدة
+# 4. جلب البيانات وتنظيفها
 @st.cache_data(ttl=5)
 def load_data():
     try:
         res = requests.get(SHEET_URL)
         res.encoding = 'utf-8'
         df = pd.read_csv(StringIO(res.text))
-        # تنظيف أسماء الأعمدة من أي مسافات مخفية
-        df.columns = df.columns.str.strip()
+        # أهم خطوة: تنظيف أسماء الأعمدة من المسافات المخفية
+        df.columns = [str(c).strip() for c in df.columns]
         df = df.fillna("-").astype(str)
         return df
-    except:
+    except Exception as e:
+        st.error(f"خطأ في الاتصال بالشيت: {e}")
         return pd.DataFrame()
 
 df = load_data()
 
-st.markdown("<h1 style='text-align:center; color:#d4af37; font-weight:900;'>🏢 موسوعة المطورين العقاريين</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center; color:#d4af37;'>🏢 موسوعة المطورين العقاريين</h1>", unsafe_allow_html=True)
 
 if not df.empty:
-    # التحقق من وجود الأعمدة قبل تنفيذ الإحصائيات
-    dev_col = 'المطور' if 'المطور' in df.columns else df.columns[0]
-    proj_col = 'المشروع' if 'المشروع' in df.columns else (df.columns[1] if len(df.columns)>1 else df.columns[0])
-    reg_col = 'المنطقة' if 'المنطقة' in df.columns else (df.columns[2] if len(df.columns)>2 else df.columns[0])
+    # تحديد الأعمدة بذكاء (لو الاسم مش موجود ياخد البديل)
+    def get_col(options, default_idx=0):
+        for opt in options:
+            if opt in df.columns: return opt
+        return df.columns[default_idx] if len(df.columns) > default_idx else df.columns[0]
 
-    # 5. الإحصائيات (بأسماء الأعمدة المرنة)
+    C_PROJ = get_col(["المشروع", "اسم المشروع", "Project"])
+    C_DEV = get_col(["المطور", "الشركة", "Developer"])
+    C_REG = get_col(["المنطقة", "Location", "Region"])
+    C_OWNER = get_col(["المالك", "Owner"])
+    C_BIO = get_col(["سابقة_الأعمال", "سابقة الأعمال", "Bio"])
+
+    # إحصائيات
     c1, c2, c3 = st.columns(3)
-    with c1: 
-        st.markdown(f"<div class='stats-box'><h3>{len(df[dev_col].unique())}</h3> مطور عقاري</div>", unsafe_allow_html=True)
-    with c2: 
-        st.markdown(f"<div class='stats-box'><h3>{len(df[proj_col].unique())}</h3> مشروع مدرج</div>", unsafe_allow_html=True)
-    with c3: 
-        st.markdown(f"<div class='stats-box'><h3>{len(df[reg_col].unique())}</h3> منطقة</div>", unsafe_allow_html=True)
-    
+    with c1: st.markdown(f"<div class='stats-box'><h3>{len(df[C_DEV].unique())}</h3> مطور</div>", unsafe_allow_html=True)
+    with c2: st.markdown(f"<div class='stats-box'><h3>{len(df[C_PROJ].unique())}</h3> مشروع</div>", unsafe_allow_html=True)
+    with c3: st.markdown(f"<div class='stats-box'><h3>{len(df[C_REG].unique())}</h3> منطقة</div>", unsafe_allow_html=True)
+
+    # الفلاتر
     st.markdown("---")
+    f1, f2 = st.columns(2)
+    with f1:
+        s_reg = st.selectbox("📍 اختر المنطقة", ["كل المناطق"] + sorted(df[C_REG].unique().tolist()))
+    with f2:
+        s_dev = st.selectbox("🏢 اختر المطور", ["كل المطورين"] + sorted(df[C_DEV].unique().tolist()))
 
-    # 6. الفلاتر
-    col_reg, col_dev = st.columns(2)
-    with col_reg:
-        s_reg = st.selectbox("📍 فلتر بالمنطقة", ["كل المناطق"] + sorted(df[reg_col].unique().tolist()))
-    with col_dev:
-        s_dev = st.selectbox("🏢 اختر المطور", ["كل المطورين"] + sorted(df[dev_col].unique().tolist()))
-
-    # 7. منطق العرض
+    # عرض النتائج
     if s_dev != "كل المطورين":
-        dev_data = df[df[dev_col] == s_dev].iloc[0]
-        st.markdown(f"<h2 style='color:#d4af37; text-align:center; margin-top:20px;'>📂 شركة: {s_dev}</h2>", unsafe_allow_html=True)
+        row = df[df[C_DEV] == s_dev].iloc[0]
+        st.markdown(f"<div class='dev-profile'>", unsafe_allow_html=True)
+        st.subheader(f"📂 ملف شركة: {s_dev}")
+        tab_info, tab_projs = st.tabs(["ℹ️ معلومات المطور", "🏗️ المشاريع"])
         
-        tab1, tab2 = st.tabs(["ℹ️ معلومات الشركة", "🏗️ مشاريعها"])
-        
-        with tab1:
-            st.markdown(f"""
-                <div class="dev-card">
-                    <h3 style="color:#d4af37;">👤 المالك والإدارة</h3>
-                    <p style="font-size:1.2em;">{dev_data.get('المالك', 'غير مدرج')}</p>
-                    <hr style="opacity:0.2;">
-                    <h3 style="color:#d4af37;">📜 النبذة التاريخية</h3>
-                    <p style="line-height:1.8;">{dev_data.get('سابقة_الأعمال', 'لا توجد تفاصيل.')}</p>
-                </div>
-            """, unsafe_allow_html=True)
+        with tab_info:
+            st.write(f"**👤 المالك:** {row.get(C_OWNER, 'غير مدرج')}")
+            st.write(f"**📜 سابقة الأعمال:**")
+            st.write(row.get(C_BIO, '-'))
             
-        with tab2:
-            projects = df[df[dev_col] == s_dev]
-            for _, row in projects.iterrows():
-                st.markdown(f"""
-                    <div class="project-card">
-                        <div style="background:#d4af37; color:black; padding:2px 10px; border-radius:5px; float:left; font-weight:bold;">{row.get('السعر','-')}</div>
-                        <h3 style="margin:0;">{row.get(proj_col,'-')}</h3>
-                        <p>📍 {row.get(reg_col,'-')} | 💳 {row.get('السداد','-')}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+        with tab_projs:
+            dev_projs = df[df[C_DEV] == s_dev]
+            for _, p in dev_projs.iterrows():
+                st.markdown(f"<div class='project-card'><h3>{p[C_PROJ]}</h3><p>📍 {p[C_REG]}</p></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     else:
-        # البحث العام
-        f_df = df.copy()
-        if s_reg != "كل المناطق": f_df = f_df[f_df[reg_col] == s_reg]
-        
-        for _, row in f_df.iterrows():
-            st.markdown(f"""
-                <div class="project-card">
-                    <div style="background:#d4af37; color:black; padding:2px 10px; border-radius:5px; float:left; font-weight:bold;">{row.get('السعر','-')}</div>
-                    <h3 style="margin:0;">{row.get(proj_col,'-')}</h3>
-                    <p>🏢 {row.get(dev_col,'-')} | 📍 {row.get(reg_col,'-')}</p>
-                </div>
-            """, unsafe_allow_html=True)
+        # عرض البحث العام
+        res_df = df.copy()
+        if s_reg != "كل المناطق": res_df = res_df[res_df[C_REG] == s_reg]
+        for _, r in res_df.iterrows():
+            st.markdown(f"<div class='project-card'><h3>{r[C_PROJ]}</h3><p>🏢 {r[C_DEV]} | 📍 {r[C_REG]}</p></div>", unsafe_allow_html=True)
 else:
-    st.error("⚠️ فشل تحميل البيانات. تأكد من وجود أعمدة: المشروع، المطور، المنطقة.")
+    st.warning("تأكد من نشر الشيت (Publish to web) واختيار صيغة CSV.")
