@@ -13,7 +13,7 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW
 if 'auth' not in st.session_state:
     st.session_state['auth'] = False
 
-# 2. التنسيق (CSS)
+# 2. التنسيق (CSS) المتطور
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -36,11 +36,39 @@ st.markdown("""
     .price-badge { background: #d4af37; color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; float: left; }
     .info-box { background: rgba(212,175,55,0.05); border-right: 4px solid #d4af37; padding: 15px; border-radius: 5px; margin: 15px 0; }
     
-    /* جعل حقل البحث احترافي */
+    /* حقل البحث */
     .stTextInput > div > div > input {
         background-color: #161b22 !important; color: white !important;
         border: 2px solid #30363d !important; border-radius: 12px !important;
         height: 50px; text-align: center;
+    }
+
+    /* زر الخروج العائم على اليسار */
+    .stButton > button {
+        transition: 0.3s;
+    }
+    
+    /* تعريف مكان زر الخروج الخاص */
+    div.stButton > button:first-child {
+        position: fixed;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 120px;
+        height: 60px;
+        background-color: #d4af37 !important;
+        color: black !important;
+        font-weight: bold !important;
+        border-radius: 15px !important;
+        z-index: 999999;
+        border: 2px solid #000 !important;
+        box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
+    }
+    
+    div.stButton > button:first-child:hover {
+        width: 140px;
+        background-color: #ff4b4b !important;
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -75,12 +103,10 @@ if not st.session_state['auth']:
 else:
     # الصفحة الرئيسية (بعد الدخول)
     
-    # --- إضافة زر الخروج في الأعلى ---
-    top_col1, top_col2 = st.columns([0.9, 0.1])
-    with top_col2:
-        if st.button("خروج 🚪"):
-            st.session_state['auth'] = False
-            st.rerun()
+    # زر الخروج العائم (بسبب الـ CSS سيبقى ثابتاً على اليسار)
+    if st.button("خروج من المنصة"):
+        st.session_state['auth'] = False
+        st.rerun()
             
     st.markdown("<h2 class='gold' style='text-align:center;'>🏠 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
     
