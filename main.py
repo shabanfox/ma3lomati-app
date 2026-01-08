@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="رادار العقارات المحترف", layout="wide")
+st.set_page_config(page_title="Professional Real Estate Radar", layout="wide")
 
 # الرابط الخاص بك
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkp73VTBzZ25jYx5Zj-uqYpBgETbZj2Duivdjv8no8btvDQENS6T8OcaAPpSMgqJW0PeCQ-21vJm1V/pub?output=xlsx"
@@ -11,19 +11,20 @@ SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkp73VTBzZ25jYx5Zj
 def load_data():
     try:
         df = pd.read_excel(SHEET_URL)
+        # تنظيف أسامي الأعمدة من أي مسافات
         df.columns = [str(c).strip() for c in df.columns]
-        # معالجة شاملة لكل القيم الفارغة في كل الأعمدة
-        df = df.fillna("غير محدد")
+        # تحويل كل الجدول لنصوص لتجنب تضارب الأنواع (نصوص ضد أرقام)
+        df = df.astype(str).replace('nan', 'غير محدد')
         return df
     except Exception as e:
-        st.error(f"خطأ في الاتصال: {e}")
+        st.error(f"خطأ في تحميل البيانات: {e}")
         return pd.DataFrame()
 
-# 2. التنسيق البصري (Deep Premium Dark)
+# 2. تصميم UI احترافي (Modern Dark Glass)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-    .stApp { background: radial-gradient(circle at top right, #0f172a, #020617); font-family: 'Cairo', sans-serif; color: white; }
+    .stApp { background: radial-gradient(circle at top right, #0f172a, #020617); font-family: 'Cairo', sans-serif; }
     .glass-card {
         background: rgba(255, 255, 255, 0.03);
         border-radius: 20px;
@@ -31,10 +32,12 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
         margin-bottom: 20px;
         direction: rtl; text-align: right;
+        transition: 0.3s ease;
     }
+    .glass-card:hover { border-color: #38bdf8; background: rgba(255, 255, 255, 0.05); }
     .price-badge { background: linear-gradient(90deg, #38bdf8, #2563eb); color: white; padding: 6px 15px; border-radius: 12px; font-weight: bold; }
     h1, h2, h3, p, span, label, div { color: white !important; }
-    .stTextInput input, .stSelectbox div { background-color: rgba(255,255,255,0.05) !important; color: white !important; border-radius: 10px !important; }
+    .stTextInput input, .stSelectbox div { background-color: rgba(255,255,255,0.05) !important; color: white !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -43,40 +46,37 @@ df = load_data()
 if not df.empty:
     st.markdown("<h1 style='text-align: center; color: #38bdf8;'>🏙️ موسوعة المطورين العقاريين</h1>", unsafe_allow_html=True)
     
-    # 3.Sidebar Filters (تم تأمينها تماماً من الـ TypeError)
+    # 3. Sidebar (تم معالجة الـ TypeError هنا جذرياً)
     with st.sidebar:
         st.header("تصفية البحث")
-        general_search = st.text_input("🔍 بحث بالاسم أو المالك...")
+        search_query = st.text_input("🔍 ابحث (مطور، مشروع، مالك)...")
         
-        # تأمين فلتر المنطقة
+        # معالجة عمود المنطقة
         if 'المنطقة' in df.columns:
-            # تحويل كل القيم لنصوص -> مسح الـ "غير محدد" -> الترتيب
-            raw_regions = df['المنطقة'].astype(str).unique().tolist()
-            clean_regions = sorted([r for r in raw_regions if r != "غير محدد"])
-            sel_region = st.selectbox("📍 المنطقة", ["الكل"] + clean_regions)
+            region_list = sorted([r for r in df['المنطقة'].unique() if r != 'غير محدد'])
+            sel_region = st.selectbox("📍 المنطقة", ["الكل"] + region_list)
         else:
             sel_region = "الكل"
 
-        # تأمين فلتر نوع الوحدة
+        # معالجة عمود نوع الوحدة
         if 'نوع الوحدة' in df.columns:
-            raw_units = df['نوع الوحدة'].astype(str).unique().tolist()
-            clean_units = sorted([u for u in raw_units if u != "غير محدد"])
-            sel_unit = st.selectbox("🏠 نوع الوحدة", ["الكل"] + clean_units)
+            unit_list = sorted([u for u in df['نوع الوحدة'].unique() if u != 'غير محدد'])
+            sel_unit = st.selectbox("🏠 نوع الوحدة", ["الكل"] + unit_list)
         else:
             sel_unit = "الكل"
 
     # تطبيق الفلترة
     f_df = df.copy()
-    if general_search:
-        f_df = f_df[f_df.apply(lambda r: general_search.lower() in str(r).lower(), axis=1)]
+    if search_query:
+        f_df = f_df[f_df.apply(lambda r: search_query.lower() in str(r).lower(), axis=1)]
     if sel_region != "الكل":
         f_df = f_df[f_df['المنطقة'] == sel_region]
     if sel_unit != "الكل":
         f_df = f_df[f_df['نوع الوحدة'] == sel_unit]
 
+    st.write(f"📊 المشاريع المتاحة: {len(f_df)}")
+
     # 4. عرض النتائج
-    st.write(f"المشاريع المتاحة: {len(f_df)}")
-    
     for _, row in f_df.iterrows():
         st.markdown(f"""
             <div class="glass-card">
@@ -88,15 +88,15 @@ if not df.empty:
                     </div>
                     <div class="price-badge">{row.get('السعر التقريبي (يبدأ من)', 'اتصل')}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin: 20px 0;">
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #38bdf8;">
                     <small style="color: #38bdf8; font-weight: bold;">📜 سابقة الأعمال والخبرة:</small><br>
-                    <span style="font-size: 0.95em; line-height: 1.6;">{row.get('سابقة الأعمال (أهم المشاريع)', 'لا توجد بيانات متاحة')}</span>
+                    <span style="font-size: 0.95em; line-height: 1.6;">{row.get('سابقة الأعمال (أهم المشاريع)', 'لا توجد بيانات')}</span>
                 </div>
-                <div style="display: flex; gap: 30px; font-size: 0.9em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <div style="display: flex; gap: 30px; font-size: 0.9em; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
                     <div><span style="color:#94a3b8;">👤 المالك:</span> {row.get('المالك / رئيس مجلس الإدارة', '-')}</div>
                     <div><span style="color:#94a3b8;">💳 السداد:</span> {row.get('نظام السداد', '-')}</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 else:
-    st.warning("⚠️ لم يتم العثور على بيانات. تأكد من أن ملف الإكسيل يحتوي على البيانات المطلوبة.")
+    st.info("⚠️ تأكد من رفع ملف الإكسيل ومزامنة الرابط بشكل صحيح.")
