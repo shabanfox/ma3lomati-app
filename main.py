@@ -3,114 +3,85 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة (تجربة المستخدم الاحترافية)
-st.set_page_config(page_title="MA3LOMATI | Real Estate Intelligence", layout="wide")
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="MA3LOMATI | Broker Tool", layout="wide")
 
+# 2. CSS منفصل تماماً لتجنب أخطاء Syntax
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=Cairo:wght@400;700;900&display=swap');
     
-    /* إخفاء القوائم الافتراضية */
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
-    /* الخلفية العامة للموقع */
     html, body, [data-testid="stAppViewContainer"] {
         background-color: #fcfcfd !important;
         font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
         color: #101828;
-        direction: ltr !important;
     }
 
-    /* تصميم شريط البحث الجانبي */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 1px solid #eaecf0;
-        padding-top: 20px;
-    }
-
-    /* الهيدر الرئيسي الفخم */
+    /* الهيدر الرئيسي */
     .main-hero {
         background: #0f172a;
-        padding: 40px;
-        border-radius: 24px;
-        color: white;
-        margin-bottom: 30px;
-        border-bottom: 4px solid #c49a6c;
-        box-shadow: 0 20px 24px -4px rgba(16, 24, 40, 0.08);
-    }
-
-    /* لوحة معلومات المطور (الجهة اليمنى) */
-    .dev-profile-card {
-        background: #ffffff;
+        padding: 30px 40px;
         border-radius: 20px;
-        padding: 30px;
+        color: white;
+        margin-bottom: 25px;
+        border-left: 5px solid #c49a6c;
+    }
+
+    /* لوحة البروفايل على اليمين */
+    .dev-profile {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 25px;
         border: 1px solid #eaecf0;
-        box-shadow: 0 4px 6px -2px rgba(16, 24, 40, 0.03);
-        position: sticky; top: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
-    /* شبكة المشاريع (الجهة اليسرى) */
-    .projects-container {
+    /* شبكة الكروت على اليسار */
+    .projects-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
     }
 
-    /* كارت المشروع "الفخم والمصغر" */
-    .project-card-premium {
+    .card {
         background: #ffffff;
         border: 1px solid #eaecf0;
-        border-radius: 16px;
-        padding: 20px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 12px;
+        padding: 15px;
+        transition: 0.3s ease;
+        min-height: 130px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 140px;
     }
-    .project-card-premium:hover {
+    .card:hover {
         transform: translateY(-5px);
         border-color: #c49a6c;
-        box-shadow: 0 12px 16px -4px rgba(16, 24, 40, 0.08);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
     }
 
-    .badge-price {
-        background: #fef6ee;
+    .price {
         color: #c49a6c;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 6px;
-        width: fit-content;
-        margin-bottom: 12px;
-    }
-
-    .project-name {
-        font-size: 16px;
-        font-weight: 700;
-        color: #101828;
-        margin-bottom: 4px;
-    }
-
-    .project-location {
-        font-size: 14px;
-        color: #667085;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .owner-label {
-        font-size: 12px;
-        color: #c49a6c;
-        text-transform: uppercase;
-        letter-spacing: 1px;
         font-weight: 800;
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+    .title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #101828;
+    }
+    .loc {
+        color: #667085;
+        font-size: 0.8rem;
+        margin-top: 5px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. تحميل البيانات
+# 3. جلب البيانات
 RAW_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8MmnRw6KGRVIKIfp_-o8KyvhJKVhHLIZKpFngWHeN0WTsjupFMILryY7EKv6m0vPCD0jwcBND-pvk/pub?output=csv"
 
 @st.cache_data(ttl=5)
@@ -125,27 +96,62 @@ def load_data():
 
 df = load_data()
 
-# 3. Sidebar (Filters)
+# 4. Sidebar للبحث والفلاتر
 with st.sidebar:
-    st.markdown("<h1 style='color:#0f172a; font-size:24px;'>MA3LOMATI.</h1>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown("<h2 style='color:#0f172a;'>MA3LOMATI.</h2>", unsafe_allow_html=True)
     if not df.empty:
-        C_DEV = df.columns[0]; C_REG = df.columns[4]
-        s_dev = st.selectbox("Choose Developer", sorted(df[C_DEV].unique().tolist()))
-        s_reg = st.selectbox("Select Location", ["All Locations"] + sorted(df[C_REG].unique().tolist()))
-    st.markdown("---")
-    st.info("v2.5 - Professional Brokerage Tool")
+        c_dev_name = df.columns[0]
+        c_reg_name = df.columns[4] if len(df.columns) > 4 else df.columns[0]
+        
+        s_dev = st.selectbox("Developer", sorted(df[c_dev_name].unique().tolist()))
+        s_reg = st.selectbox("Location", ["All"] + sorted(df[c_reg_name].unique().tolist()))
+    st.write("---")
+    st.caption("Premium Broker Insight v3.0")
 
-# 4. Main Body Logic
+# 5. عرض المحتوى
 if not df.empty:
-    C_OWNER = df.columns[1]; C_BIO = df.columns[2]; C_PROJ = df.columns[3]; C_PRICE = df.columns[5]
-    
-    dev_data = df[df[C_DEV] == s_dev]
-    
-    # Header Section
-    st.markdown(f"""
-        <div class="main-hero">
-            <h1 style="margin:0; font-size:32px; font-weight:900;">{s_dev}</h1>
-            <p style="opacity:0.8; margin:5px 0 0 0;">Exclusive Insights & Project Portfolio</p>
-        </div>
-    """, unsafe_
+    # تحديد الأعمدة
+    c_owner = df.columns[1] if len(df.columns) > 1 else ""
+    c_bio = df.columns[2] if len(df.columns) > 2 else ""
+    c_proj = df.columns[3] if len(df.columns) > 3 else ""
+    c_price = df.columns[5] if len(df.columns) > 5 else ""
+
+    dev_data = df[df[c_dev_name] == s_dev]
+
+    # هيدر الصفحة
+    st.markdown(f'<div class="main-hero"><h1>{s_dev}</h1><p>Developer Portfolio & Chairman Insights</p></div>', unsafe_allow_html=True)
+
+    # تقسيم الشاشة (يسار للمشاريع | يمين للمعلومات)
+    col_left, col_right = st.columns([2.5, 1], gap="medium")
+
+    with col_right:
+        if not dev_data.empty:
+            row = dev_data.iloc[0]
+            st.markdown('<div class="dev-profile">', unsafe_allow_html=True)
+            st.markdown(f"<small style='color:#c49a6c; font-weight:bold;'>CHAIRMAN</small>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='margin:0 0 15px 0;'>{row[c_owner]}</h3>", unsafe_allow_html=True)
+            st.markdown("<hr style='opacity:0.1'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:0.9rem; line-height:1.6; color:#475569;'>{row[c_bio]}</p>", unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_left:
+        filtered_df = dev_data
+        if s_reg != "All":
+            filtered_df = dev_data[dev_data[c_reg_name] == s_reg]
+        
+        st.markdown(f"<h4 style='margin-bottom:15px;'>Inventory ({len(filtered_df)})</h4>", unsafe_allow_html=True)
+        st.markdown('<div class="projects-grid">', unsafe_allow_html=True)
+        for _, r in filtered_df.iterrows():
+            if r[c_proj] != "-":
+                st.markdown(f"""
+                    <div class="card">
+                        <div>
+                            <div class="price">{r[c_price]}</div>
+                            <div class="title">{r[c_proj]}</div>
+                        </div>
+                        <div class="loc">📍 {r[c_reg_name]}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+else:
+    st.error("Data Sync Failed.")
