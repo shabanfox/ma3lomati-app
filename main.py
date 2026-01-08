@@ -3,159 +3,161 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. Page Config
-st.set_page_config(page_title="MA3LOMATI Pro", layout="wide")
+# 1. إعدادات المنصة بأسلوب Nawy
+st.set_page_config(page_title="Ma3lomati | Pro Broker Tool", layout="wide")
 
-# 2. Advanced UI System (Clean & Sharp)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Cairo:wght@600;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
+    /* إخفاء عناصر ستريمليت */
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
+    /* التصميم العام (Clean & Professional) */
     html, body, [data-testid="stAppViewContainer"] {
-        background: #090b10 !important;
-        font-family: 'Inter', 'Cairo', sans-serif;
+        background-color: #f8f9fb !important;
+        font-family: 'Cairo', sans-serif;
+        color: #1a202c;
+        direction: ltr !important;
     }
 
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #11141d !important;
-        border-right: 1px solid #1e222d;
-    }
-
-    /* Main Dashboard Layout */
-    .app-container {
+    /* هيدر يشبه Nawy */
+    .nawy-header {
+        background: #ffffff;
+        padding: 15px 40px;
         display: flex;
-        gap: 20px;
-        padding: 20px;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky; top: 0; z-index: 1000;
     }
 
-    /* Left Side: Inventory Grid */
-    .inventory-section {
-        flex: 3;
-    }
-
-    /* Right Side: Developer Intelligence Panel */
-    .intel-panel {
-        flex: 1;
-        background: #11141d;
-        border-radius: 16px;
-        padding: 24px;
-        border: 1px solid #1e222d;
-        position: sticky; top: 20px;
-        height: fit-content;
-    }
-
-    /* Micro Property Cards */
-    .prop-card {
-        background: #161a23;
-        border: 1px solid #1e222d;
+    /* كارت المطور (يمين) - ستايل Nawy Sidebar */
+    .dev-sidebar {
+        background: #ffffff;
         border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        transition: 0.2s ease;
-        border-left: 4px solid #c49a6c;
-    }
-    .prop-card:hover {
-        background: #1c222d;
-        border-color: #c49a6c;
-        transform: translateX(5px);
+        padding: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        position: sticky; top: 100px;
     }
 
-    .prop-price {
-        color: #c49a6c;
-        font-weight: 900;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
+    /* كروت المشاريع (يسار) - Clean Cards */
+    .project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
     }
-    .prop-title {
-        color: #ffffff;
+
+    .nawy-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    .nawy-card:hover {
+        border-color: #0056b3;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .price-nawy {
+        color: #0056b3;
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .title-nawy {
         font-weight: 700;
         font-size: 1rem;
-        margin: 5px 0;
+        color: #2d3748;
+        margin-bottom: 4px;
     }
-    .prop-meta {
-        color: #6d7681;
-        font-size: 0.8rem;
+
+    .loc-nawy {
+        color: #718096;
+        font-size: 0.85rem;
         display: flex;
         align-items: center;
-        gap: 5px;
     }
 
-    /* Layout Utility */
-    .flex-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 12px;
+    /* تخصيص صناديق الاختيار */
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
     }
-
-    h1, h2, h3 { color: white !important; font-family: 'Cairo', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. Data Core
+# 2. جلب البيانات
 @st.cache_data(ttl=5)
-def get_data():
+def load_data():
     URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8MmnRw6KGRVIKIfp_-o8KyvhJKVhHLIZKpFngWHeN0WTsjupFMILryY7EKv6m0vPCD0jwcBND-pvk/pub?output=csv"
     try:
-        r = requests.get(URL); r.encoding = 'utf-8'
-        df = pd.read_csv(StringIO(r.text))
+        res = requests.get(URL); res.encoding = 'utf-8'
+        df = pd.read_csv(StringIO(res.text))
         df.columns = [str(c).strip() for c in df.columns]
         return df.fillna("-").astype(str)
     except: return pd.DataFrame()
 
-df = get_data()
+df = load_data()
 
-# 4. App Structure
+# Header
+st.markdown("""
+    <div class="nawy-header">
+        <div style="font-size: 1.4rem; font-weight: 900; color: #0056b3;">MA3LOMATI<span style="color:#1a202c;">PRO</span></div>
+        <div style="font-size: 0.85rem; color: #718096; font-weight: 600;">Internal Broker Portal</div>
+    </div>
+""", unsafe_allow_html=True)
+
 if not df.empty:
-    # Sidebar Filters
-    with st.sidebar:
-        st.markdown("<h2 style='font-size:20px; margin-bottom:30px;'>MA3LOMATI <span style='color:#c49a6c'>PRO</span></h2>", unsafe_allow_html=True)
-        dev_list = sorted(df.iloc[:, 0].unique().tolist())
-        s_dev = st.selectbox("Developer", dev_list)
-        reg_list = ["All Regions"] + sorted(df.iloc[:, 4].unique().tolist())
-        s_reg = st.selectbox("Location", reg_list)
-        st.markdown("---")
-        st.caption("v5.5 Broker Internal System")
+    # المنطقة العلوية للفلاتر (Clean Search Bar style)
+    st.markdown('<div style="padding: 20px 40px 0 40px;">', unsafe_allow_html=True)
+    c1, c2 = st.columns([2, 1])
+    with c1: s_dev = st.selectbox("Search Developer", sorted(df.iloc[:, 0].unique().tolist()))
+    with c2: s_reg = st.selectbox("Location", ["All Egypt"] + sorted(df.iloc[:, 4].unique().tolist()))
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Main Area
-    c_cards, c_info = st.columns([2.8, 1.2], gap="medium")
+    # المحتوى الرئيسي
+    col_left, col_right = st.columns([2.5, 1], gap="large")
 
     dev_data = df[df.iloc[:, 0] == s_dev]
 
-    with c_info:
-        # Developer Intel Panel (Sticky on Right)
-        first = dev_data.iloc[0]
+    with col_right:
+        # لوحة معلومات المطور (Right Sidebar)
+        row = dev_data.iloc[0]
         st.markdown(f"""
-            <div class="intel-panel">
-                <p style="color:#c49a6c; font-size:11px; font-weight:900; text-transform:uppercase;">Developer Info</p>
-                <h2 style="margin:5px 0 20px 0; font-size:24px;">{s_dev}</h2>
-                <div style="background:#090b10; padding:15px; border-radius:10px; margin-bottom:20px;">
-                    <small style="color:#6d7681;">Owner / Chairman</small><br>
-                    <b style="color:white; font-size:16px;">{first.iloc[1]}</b>
+            <div class="dev-sidebar">
+                <h2 style="margin:0 0 10px 0; font-size:1.5rem; color:#1a202c;">{s_dev}</h2>
+                <div style="margin-bottom:20px;">
+                    <small style="color:#718096; text-transform:uppercase; font-weight:700;">Chairman</small><br>
+                    <b style="color:#2d3748; font-size:1.1rem;">{row.iloc[1]}</b>
                 </div>
-                <p style="color:#adb5bd; font-size:13px; line-height:1.6;">{first.iloc[2]}</p>
+                <hr style="opacity:0.1">
+                <p style="color:#4a5568; font-size:0.95rem; line-height:1.6; text-align:justify;">{row.iloc[2]}</p>
             </div>
         """, unsafe_allow_html=True)
 
-    with c_cards:
-        # Inventory Section
+    with col_left:
+        # عرض المشاريع (Inventory Grid)
         f_df = dev_data
-        if s_reg != "All Regions": f_df = dev_data[dev_data.iloc[:, 4] == s_reg]
+        if s_reg != "All Egypt": f_df = dev_data[dev_data.iloc[:, 4] == s_reg]
         
-        st.markdown(f"<h3>Inventory <span style='color:#c49a6c; font-size:14px;'>({len(f_df)} Projects)</span></h3>", unsafe_allow_html=True)
-        
-        st.markdown('<div class="flex-grid">', unsafe_allow_html=True)
+        st.markdown(f"<p style='color:#718096; font-weight:600; margin-bottom:20px; padding-left:10px;'>{len(f_df)} Results found</p>", unsafe_allow_html=True)
+        st.markdown('<div class="project-grid">', unsafe_allow_html=True)
         for _, r in f_df.iterrows():
             if r.iloc[3] != "-":
                 st.markdown(f"""
-                    <div class="prop-card">
-                        <div class="prop-price">EGP {r.iloc[5]}</div>
-                        <div class="prop-title">{r.iloc[3]}</div>
-                        <div class="prop-meta">📍 {r.iloc[4]}</div>
+                    <div class="nawy-card">
+                        <div class="price-nawy">{r.iloc[5]}</div>
+                        <div class="title-nawy">{r.iloc[3]}</div>
+                        <div class="loc-nawy">📍 {r.iloc[4]}</div>
                     </div>
                 """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.error("System Offline - Check Data Source")
+    st.error("Connection Error with Sheets")
