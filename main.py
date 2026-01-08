@@ -3,16 +3,17 @@ import streamlit as st
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. حماية المنصة
+# 2. حالة الجلسة (للحماية)
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. استرجاع التصميم المعتمد (CSS)
+# 3. استدعاء الـ CSS المعتمد (النسخة الخام)
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
+    /* منع ظهور عناصر ستريمليت الافتراضية */
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
     .block-container { padding-top: 0.6rem !important; padding-left: 0rem !important; padding-right: 0rem !important; }
@@ -42,7 +43,7 @@ st.markdown("""
         justify-content: center; align-items: center; color: white; 
     }
     
-    /* كروت المشاريع */
+    /* كروت المشاريع (تستخدم عند إضافة بيانات) */
     .project-card { 
         background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
         display: flex; height: 190px; margin-bottom: 15px; overflow: hidden; 
@@ -51,11 +52,14 @@ st.markdown("""
     .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     .price { color: #003366; font-weight: 900; font-size: 1.4rem; }
     
-    .btn-details { background:#003366; border:none; color:white; padding:8px 20px; border-radius:6px; font-weight:700; cursor:pointer; }
+    .btn-details { 
+        background:#003366; border:none; color:white; padding:8px 20px; 
+        border-radius:6px; font-weight:700; cursor:pointer; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 4. عرض المحتوى
+# 4. منطق العرض (دخول المنصة / الصفحة الرئيسية)
 if not st.session_state.logged_in:
     # --- صفحة الدخول ---
     st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
@@ -64,14 +68,14 @@ if not st.session_state.logged_in:
     with col:
         st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
         st.markdown("<h2 style='text-align:center; color:#003366; font-weight:900;'>دخول المنصة</h2>", unsafe_allow_html=True)
-        user = st.text_input("اسم المستخدم")
-        pwd = st.text_input("كلمة المرور", type="password")
+        user = st.text_input("اسم المستخدم", placeholder="ادخل اسم المستخدم")
+        pwd = st.text_input("كلمة المرور", type="password", placeholder="ادخل كلمة المرور")
         if st.button("دخول", use_container_width=True):
             if user == "admin" and pwd == "123":
                 st.session_state.logged_in = True
                 st.rerun()
 else:
-    # --- المنصة الرئيسية (فاضية) ---
+    # --- الصفحة الرئيسية الفخمة ---
     st.markdown("""
         <div class="header-nav">
             <div class="logo-container">
