@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة (يجب أن يكون أول سطر)
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
 # رابط البيانات
@@ -13,17 +13,21 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW
 if 'auth' not in st.session_state:
     st.session_state['auth'] = False
 
-# 2. التنسيق (CSS) - بدون أي تعقيدات برمجية
+# 2. التنسيق (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     html, body, [class*="st-"] { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
     .stApp { background-color: #0d1117; color: white; }
     [data-testid="stSidebar"] { display: none; }
+    
+    /* تنسيق كادر الدخول */
     .login-box {
         background: #161b22; border: 2px solid #d4af37; border-radius: 25px;
         padding: 40px; text-align: center; margin-top: 50px;
     }
+    
+    /* تنسيق كروت المشاريع */
     .project-card {
         background: #1c2128; border: 1px solid #30363d; border-radius: 15px;
         padding: 25px; margin-bottom: 20px;
@@ -31,6 +35,13 @@ st.markdown("""
     .gold { color: #d4af37 !important; font-weight: 900; }
     .price-badge { background: #d4af37; color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; float: left; }
     .info-box { background: rgba(212,175,55,0.05); border-right: 4px solid #d4af37; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    
+    /* جعل حقل البحث احترافي */
+    .stTextInput > div > div > input {
+        background-color: #161b22 !important; color: white !important;
+        border: 2px solid #30363d !important; border-radius: 12px !important;
+        height: 50px; text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -46,6 +57,7 @@ def load_data():
 
 # 3. عرض الصفحات
 if not st.session_state['auth']:
+    # صفحة تسجيل الدخول
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
@@ -54,23 +66,35 @@ if not st.session_state['auth']:
         with tab1:
             st.text_input("الإيميل")
             st.text_input("الباسورد", type="password")
-            if st.button("دخول", use_container_width=True):
+            if st.button("دخول المنصة", use_container_width=True):
                 st.session_state['auth'] = True
                 st.rerun()
         with tab2:
             st.text_input("الاسم")
             st.button("إنشاء حساب", use_container_width=True)
 else:
+    # الصفحة الرئيسية (بعد الدخول)
+    
+    # --- إضافة زر الخروج في الأعلى ---
+    top_col1, top_col2 = st.columns([0.9, 0.1])
+    with top_col2:
+        if st.button("خروج 🚪"):
+            st.session_state['auth'] = False
+            st.rerun()
+            
     st.markdown("<h2 class='gold' style='text-align:center;'>🏠 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
     
+    # محرك البحث
     col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
     with col_s2:
-        search = st.text_input("", placeholder="🔍 ابحث هنا عن أي شيء...")
+        search = st.text_input("", placeholder="🔍 ابحث هنا عن مطور، منطقة، أو مشروع...")
 
     df = load_data()
     if not df.empty:
         if search:
             df = df[df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
+        
+        st.markdown(f"<p style='text-align:center;'>تم إيجاد {len(df)} مشروع</p>", unsafe_allow_html=True)
         
         for _, row in df.iterrows():
             st.markdown(f"""
@@ -88,7 +112,3 @@ else:
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-        
-        if st.button("خروج"):
-            st.session_state['auth'] = False
-            st.rerun()
