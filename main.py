@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
 # الرابط المباشر للبيانات (CSV)
@@ -13,28 +13,51 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# 2. تصميم الواجهة (CSS)
+# 2. تصميم الواجهة (Premium UI)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
     .stApp { background-color: #0d1117; font-family: 'Cairo', sans-serif; color: white; }
+    
+    /* تنسيق صفحة الدخول */
+    .login-container {
+        max-width: 450px; margin: auto; padding: 40px;
+        background: #161b22; border-radius: 25px;
+        border: 1px solid #d4af37; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    
     .gold { color: #d4af37 !important; font-weight: 900; }
-    .card {
+    
+    /* تنسيق الكروت (المشاريع) */
+    .project-card {
         background: linear-gradient(145deg, #1c2128, #0d1117);
         border: 1px solid #30363d; border-radius: 20px;
-        padding: 25px; margin-bottom: 25px; direction: rtl; text-align: right;
+        padding: 30px; margin-bottom: 30px; 
+        direction: rtl; text-align: right;
     }
-    .price-tag { background: #d4af37; color: black; padding: 6px 18px; border-radius: 10px; font-weight: bold; float: left; }
-    /* تنسيق صندوق تسجيل الدخول */
-    .login-box {
-        max-width: 400px; margin: auto; padding: 40px;
-        background: #161b22; border-radius: 20px; border: 1px solid #d4af37;
-        text-align: center;
+    .project-card:hover { border-color: #d4af37; transform: scale(1.01); transition: 0.3s; }
+    
+    .price-tag { 
+        background: #d4af37; color: black; padding: 7px 20px; 
+        border-radius: 12px; font-weight: 800; float: left; font-size: 1.1em;
     }
+
+    /* إخفاء السايد بار تماماً لجعل الصفحة صافية */
+    [data-testid="stSidebar"] { display: none; }
+    
+    /* تنسيق حقل البحث */
+    .stTextInput > div > div > input {
+        background-color: #161b22 !important;
+        border: 2px solid #30363d !important;
+        border-radius: 15px !important;
+        height: 55px; font-size: 1.2em; text-align: center;
+    }
+    .stTextInput > div > div > input:focus { border-color: #d4af37 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# دالة تحميل البيانات
 @st.cache_data(ttl=5)
 def load_data():
     try:
@@ -44,73 +67,81 @@ def load_data():
         df.columns = [str(c).strip() for c in df.columns]
         df = df.astype(str).replace(['nan', 'NaN', 'None'], 'غير مدرج')
         return df
-    except:
-        return pd.DataFrame()
+    except: return pd.DataFrame()
 
-# --- المنطق البرمجي للصفحات ---
+# --- المنطق البرمجي ---
 
 if not st.session_state['logged_in']:
-    # صفحة تسجيل الدخول المنفصلة
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1.5, 1])
+    # الصفحة الأولى: تسجيل الدخول فقط
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     
     with col2:
-        st.markdown("<h1 class='gold' style='text-align:center;'>🏠 معلوماتي العقارية</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;'>بوابة بروكرز مصر - سجل دخولك للمتابعة</p>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 class="gold">🏠 منصة معلوماتي</h1>
+                <p style="opacity:0.8;">بوابة بروكرز مصر العقارية</p>
+            </div>
+        """, unsafe_allow_html=True)
         
-        tab1, tab2 = st.tabs(["تسجيل دخول", "حساب جديد مجاني"])
+        tab1, tab2 = st.tabs(["🔐 دخول", "📝 حساب جديد"])
         
         with tab1:
-            user = st.text_input("اسم المستخدم أو البريد")
-            pw = st.text_input("كلمة المرور", type="password")
-            if st.button("دخول للمنصة", use_container_width=True):
-                # هنا نضع شرط الدخول (للتجربة حالياً أي دخول سينجح)
+            st.text_input("البريد الإلكتروني", key="user_email")
+            st.text_input("كلمة المرور", type="password", key="user_pass")
+            if st.button("دخول المنصة الآن", use_container_width=True):
                 st.session_state['logged_in'] = True
                 st.rerun()
         
         with tab2:
-            st.text_input("الاسم")
-            st.text_input("رقم الواتساب")
-            st.button("إنشاء حسابي الآن", use_container_width=True)
+            st.text_input("الاسم بالكامل")
+            st.text_input("رقم الموبايل")
+            st.button("إنشاء حساب مجاني", use_container_width=True)
 
 else:
-    # الصفحة الرئيسية (تعرض بعد تسجيل الدخول فقط)
-    with st.sidebar:
-        st.markdown(f"<h3 class='gold'>أهلاً بك يا بروكر</h3>", unsafe_allow_html=True)
-        if st.button("تسجيل الخروج"):
-            st.session_state['logged_in'] = False
-            st.rerun()
-        st.divider()
-
-    st.markdown("<h2 style='text-align:center;' class='gold'>🏠 منصة معلوماتي العقارية</h2>", unsafe_allow_html=True)
+    # الصفحة الثانية: المشاريع فقط
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # البحث في المنتصف تماماً
+    # رأس الصفحة والبحث
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
-        search = st.text_input("", placeholder="🔍 ابحث عن المطور، المشروع، أو المالك...")
-
+        st.markdown("<h2 style='text-align:center;' class='gold'>📁 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
+        search = st.text_input("", placeholder="🔍 ابحث عن أي مطور أو مشروع أو منطقة...")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
     df = load_data()
     if not df.empty:
-        # الفلترة والعرض (كما في الكود السابق)
+        # تصفية البيانات
         f_df = df.copy()
         if search:
             f_df = f_df[f_df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
         
-        st.markdown(f"<p style='text-align:center;'>نتائج البحث: {len(f_df)}</p>", unsafe_allow_html=True)
-        
+        # عرض المشاريع
         for _, row in f_df.iterrows():
             st.markdown(f"""
-                <div class="card">
-                    <div class="price-tag">{row.get('السعر', 'اتصل')}</div>
-                    <div class="gold">ملف العقار</div>
-                    <h2>{row.get('المشروع', '-')}</h2>
-                    <p>🏢 {row.get('المطور', '-')} | 📍 {row.get('المنطقة', '-')}</p>
-                    <div style="background: rgba(255,255,255,0.03); border-right: 4px solid #d4af37; padding: 15px; margin: 15px 0;">
-                        <b>📜 سابقة الأعمال:</b> {row.get('سابقة_الأعمال', '-')}
+                <div class="project-card">
+                    <div class="price-tag">{row.get('السعر', 'طلب السعر')}</div>
+                    <div class="gold" style="font-size: 0.9em; letter-spacing: 1px;">PROJECT FILE</div>
+                    <h2 style="margin: 10px 0;">{row.get('المشروع', '-')}</h2>
+                    <div style="font-size: 1.1em; margin-bottom: 15px;">🏢 {row.get('المطور', '-')} | 📍 {row.get('المنطقة', '-')}</div>
+                    
+                    <div style="background: rgba(212, 175, 55, 0.05); border-right: 5px solid #d4af37; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                        <b class="gold" style="font-size: 1.1em;">📜 سابقة الأعمال:</b><br>
+                        <span style="line-height: 1.8;">{row.get('سابقة_الأعمال', 'لا توجد بيانات مسجلة')}</span>
                     </div>
-                    <div style="display: flex; gap: 30px; font-size: 0.9em; border-top: 1px solid #333; padding-top: 10px;">
+                    
+                    <div style="display: flex; gap: 50px; font-size: 1em; border-top: 1px solid #30363d; padding-top: 20px;">
                         <div><span class="gold">👤 المالك:</span> {row.get('المالك', '-')}</div>
-                        <div><span class="gold">💳 السداد:</span> {row.get('السداد', '-')}</div>
+                        <div><span class="gold">💳 نظام السداد:</span> {row.get('السداد', '-')}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+        
+        # زر خروج هادئ في الأسفل
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("تسجيل الخروج", use_container_width=False):
+            st.session_state['logged_in'] = False
+            st.rerun()
+    else:
+        st.info("🔄 جاري مزامنة المشاريع...")
