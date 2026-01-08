@@ -4,25 +4,23 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. حالة الجلسة (للتأمين)
+# 2. حالة الجلسة (الحماية)
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. دالة جلب البيانات من الإكسيل (خلف الكواليس)
+# 3. دالة جلب البيانات (بتقرأ من الإكسيل بنفس التصميم)
 def load_data():
     try:
-        # بيقرأ ملف data.csv
         return pd.read_csv('data.csv')
     except:
-        # بيانات احتياطية بنفس تنسيقك لو الملف مش موجود
         return pd.DataFrame({
-            'المشروع': ['كمبوند ايفوري جولي'],
-            'المنطقة': ['الشيخ زايد الجديدة'],
-            'السعر': ['9,200,000'],
-            'الصورة': ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400']
+            'المشروع': ['كمبوند ايفوري جولي', 'سولاري رأس الحكمة'],
+            'المنطقة': ['الشيخ زايد الجديدة', 'الساحل الشمالي'],
+            'السعر': ['9,200,000', '15,000,000'],
+            'الصورة': ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400']
         })
 
-# 4. التنسيق اللي بعته (ممنوع اللمس)
+# 4. التصميم اللي بعته (ممنوع اللمس)
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -78,12 +76,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# العرض
 if not st.session_state.logged_in:
-    # صفحة الدخول بنفس التصميم
+    # صفحة الدخول باللوجو الفخم
     st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
     _, login_col, _ = st.columns([1, 1.2, 1])
     with login_col:
         st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#003366;'>دخول المنصة</h2>", unsafe_allow_html=True)
         u = st.text_input("اسم المستخدم")
         p = st.text_input("كلمة المرور", type="password")
         if st.button("دخول", use_container_width=True):
@@ -91,7 +91,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.rerun()
 else:
-    # الهيدر الفخم
+    # الموقع الرئيسي بالتصميم الملكي
     st.markdown("""
         <div class="header-nav">
             <div class="logo-container">
@@ -102,7 +102,6 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # الهيرو
     st.markdown("""
         <div class="hero-outer">
             <div class="hero-inner">
@@ -111,12 +110,10 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # تحميل البيانات من ملف الإكسيل
+    # عرض البيانات
     df = load_data()
-    
     st.markdown('<div style="padding: 0 8%; margin-top:25px;">', unsafe_allow_html=True)
     
-    # عرض الكروت ديناميكياً بناءً على ملف الإكسيل
     for _, row in df.iterrows():
         st.markdown(f"""
             <div class="project-card">
@@ -133,5 +130,4 @@ else:
                 </div>
             </div>
         """, unsafe_allow_html=True)
-    
     st.markdown('</div>', unsafe_allow_html=True)
