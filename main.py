@@ -1,65 +1,95 @@
 import streamlit as st
 import pandas as pd
+import requests
+from io import StringIO
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="M A S T E R _ R A D A R", layout="wide")
+# 1. إعدادات المنصة الاحترافية
+st.set_page_config(page_title="موسوعة العقارات المصرية 480+", layout="wide")
 
-# 2. البيانات (الـ 100 مطور - عينة الملوك)
-data = [
-    {"المطور": "إعمار مصر", "المالك": "محمد العبار", "سابقة_الأعمال": "مراسي، أب تاون كايرو", "المشروع": "ميفيدا", "المنطقة": "التجمع الخامس", "السعر": "15,000,000", "السداد": "10% - 8 سنين"},
-    {"المطور": "ماونتن فيو", "المالك": "عمرو سليمان", "سابقة_الأعمال": "هايد بارك، ام في 1", "المشروع": "آي سيتي", "المنطقة": "التجمع / أكتوبر", "السعر": "9,500,000", "السداد": "10% - 9 سنين"},
-    {"المطور": "سوديك", "المالك": "شركة الدار", "سابقة_الأعمال": "ويست تاون، فيليت", "المشروع": "سوديك إيست", "المنطقة": "المستقبل سيتي", "السعر": "11,000,000", "السداد": "5% - 8 سنين"},
-    {"المطور": "أورا العقارية", "المالك": "نجيب ساويرس", "سابقة_الأعمال": "نايل سيتي، سيلفر ساندس", "المشروع": "زيد إيست", "المنطقة": "التجمع الخامس", "السعر": "12,000,000", "السداد": "5% - 8 سنين"},
-    {"المطور": "طلعت مصطفى", "المالك": "هشام طلعت مصطفى", "سابقة_الأعمال": "مدينتي، الرحاب", "المشروع": "سيليا / نور", "المنطقة": "العاصمة الإدارية", "السعر": "7,000,000", "السداد": "تقسيط 12 سنة"},
-    {"المطور": "مصر إيطاليا", "المالك": "عائلة العسال", "سابقة_الأعمال": "كايرو بيزنس بارك", "المشروع": "فينشي", "المنطقة": "العاصمة الإدارية", "السعر": "9,000,000", "السداد": "10% - 8 سنين"},
-    {"المطور": "النيل للتطوير", "المالك": "م. محمد طاهر", "سابقة_الأعمال": "نايل بيزنس سيتي", "المشروع": "31 North Tower", "المنطقة": "العاصمة الإدارية", "السعر": "6,000,000", "السداد": "10% - 10 سنين"},
-    {"المطور": "المراسم", "المالك": "عائلة بن لادن", "سابقة_الأعمال": "توسعة المطارات المصرية", "المشروع": "فيفتي سكوير", "المنطقة": "التجمع الخامس", "السعر": "11,000,000", "السداد": "5% - 8 سنين"}
-]
-df = pd.DataFrame(data)
+# رابط الشيت بتاعك (تأكد إنه بصيغة CSV في النهاية)
+# استبدل هذا الرابط برابط الشيت الجديد بعد ما تضيف فيه الـ 480 مطور
+SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTKo71CsiseSakziKDXBVahPV_TJ_JwbTqcJ3832U7kzAHrjM-l4jV1s6rcJPOwRV2mG9WxO8Hhlfex/pub?output=csv"
 
-# 3. التصميم العام (Dark Mode)
+@st.cache_data(ttl=60) # تحديث كل دقيقة
+def load_big_data():
+    try:
+        response = requests.get(SHEET_URL)
+        response.encoding = 'utf-8'
+        df = pd.read_csv(StringIO(response.text))
+        # تنظيف أسامي الأعمدة
+        df.columns = [str(c).strip() for c in df.columns]
+        # تحويل كل شيء لنص لمنع الـ Errors
+        df = df.astype(str).replace(['nan', 'NaN', 'None'], 'غير مدرج')
+        return df
+    except Exception as e:
+        return pd.DataFrame()
+
+# 2. تصميم الواجهة (Premium Dark Design)
 st.markdown("""
 <style>
-    .main { background-color: #0e1117; }
-    div[data-testid="stExpander"] { border: 1px solid #c5a059; border-radius: 15px; background-color: #161b22; }
-    h1 { color: #c5a059 !important; text-align: center; font-family: 'Cairo', sans-serif; }
-    .stBadge { background-color: #c5a059 !important; }
+    .stApp { background-color: #0c0f14; font-family: 'Cairo', sans-serif; }
+    .card-container {
+        background: #1a1f26;
+        border: 1px solid #c5a059;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        color: white;
+        direction: rtl;
+    }
+    .gold-text { color: #c5a059; font-weight: bold; }
+    .search-box { border-radius: 10px; border: 1px solid #c5a059; }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. الواجهة البرمجية
-st.title("🏙️ M A S T E R _ R A D A R")
-st.subheader("دليل المطورين العقاريين - الإصدار الاحترافي")
-st.divider()
+# 3. تحميل البيانات
+df = load_big_data()
 
-# الفلاتر في السايد بار
-with st.sidebar:
-    st.header("🔍 بحث وتصفية")
-    search_term = st.text_input("ابحث عن شركة أو مشروع...")
-    selected_region = st.selectbox("📍 اختر المنطقة", ["الكل"] + list(df['المنطقة'].unique()))
-
-# منطق البحث
-filtered_df = df.copy()
-if search_term:
-    filtered_df = filtered_df[filtered_df.apply(lambda row: search_term in str(row.values), axis=1)]
-if selected_region != "الكل":
-    filtered_df = filtered_df[filtered_df['المنطقة'] == selected_region]
-
-# 5. عرض الكروت (بدون أكواد HTML ظاهرة)
-for _, row in filtered_df.iterrows():
-    # استخدام Expander كحاوية للكارت (بشكل نظيف جداً)
-    with st.expander(f"🏢 {row['المطور']} - {row['المشروع']} | 📍 {row['المنطقة']}"):
-        col1, col2 = st.columns([2, 1])
+if not df.empty:
+    st.markdown("<h1 style='text-align: center; color: #c5a059;'>🏙️ رادار المطورين (480+ مطور)</h1>", unsafe_allow_html=True)
+    
+    # الفلاتر الذكية
+    with st.sidebar:
+        st.markdown("<h2 class='gold-text'>لوحة التحكم</h2>", unsafe_allow_html=True)
+        search = st.text_input("🔍 ابحث في الـ 480 مطور...")
         
-        with col1:
-            st.markdown(f"**👤 المالك:** {row['الالمالك'] if 'الالمالك' in row else row['المالك']}")
-            st.info(f"📜 **سابقة الأعمال:** {row['سابقة_الأعمال']}")
-            st.write(f"💳 **نظام السداد:** {row['السداد']}")
-        
-        with col2:
-            st.success(f"💰 **السعر يبدأ من:** \n\n {row['السعر']} ج.م")
-            st.button(f"تفاصيل {row['المشروع']}", key=row['المشروع'])
+        if 'المنطقة' in df.columns:
+            region_list = ["الكل"] + sorted([r for r in df['المنطقة'].unique() if r != "غير مدرج"])
+            sel_region = st.selectbox("📍 اختر المنطقة", region_list)
+        else: sel_region = "الكل"
 
-# تذييل الصفحة
-st.divider()
-st.caption("تم التطوير بواسطة ذكاء Gemini الاصطناعي - 2026")
+    # تطبيق الفلترة
+    f_df = df.copy()
+    if search:
+        f_df = f_df[f_df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
+    if sel_region != "الكل":
+        f_df = f_df[f_df['المنطقة'] == sel_region]
+
+    # عرض النتائج مع عداد
+    st.markdown(f"<p style='text-align: right;'>تم العثور على: <span class='gold-text'>{len(f_df)}</span> مطور ومشروع</p>", unsafe_allow_html=True)
+    st.divider()
+
+    # استخدام نظام الـ "List" السريع للعرض
+    for i, row in f_df.iterrows():
+        with st.container():
+            st.markdown(f"""
+            <div class="card-container">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="background:#c5a059; color:black; padding:2px 10px; border-radius:5px; font-weight:bold;">#{i+1}</span>
+                    <span class="gold-text" style="font-size:1.2em;">{row.get('المطور', '-')}</span>
+                </div>
+                <h3 style="margin:10px 0;">{row.get('المشروع', 'مشروع غير مسمى')}</h3>
+                <p>📍 <b>المنطقة:</b> {row.get('المنطقة', '-')}</p>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <small class="gold-text">📜 سابقة الأعمال:</small><br>
+                    {row.get('سابقة_الأعمال', 'لا توجد بيانات')}
+                </div>
+                <div style="margin-top:10px; display:flex; gap:20px; font-size:0.9em;">
+                    <span>👤 <b>المالك:</b> {row.get('المالك', '-')}</span>
+                    <span>💰 <b>السعر:</b> {row.get('السعر', '-')}</span>
+                    <span>💳 <b>السداد:</b> {row.get('السداد', '-')}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    st.warning("🔄 في انتظار البيانات... تأكد من ملء الإكسيل ونشره بصيغة CSV.")
