@@ -3,11 +3,11 @@ import streamlit as st
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. حالة الجلسة (الحماية)
+# 2. حماية المنصة
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. الـ CSS الملكي (الذي اعتمدته أنت)
+# 3. استرجاع التصميم المعتمد (CSS)
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -42,7 +42,7 @@ st.markdown("""
         justify-content: center; align-items: center; color: white; 
     }
     
-    /* كروت المشاريع (فارغة للتعبئة لاحقاً) */
+    /* كروت المشاريع */
     .project-card { 
         background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
         display: flex; height: 190px; margin-bottom: 15px; overflow: hidden; 
@@ -55,9 +55,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 4. منطق العرض
+# 4. عرض المحتوى
 if not st.session_state.logged_in:
-    # صفحة الدخول
+    # --- صفحة الدخول ---
     st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
     
     _, col, _ = st.columns([1, 1, 1])
@@ -71,7 +71,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.rerun()
 else:
-    # الموقع الرئيسي (الهيكل فقط)
+    # --- المنصة الرئيسية (فاضية) ---
     st.markdown("""
         <div class="header-nav">
             <div class="logo-container">
@@ -88,6 +88,5 @@ else:
         </div>
         
         <div style="padding: 0 8%; margin-top:25px;">
-            <h3 style="color:#cbd5e1; text-align:center; margin-top:50px;">المحتوى فارغ.. بانتظار إضافة المشاريع</h3>
-        </div>
+            </div>
     """, unsafe_allow_html=True)
