@@ -1,9 +1,9 @@
 import streamlit as st
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة والتصميم الأساسي
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
 
-# 2. تهيئة حالة الجلسة
+# 2. تهيئة حالة الجلسة (Session State)
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
@@ -12,132 +12,202 @@ def logout():
     st.session_state.logged_in = False
     st.rerun()
 
-# 3. التنسيق (CSS)
+# 3. هندسة التناسق (CSS) - النسخة الأصلية المفضلة لديك
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
-    .block-container { padding-top: 0.5rem !important; padding-left: 0rem !important; padding-right: 0rem !important; }
+    /* تصفير المسافات العلوية الصغيرة */
+    .block-container {
+        padding-top: 0.6rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
+    }
+    
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
     html, body, [data-testid="stAppViewContainer"] {
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif;
+        direction: RTL;
+        text-align: right;
+        font-family: 'Cairo', sans-serif;
         background-color: #f4f7fa !important;
     }
 
-    /* الهيدر العلوي */
+    /* الهيدر العلوي المتناسق */
     .header-nav {
-        background: white; height: 75px; padding: 0 8%;
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000;
+        background: white;
+        height: 70px;
+        padding: 0 8%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        width: 100%;
+        box-sizing: border-box;
     }
-    .logo { color: #0056b3; font-weight: 900; font-size: 1.6rem; text-decoration: none; }
+    .logo { color: #0056b3; font-weight: 900; font-size: 1.5rem; text-decoration: none; }
     
-    .nav-links { display: flex; gap: 25px; align-items: center; }
-    .nav-links a { color: #475569; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
-    
-    /* ستايل زر تسجيل الخروج في الهيدر */
-    .stButton > button {
-        background-color: transparent !important;
-        color: #ef4444 !important;
-        border: 1px solid #ef4444 !important;
-        font-weight: 700 !important;
-        padding: 5px 15px !important;
-        border-radius: 8px !important;
-    }
-    .stButton > button:hover {
-        background-color: #ef4444 !important;
-        color: white !important;
+    .nav-links-area {
+        display: flex;
+        gap: 30px;
+        align-items: center;
     }
 
-    /* منطقة الهيرو والكروت */
-    .hero-container {
+    /* منطقة الصورة الخلفية (Hero) */
+    .hero-outer {
+        padding: 0 8%;
+        margin-top: 10px;
+    }
+    .hero-inner {
         background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
-        background-size: cover; background-position: center; height: 350px;
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        color: white; margin-bottom: 40px;
+        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+        background-size: cover;
+        background-position: center;
+        height: 320px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
     }
-    .main-wrapper { padding: 0 8%; }
+
+    /* كروت المشاريع العريضة (تصميمك المفضل) */
     .project-card {
-        background: white; border-radius: 12px; border: 1px solid #e2e8f0;
-        display: flex; height: 200px; margin-bottom: 20px; overflow: hidden;
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        height: 190px;
+        margin-bottom: 15px;
+        overflow: hidden;
+        transition: 0.2s ease;
     }
-    .card-img { width: 280px; background: #eee url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=80') center/cover; }
-    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-img { 
+        width: 260px; 
+        background: #eee url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=80') center/cover; 
+    }
+    .card-body { 
+        padding: 18px; 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between; 
+    }
+    .price { color: #0056b3; font-weight: 900; font-size: 1.4rem; }
+    
+    /* ستايل زر تسجيل الخروج الخاص */
+    .logout-text-btn {
+        color: #ef4444;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.9rem;
+        border: 1px solid #fee2e2;
+        padding: 5px 15px;
+        border-radius: 6px;
+        background: #fef2f2;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- نظام عرض الصفحات ---
+# --- 4. منطق عرض الصفحات ---
+
 if not st.session_state.logged_in:
-    # صفحة تسجيل الدخول (كما هي)
+    # صفحة تسجيل الدخول (بنفس التناسق)
     st.markdown('<div class="header-nav"><div class="logo">معلوماتى <span style="color:#1e293b">العقارية</span></div></div>', unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1])
-    with c2:
-        st.write("")
-        st.markdown("<h2 style='text-align:center;'>تسجيل الدخول</h2>", unsafe_allow_html=True)
-        user = st.text_input("اسم المستخدم")
-        pw = st.text_input("كلمة المرور", type="password")
-        if st.button("دخول", use_container_width=True):
-            if user == "admin" and pw == "123":
+    
+    col_a, col_b, col_c = st.columns([1, 1.2, 1])
+    with col_b:
+        st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#1e293b;'>سجل دخولك الآن</h2>", unsafe_allow_html=True)
+        user_input = st.text_input("اسم المستخدم")
+        pass_input = st.text_input("كلمة المرور", type="password")
+        if st.button("دخول المنصة", use_container_width=True):
+            if user_input == "admin" and pass_input == "123":
                 st.session_state.logged_in = True
                 st.rerun()
+            else:
+                st.error("البيانات غير صحيحة")
+
 else:
-    # --- الموقع الرئيسي بعد تسجيل الدخول ---
+    # --- الموقع الرئيسي (التصميم الأصلي) ---
     
-    # الهيدر مع زر الخروج بجانب الروابط
-    header_col1, header_col2 = st.columns([4, 1])
-    
-    # عرض الهيدر باستخدام HTML مخصص للجزء الأيمن والـ Button للجزء الأيسر
+    # الهيدر الموحد مع زر الخروج
     with st.container():
-        st.markdown("""
+        c_left, c_right = st.columns([4, 1])
+        st.markdown(f"""
             <div class="header-nav">
                 <div class="logo">معلوماتى <span style="color:#1e293b">العقارية</span></div>
-                <div class="nav-links">
-                    <a href="#">الرئيسية</a>
-                    <a href="#">المشاريع</a>
-                    <a href="#">المطورين</a>
+                <div class="nav-links-area">
+                    <a href="#" style="color:#475569; text-decoration:none; font-weight:600; font-size:0.9rem;">الرئيسية</a>
         """, unsafe_allow_html=True)
         
-        # وضع زر تسجيل الخروج في نهاية الـ nav-links
+        # زر تسجيل الخروج بجانب "الرئيسية"
         if st.button("تسجيل الخروج"):
             logout()
             
         st.markdown("</div></div>", unsafe_allow_html=True)
 
-    # محتوى الصفحة (Hero)
+    # قسم الصورة الخلفية (Hero Section)
     st.markdown("""
-        <div class="hero-container">
-            <h1 style="font-weight:900; font-size:2.5rem;">منصة المحترفين</h1>
-            <p style="font-size:1.2rem;">أهلاً بك مرة أخرى في عالم المعلومات العقارية</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # محرك البحث والكروت بمسافة جانبية موحدة
-    st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
-    
-    c1, c2, c3, c4 = st.columns([2.5, 1, 1, 0.7])
-    with c1: st.text_input("📍 ابحث هنا...", label_visibility="collapsed")
-    with c2: st.selectbox("النوع", ["شقة", "فيلا"], label_visibility="collapsed")
-    with c3: st.selectbox("الميزانية", ["الكل"], label_visibility="collapsed")
-    with c4: st.button("ابحث الآن", use_container_width=True)
-
-    st.markdown("<h3 style='margin: 30px 0;'>أحدث المشاريع العقارية</h3>", unsafe_allow_html=True)
-
-    # مثال لكارت
-    st.markdown("""
-        <div class="project-card">
-            <div class="card-img"></div>
-            <div class="card-body">
-                <div>
-                    <div style="color:#0056b3; font-weight:900; font-size:1.5rem;">9,500,000 ج.م</div>
-                    <div style="font-weight:700; font-size:1.2rem;">كمبوند ايفوري - الشيخ زايد</div>
-                    <div style="color:#64748b;">📍 الشيخ زايد الجديدة</div>
-                </div>
-                <div style="text-align: left;">
-                    <button style="background:#0056b3; color:white; border:none; padding:8px 25px; border-radius:6px; font-weight:700; cursor:pointer;">التفاصيل</button>
-                </div>
+        <div class="hero-outer">
+            <div class="hero-inner">
+                <h1 style="font-weight:900; font-size:2.2rem; margin-bottom:10px;">عالم العقارات في مكان واحد</h1>
+                <p style="font-size:1.1rem; opacity:0.9;">أدق المعلومات عن المشاريع والمطورين في مصر</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
+
+    # المحتوى الرئيسي بمسافات 8%
+    st.markdown('<div style="padding: 0 8%;">', unsafe_allow_html=True)
+    
+    # شريط البحث
+    st.markdown("<div style='margin-top:25px;'></div>", unsafe_allow_html=True)
+    s_col1, s_col2, s_col3, s_col4 = st.columns([2, 1, 1, 0.6])
+    with s_col1: st.text_input("📍 المنطقة أو المشروع", placeholder="ابحث هنا...", key="search_main", label_visibility="collapsed")
+    with s_col2: st.selectbox("النوع", ["كل الأنواع", "شقة", "فيلا"], key="type_main", label_visibility="collapsed")
+    with s_col3: st.selectbox("السعر", ["كل الأسعار"], key="price_main", label_visibility="collapsed")
+    with s_col4: st.button("بحث", use_container_width=True, key="btn_search")
+
+    st.markdown("<h3 style='margin: 30px 0 20px 0; color:#1e293b; font-size:1.4rem;'>أحدث المشاريع العقارية</h3>", unsafe_allow_html=True)
+
+    # النتائج (كروت عريضة)
+    col_main_list, col_spacer, col_side_info = st.columns([2.8, 0.2, 1])
+
+    with col_main_list:
+        def draw_property(price, name, loc):
+            st.markdown(f"""
+                <div class="project-card">
+                    <div class="card-img"></div>
+                    <div class="card-body">
+                        <div>
+                            <div class="price">{price} ج.م</div>
+                            <div style="font-weight: 700; font-size: 1.15rem; color: #1e293b;">{name}</div>
+                            <div style="color:#64748b; font-size:0.9rem; margin-top:4px;">📍 {loc}</div>
+                        </div>
+                        <div style="text-align: left;">
+                            <button style="background:white; border:1px solid #0056b3; color:#0056b3; padding:6px 16px; border-radius:5px; font-weight:700; cursor:pointer; font-size:0.85rem;">التفاصيل</button>
+                        </div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        draw_property("9,200,000", "كمبوند ايفوري جولي - الشيخ زايد", "الشيخ زايد الجديدة")
+        draw_property("6,450,000", "ذا بروكس - التجمع الخامس", "القاهرة الجديدة")
+        draw_property("11,300,000", "بادية بالم هيلز - Badya", "مدينة 6 أكتوبر")
+
+    with col_side_info:
+        st.markdown("""
+            <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <h4 style="color:#0056b3; font-size:1.1rem; margin-bottom:15px;">دليل المستخدم</h4>
+                <p style="font-size:0.85rem; color:#475569; line-height:1.8;">
+                    مرحباً بك في لوحة تحكم المعلومات العقارية الحصرية. يمكنك البحث وتصفح أدق تفاصيل المشاريع.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
