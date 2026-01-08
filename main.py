@@ -1,113 +1,96 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة الفاخرة
-st.set_page_config(page_title="موسوعة المطورين العقاريين", layout="wide")
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="موسوعة العقارات المحترفة", layout="wide")
 
-# رابط الشيت بتاعك (تم تحويله للقراءة المباشرة)
+# رابط الشيت بتاعك - تأكد من استخدام صيغة pub?output=xlsx في الكود
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkp73VTBzZ25jYx5Zj-uqYpBgETbZj2Duivdjv8no8btvDQENS6T8OcaAPpSMgqJW0PeCQ-21vJm1V/pub?output=xlsx"
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30) # تحديث كل 30 ثانية
 def load_data():
-    df = pd.read_excel(SHEET_URL)
-    df.columns = df.columns.str.strip()
-    return df
+    try:
+        df = pd.read_excel(SHEET_URL)
+        # تنظيف أسامي الأعمدة من المسافات الزائدة
+        df.columns = [str(c).strip() for c in df.columns]
+        return df
+    except Exception as e:
+        st.error(f"فشل في الاتصال بجوجل شيت: {e}")
+        return pd.DataFrame()
 
-# 2. تصميم UI احترافي جداً (خلفية متدرجة + كروت زجاجية)
+# 2. التصميم (Modern Dark Glass)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-    
-    .stApp {
-        background: radial-gradient(circle at top right, #001e3c, #000814);
-        font-family: 'Cairo', sans-serif;
-        color: white;
-    }
-
-    /* تصميم الكارت الزجاجي */
-    .dev-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        border-radius: 20px;
-        padding: 25px;
+    .stApp { background: #0f172a; font-family: 'Cairo', sans-serif; color: white; }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 20px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         direction: rtl;
-        transition: 0.3s;
     }
-    .dev-card:hover {
-        border-color: #c5a059; /* لون ذهبي */
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-    .owner-tag { color: #c5a059; font-weight: bold; font-size: 0.9em; }
-    .project-title { font-size: 1.8em; font-weight: 700; color: #ffffff; margin-bottom: 5px; }
-    .price-box { background: #c5a059; color: #000; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 1.2em; }
-    .history-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; border-right: 4px solid #c5a059; margin-top: 15px; }
-    
-    /* تعديل الفلاتر لتناسب التصميم الداكن */
-    .stTextInput input, .stSelectbox div {
-        background-color: rgba(255,255,255,0.05) !important;
-        color: white !important;
-        border-radius: 10px !important;
-    }
-    label { color: #c5a059 !important; font-weight: bold !important; }
+    .price-tag { background: #38bdf8; color: white; padding: 4px 12px; border-radius: 8px; font-weight: bold; }
+    .owner-info { color: #94a3b8; font-size: 0.85em; }
+    h1, h2, h3, p, span, label { color: white !important; }
     </style>
     """, unsafe_allow_html=True)
 
-try:
-    df = load_data()
+df = load_data()
+
+if not df.empty:
+    st.markdown("<h1 style='text-align: center;'>🏙️ رادار المطورين العقاريين</h1>", unsafe_allow_html=True)
     
-    st.markdown("<h1 style='text-align: center; color: #c5a059;'>🏙️ دليل المطورين العقاريين في مصر</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #aaa;'>داتا محدثة تشمل الملاك وسابقة الأعمال والأسعار</p>", unsafe_allow_html=True)
+    # 3. الفلاتر الذكية (مع التأكد من وجود الأعمدة)
+    with st.sidebar:
+        st.title("البحث الذكي")
+        search = st.text_input("🔍 بحث عام...")
+        
+        # التأكد من وجود الأعمدة قبل عمل الفلتر
+        cols = df.columns.tolist()
+        
+        region_opt = ["الكل"] + sorted(df['المنطقة'].unique().tolist()) if 'المنطقة' in cols else ["الكل"]
+        sel_region = st.selectbox("المنطقة", region_opt)
+        
+        unit_opt = ["الكل"] + sorted(df['نوع الوحدة'].unique().tolist()) if 'نوع الوحدة' in cols else ["الكل"]
+        sel_unit = st.selectbox("نوع الوحدة", unit_opt)
 
-    # 3. الفلاتر الاحترافية
-    with st.container():
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            search = st.text_input("🔍 ابحث عن (شركة، مالك، أو مشروع)")
-        with c2:
-            region = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['المنطقة'].unique().tolist()))
-        with c3:
-            unit = st.selectbox("🏠 نوع الوحدة", ["الكل"] + sorted(df['نوع الوحدة'].unique().tolist()))
-
-    # تصفية البيانات
+    # تطبيق الفلترة
     f_df = df.copy()
     if search:
         f_df = f_df[f_df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
-    if region != "الكل":
-        f_df = f_df[f_df['المنطقة'] == region]
-    if unit != "الكل":
-        f_df = f_df[f_df['نوع الوحدة'] == unit]
+    if 'المنطقة' in cols and sel_region != "الكل":
+        f_df = f_df[f_df['المنطقة'] == sel_region]
+    if 'نوع الوحدة' in cols and sel_unit != "الكل":
+        f_df = f_df[f_df['نوع الوحدة'] == sel_unit]
 
-    st.write(f"---")
-    st.write(f"📊 تم العثور على: {len(f_df)} مشروع")
-
-    # 4. عرض النتائج (The Premium Cards)
+    # 4. عرض النتائج
+    st.write(f"عدد المشاريع المكتشفة: {len(f_df)}")
+    
     for _, row in f_df.iterrows():
-        st.markdown(f"""
-            <div class="dev-card">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <span class="owner-tag">رئيس مجلس الإدارة: {row.get('المالك / رئيس مجلس الإدارة', 'غير مدرج')}</span>
-                        <div class="project-title">{row.get('اسم المشروع', '-')}</div>
-                        <div style="color: #38bdf8; font-weight: bold;">🏢 شركة {row.get('المطور', '-')} | 📍 {row.get('المنطقة', '-')}</div>
+        with st.container():
+            st.markdown(f"""
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <span class="owner-info">المطور: {row.get('المطور', 'غير متوفر')}</span>
+                            <h2 style="margin:5px 0;">{row.get('اسم المشروع', 'بدون اسم')}</h2>
+                            <p style="color:#38bdf8;">📍 {row.get('المنطقة', '-')}</p>
+                        </div>
+                        <div>
+                            <span class="price-tag">{row.get('السعر التقريبي (يبدأ من)', 'اتصل للسعر')}</span>
+                        </div>
                     </div>
-                    <div class="price-box">{row.get('السعر التقريبي (يبدأ من)', '-')}</div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 10px;">
+                        <small><b>سابقة الأعمال:</b></small><br>
+                        <span style="font-size: 0.9em;">{row.get('سابقة الأعمال (أهم المشاريع)', '-')}</span>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 0.85em; display: grid; grid-template-columns: 1fr 1fr;">
+                        <div>👤 المالك: {row.get('المالك / رئيس مجلس الإدارة', '-')}</div>
+                        <div>💳 السداد: {row.get('نظام السداد', '-')}</div>
+                    </div>
                 </div>
-                
-                <div class="history-box">
-                    <small style="color: #aaa;">📜 سابقة أعمال الشركة:</small><br>
-                    {row.get('سابقة الأعمال (أهم المشاريع)', '-')}
-                </div>
-
-                <div style="display: flex; gap: 40px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                    <div><small style="color:#aaa">نوع الوحدة</small><br><b>{row.get('نوع الوحدة', '-')}</b></div>
-                    <div><small style="color:#aaa">نظام السداد</small><br><b>{row.get('نظام السداد', '-')}</b></div>
-                    <div><small style="color:#aaa">المشروع الحالي</small><br><b>{row.get('المشروع الحالي', '-')}</b></div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-except Exception as e:
-    st.error(f"تأكد من مطابقة أسماء الأعمدة في الشيت للأسامي في الكود. الخطأ: {e}")
+            """, unsafe_allow_html=True)
+else:
+    st.warning("لم يتم تحميل بيانات. تأكد من أن الشيت يحتوي على داتا صحيحة.")
