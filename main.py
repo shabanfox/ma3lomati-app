@@ -7,13 +7,13 @@ from io import StringIO
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", page_icon="🏢")
 
 # رابط البيانات
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfBy extraction/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
 
 # حالة الدخول
 if 'auth' not in st.session_state:
     st.session_state['auth'] = False
 
-# 2. التنسيق (CSS) المتطور
+# 2. التنسيق (CSS) المتطور مع تعديل الـ Scrollbar
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -21,6 +21,22 @@ st.markdown("""
     .stApp { background-color: #0d1117; color: white; }
     [data-testid="stSidebar"] { display: none; }
     
+    /* --- تعديل شريط التمرير (Scrollbar) ليصبح عريضاً وذهبياً --- */
+    ::-webkit-scrollbar {
+        width: 20px; /* جعل الشريط عريضاً */
+    }
+    ::-webkit-scrollbar-track {
+        background: #161b22; /* لون خلفية المجرى */
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #d4af37; /* لون المقبض (الزر) ذهبي */
+        border-radius: 10px;
+        border: 4px solid #161b22; /* إضافة مساحة حول المقبض لجعله بارزاً */
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #f1c40f; /* يتغير لونه عند الوقوف عليه ليكون أكثر لمعاناً */
+    }
+
     /* تنسيق كادر الدخول */
     .login-box {
         background: #161b22; border: 2px solid #d4af37; border-radius: 25px;
@@ -42,34 +58,6 @@ st.markdown("""
         border: 2px solid #30363d !important; border-radius: 12px !important;
         height: 50px; text-align: center;
     }
-
-    /* زر الخروج العائم على اليسار */
-    .stButton > button {
-        transition: 0.3s;
-    }
-    
-    /* تعريف مكان زر الخروج الخاص */
-    div.stButton > button:first-child {
-        position: fixed;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 120px;
-        height: 60px;
-        background-color: #d4af37 !important;
-        color: black !important;
-        font-weight: bold !important;
-        border-radius: 15px !important;
-        z-index: 999999;
-        border: 2px solid #000 !important;
-        box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
-    }
-    
-    div.stButton > button:first-child:hover {
-        width: 140px;
-        background-color: #ff4b4b !important;
-        color: white !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -85,7 +73,6 @@ def load_data():
 
 # 3. عرض الصفحات
 if not st.session_state['auth']:
-    # صفحة تسجيل الدخول
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
@@ -102,25 +89,22 @@ if not st.session_state['auth']:
             st.button("إنشاء حساب", use_container_width=True)
 else:
     # الصفحة الرئيسية (بعد الدخول)
-    
-    # زر الخروج العائم (بسبب الـ CSS سيبقى ثابتاً على اليسار)
-    if st.button("خروج من المنصة"):
-        st.session_state['auth'] = False
-        st.rerun()
-            
+    top_col1, top_col2 = st.columns([0.9, 0.1])
+    with top_col2:
+        if st.button("خروج"):
+            st.session_state['auth'] = False
+            st.rerun()
+
     st.markdown("<h2 class='gold' style='text-align:center;'>🏠 قاعدة بيانات المشاريع</h2>", unsafe_allow_html=True)
     
-    # محرك البحث
     col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
     with col_s2:
-        search = st.text_input("", placeholder="🔍 ابحث هنا عن مطور، منطقة، أو مشروع...")
+        search = st.text_input("", placeholder="🔍 ابحث هنا...")
 
     df = load_data()
     if not df.empty:
         if search:
             df = df[df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
-        
-        st.markdown(f"<p style='text-align:center;'>تم إيجاد {len(df)} مشروع</p>", unsafe_allow_html=True)
         
         for _, row in df.iterrows():
             st.markdown(f"""
