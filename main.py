@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from io import StringIO
 
-# 1. إعدادات الصفحة (إخفاء كل زوائد ستريمليت لتبدو كمنصة مستقلة)
+# 1. إعدادات الصفحة (Clean Nawy Look)
 st.set_page_config(page_title="معلوماتي العقارية", layout="wide")
 
 st.markdown("""
@@ -15,54 +15,48 @@ st.markdown("""
     
     html, body, [data-testid="stAppViewContainer"] {
         direction: rtl !important; text-align: right;
-        font-family: 'Cairo', sans-serif; background-color: #f8f9fa; color: #1a1a1a;
+        font-family: 'Cairo', sans-serif; background-color: #f4f7f6; color: #1a1a1a;
     }
 
-    /* هيدر ناوي (أبيض فخم مع لوجو ذهبي) */
+    /* هيدر ناوي الاحترافي */
     .nawy-header {
-        background: #ffffff; padding: 20px; text-align: center;
-        border-bottom: 1px solid #e0e0e0; margin-bottom: 30px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        background: #ffffff; padding: 25px; text-align: center;
+        border-bottom: 2px solid #c49a6c; margin-bottom: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
-    /* كارت المطور (Profile Card) */
-    .dev-profile {
-        background: #ffffff; border-radius: 16px; padding: 30px;
-        margin-bottom: 30px; border: 1px solid #e0e0e0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    /* كارت المطور */
+    .dev-profile-card {
+        background: #ffffff; border-radius: 20px; padding: 35px;
+        margin-bottom: 35px; border-right: 12px solid #c49a6c;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
-    .dev-title { color: #c49a6c; font-weight: 900; font-size: 2.2em; margin-bottom: 10px; }
 
-    /* شبكة المشاريع (Nawy Grid) */
+    /* شبكة المشاريع Grid */
     .project-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px; margin-top: 20px;
     }
     .project-card {
-        background: #ffffff; border-radius: 12px; overflow: hidden;
-        border: 1px solid #eee; transition: 0.3s; position: relative;
+        background: #ffffff; border-radius: 15px; border: 1px solid #eee;
+        padding: 25px; transition: 0.4s; position: relative;
     }
-    .project-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
+    .project-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-color: #c49a6c; }
     
-    .card-content { padding: 20px; }
     .price-tag {
-        color: #c49a6c; font-weight: 700; font-size: 1.2em; margin-bottom: 8px;
+        background: #c49a6c; color: #fff; padding: 5px 15px;
+        border-radius: 8px; font-weight: 900; position: absolute; left: 20px; top: 20px;
     }
-    .project-name { font-weight: 700; font-size: 1.3em; margin-bottom: 5px; }
-    .location-tag { color: #666; font-size: 0.9em; display: flex; align-items: center; gap: 5px; }
-    
+
     /* الفلاتر */
-    .filter-section {
-        background: #ffffff; padding: 20px; border-radius: 12px;
-        margin-bottom: 30px; border: 1px solid #eee;
-    }
+    .filter-box { background: #fff; padding: 20px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 30px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. جلب البيانات
+# 2. جلب البيانات بمرونة عالية
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR0vzgtd_E2feFVen6GGR02lYcB7kUASgyLyvqBGA7pAHseUf9KxAyEyDHU935VLFEWQot2p5FBFSwv/pub?output=csv"
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=2)
 def load_data():
     try:
         res = requests.get(SHEET_URL)
@@ -74,71 +68,74 @@ def load_data():
 
 df = load_data()
 
-# الهيدر العلوي
-st.markdown("""
-    <div class="nawy-header">
-        <h1 style="color: #1a1a1a; margin:0; font-weight:900; letter-spacing:-1px;">معلوماتي <span style="color:#c49a6c;">العقارية</span></h1>
-    </div>
-""", unsafe_allow_html=True)
+# الهيدر
+st.markdown('<div class="nawy-header"><h1>مـعـلـومـاتـي <span style="color:#c49a6c;">الـعـقـاريـة</span></h1></div>', unsafe_allow_html=True)
 
 if not df.empty:
-    # الفلاتر بتصميم نظيف
-    with st.container():
-        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1: s_dev = st.selectbox("🏢 المطور العقاري", ["عرض كل المطورين"] + sorted(df['المطور'].unique().tolist()))
-        with c2: s_reg = st.selectbox("📍 المنطقة", ["كل المناطق"] + sorted(df['المنطقة'].unique().tolist()))
-        st.markdown('</div>', unsafe_allow_html=True)
+    # دالة ذكية لإيجاد الأعمدة حتى لو الأسماء غلط في الشيت
+    def get_col_safe(search_list):
+        for name in search_list:
+            if name in df.columns: return name
+        return df.columns[0] # البديل الأول
 
-    if s_dev != "عرض كل المطورين":
-        dev_rows = df[df['المطور'] == s_dev]
+    C_DEV = get_col_safe(["المطور", "شركة", "الشركة", "Developer"])
+    C_REG = get_col_safe(["المنطقة", "المنطقه", "مكان", "Location", "Region"])
+    C_PROJ = get_col_safe(["المشروع", "اسم المشروع", "Project"])
+    C_OWNER = get_col_safe(["المالك", "رئيس مجلس الإدارة", "Owner"])
+    C_BIO = get_col_safe(["سابقة_الأعمال", "سابقة الأعمال", "عن الشركة", "Bio"])
+
+    # منطقة الفلاتر
+    st.markdown('<div class="filter-box">', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1: s_dev = st.selectbox("🏢 اختر المطور", ["كل المطورين"] + sorted(df[C_DEV].unique().tolist()))
+    with c2: s_reg = st.selectbox("📍 فلتر بالمنطقة", ["كل المناطق"] + sorted(df[C_REG].unique().tolist()))
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if s_dev != "كل المطورين":
+        dev_rows = df[df[C_DEV] == s_dev]
         main = dev_rows.iloc[0]
         
-        # بروفايل المطور
+        # بروفايل المطور (Nawy Style)
         st.markdown(f"""
-            <div class="dev-profile">
-                <div class="dev-title">{s_dev}</div>
-                <div style="color:#555; margin-bottom:15px;"><b>رئيس مجلس الإدارة:</b> {main.get('المالك', '-')}</div>
-                <div style="background:#fcf8f3; padding:20px; border-radius:8px; color:#444; line-height:1.8;">
-                    <b>عن الشركة:</b><br>{main.get('سابقة_الأعمال', '-')}
-                </div>
+            <div class="dev-profile-card">
+                <h2 style="color:#c49a6c; margin-bottom:10px;">{s_dev}</h2>
+                <p style="font-size:1.1em;">👤 <b>رئيس مجلس الإدارة:</b> {main.get(C_OWNER, '-')}</p>
+                <hr style="opacity:0.1; margin:20px 0;">
+                <h4 style="color:#c49a6c;">📜 سابقة الأعمال والنبذة التاريخية:</h4>
+                <p style="line-height:1.8; color:#444; text-align:justify;">{main.get(C_BIO, '-')}</p>
             </div>
-            <h3 style="margin-bottom:20px;">مشاريع {s_dev}</h3>
+            <h3 style="margin-bottom:20px; font-weight:900;">🏗️ مشاريع {s_dev}</h3>
         """, unsafe_allow_html=True)
         
-        # شبكة مشاريع المطور
         st.markdown('<div class="project-grid">', unsafe_allow_html=True)
         for _, r in dev_rows.iterrows():
-            if r['المشروع'] != "-":
+            if r[C_PROJ] != "-":
                 st.markdown(f"""
                     <div class="project-card">
-                        <div class="card-content">
-                            <div class="price-tag">{r.get('السعر', 'اتصل بنا')}</div>
-                            <div class="project-name">{r['المشروع']}</div>
-                            <div class="location-tag">📍 {r['المنطقة']}</div>
-                            <hr style="margin:15px 0; opacity:0.1;">
-                            <div style="font-size:0.85em; color:#888;">نظام السداد: {r.get('السداد','-')}</div>
+                        <div class="price-tag">{r.get('السعر', 'اتصل بنا')}</div>
+                        <h3 style="margin-top:35px; color:#1a1a1a;">{r[C_PROJ]}</h3>
+                        <p style="color:#666;">📍 {r[C_REG]} | 🏗️ {r.get('النوع','-')}</p>
+                        <div style="background:#fcf8f3; padding:10px; border-radius:8px; font-size:0.85em; color:#888;">
+                            💳 نظام السداد: {r.get('السداد','-')}
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        # البحث العام
+        # عرض كل المشاريع
         f_df = df.copy()
-        if s_reg != "كل المناطق": f_df = f_df[f_df['المنطقة'] == s_reg]
+        if s_reg != "كل المناطق": f_df = f_df[f_df[C_REG] == s_reg]
         
         st.markdown('<div class="project-grid">', unsafe_allow_html=True)
         for _, r in f_df.iterrows():
             st.markdown(f"""
                 <div class="project-card">
-                    <div class="card-content">
-                        <div class="price-tag">{r.get('السعر', 'اتصل بنا')}</div>
-                        <div class="project-name">{r['المشروع']}</div>
-                        <div style="font-weight:600; color:#c49a6c; margin-bottom:5px;">{r['المطور']}</div>
-                        <div class="location-tag">📍 {r['المنطقة']}</div>
-                    </div>
+                    <div class="price-tag">{r.get('السعر', 'اتصل بنا')}</div>
+                    <h3 style="margin-top:35px;">{r[C_PROJ]}</h3>
+                    <p style="color:#c49a6c; font-weight:700;">🏢 {r[C_DEV]}</p>
+                    <p style="color:#666; font-size:0.9em;">📍 {r[C_REG]}</p>
                 </div>
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.info("جاري مزامنة البيانات من جوجل شيت...")
+    st.warning("⚠️ جاري تحديث البيانات من جوجل شيت... يرجى الانتظار.")
