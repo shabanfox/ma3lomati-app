@@ -4,32 +4,31 @@ import requests
 from io import StringIO
 
 # 1. Page Configuration
-st.set_page_config(page_title="Real Estate Insights", layout="wide")
+st.set_page_config(page_title="Ma3lomati Dashboard", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
-    /* Hide Streamlit elements */
+    /* Hide Streamlit components */
     [data-testid="stHeader"], .stDeployButton, #MainMenu, footer {display: none !important;}
     
     html, body, [data-testid="stAppViewContainer"] {
         direction: ltr !important;
         text-align: left !important;
         font-family: 'Cairo', sans-serif;
-        background-color: #f4f7f9;
-        color: #1e272e;
+        background-color: #f8f9fb;
     }
 
-    /* Animated Luxury Hero Section */
+    /* Animated Hero Section */
     .hero-container {
         background: linear-gradient(-45deg, #0f172a, #1e293b, #c49a6c, #0f172a);
         background-size: 400% 400%;
         animation: gradientBG 10s ease infinite;
-        padding: 60px 20px;
+        padding: 50px 20px;
         text-align: center;
         border-bottom: 5px solid #c49a6c;
-        border-radius: 0 0 50px 50px;
+        border-radius: 0 0 40px 40px;
         margin-bottom: 40px;
     }
     @keyframes gradientBG {
@@ -38,85 +37,72 @@ st.markdown("""
         100% {background-position: 0% 50%;}
     }
 
-    /* Modern Search Bar */
+    /* Compact Search Section */
     .search-section {
         background: white;
-        padding: 20px 40px;
-        border-radius: 20px;
+        padding: 15px 30px;
+        border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        margin: -50px auto 30px auto;
-        max-width: 90%;
-        display: flex;
-        gap: 20px;
+        margin: -40px auto 30px auto;
+        max-width: 85%;
         z-index: 100;
         position: relative;
     }
 
-    /* Developer Info Profile Card */
-    .dev-info-card {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 40px;
-        border-left: 10px solid #c49a6c;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.03);
-    }
-
-    /* Project Grid (4 per row) */
+    /* Project Grid - Adjusted for smaller cards (5 per row) */
     .project-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 20px;
-        padding: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 15px;
+        padding: 0 20px;
     }
 
-    /* Premium Card Design */
+    /* Slim Luxury Card */
     .premium-card {
         background: #ffffff;
-        border-radius: 15px;
-        padding: 20px;
+        border-radius: 12px;
+        padding: 15px;
         border: 1px solid #eef0f2;
         transition: all 0.3s ease;
-        position: relative;
-        min-height: 180px;
+        min-height: 160px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
     .premium-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.08);
         border-color: #c49a6c;
     }
     
     .price-badge {
-        background: rgba(196, 154, 108, 0.1);
+        background: #fcf8f3;
         color: #c49a6c;
-        padding: 4px 12px;
-        border-radius: 6px;
+        padding: 3px 10px;
+        border-radius: 5px;
         font-weight: 800;
-        font-size: 0.85em;
+        font-size: 0.75em;
+        border: 1px solid #eee;
         display: inline-block;
-        margin-bottom: 10px;
-        border: 1px solid #c49a6c;
+        margin-bottom: 8px;
     }
 
     .project-title {
         font-weight: 700;
-        font-size: 1.1em;
+        font-size: 0.95em;
         color: #1a1a1a;
-        margin: 5px 0;
+        margin: 4px 0;
+        line-height: 1.3;
     }
     .project-loc {
-        color: #7f8c8d;
-        font-size: 0.85em;
-        margin-bottom: 10px;
+        color: #888;
+        font-size: 0.8em;
+        margin-bottom: 8px;
     }
     .dev-tag {
         color: #c49a6c;
         font-weight: 600;
-        font-size: 0.8em;
-        text-transform: uppercase;
+        font-size: 0.75em;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -136,76 +122,46 @@ def load_data():
 
 df = load_data()
 
-# Hero Section
-st.markdown('<div class="hero-container"><h1>Ma3lomati</h1><p>The Smart Broker\'s Guide to Egyptian Developers</p></div>', unsafe_allow_html=True)
+# Hero
+st.markdown('<div class="hero-container"><h1 style="color:white; margin:0; font-size:3em; font-weight:900;">Ma3lomati</h1><p style="color:#c49a6c; font-weight:600;">Real Estate Intelligence Hub</p></div>', unsafe_allow_html=True)
 
 if not df.empty:
-    # Column Mapping
+    # Column Discovery
     def find_col(options, idx):
         for opt in options:
             if opt in df.columns: return opt
         return df.columns[idx] if len(df.columns) > idx else df.columns[0]
 
     C_DEV = find_col(["المطور", "الشركة"], 0)
-    C_OWNER = find_col(["المالك", "الاونر"], 1)
-    C_BIO = find_col(["سيرة عن الشركة والاونر"], 2)
     C_PROJ = find_col(["المشروع", "اسم المشروع"], 3)
     C_REG = find_col(["المنطقة", "المنطقه"], 4)
     C_PRICE = find_col(["السعر"], 5)
 
-    # Search Section
+    # Filters
     st.markdown('<div class="search-section">', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1: s_dev = st.selectbox("🏗️ Developer", ["All Developers"] + sorted(df[C_DEV].unique().tolist()))
-    with col2: s_reg = st.selectbox("📍 Location / Region", ["All Regions"] + sorted(df[C_REG].unique().tolist()))
+    c1, c2 = st.columns(2)
+    with c1: s_dev = st.selectbox("Company", ["All Companies"] + sorted(df[C_DEV].unique().tolist()))
+    with c2: s_reg = st.selectbox("Location", ["All Locations"] + sorted(df[C_REG].unique().tolist()))
     st.markdown('</div>', unsafe_allow_html=True)
 
-    if s_dev != "All Developers":
-        dev_info = df[df[C_DEV] == s_dev].iloc[0]
-        st.markdown(f"""
-            <div class="dev-info-card">
-                <h2 style="color:#c49a6c; font-weight:900;">{s_dev}</h2>
-                <p style="font-size:1.1em;"><b>👤 Management & Ownership:</b> {dev_info[C_OWNER]}</p>
-                <hr style="opacity:0.05; margin:15px 0;">
-                <p style="line-height:1.7; color:#444;">{dev_info[C_BIO]}</p>
-            </div>
-            <h4 style="margin-left:10px; margin-bottom:20px; color:#0f172a; font-weight:900;">🏗️ Available Projects:</h4>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="project-grid">', unsafe_allow_html=True)
-        for _, r in df[df[C_DEV] == s_dev].iterrows():
-            if r[C_PROJ] != "-":
-                st.markdown(f"""
-                    <div class="premium-card">
-                        <div>
-                            <div class="price-badge">{r[C_PRICE]}</div>
-                            <div class="project-title">{r[C_PROJ]}</div>
-                            <div class="project-loc">📍 {r[C_REG]}</div>
-                        </div>
-                        <div style="font-size:0.8em; color:#999; border-top:1px solid #f9f9f9; padding-top:10px;">
-                            📋 {r.get('السداد', 'Payment plan available')}
-                        </div>
+    # View Logic
+    f_df = df.copy()
+    if s_dev != "All Companies": f_df = f_df[f_df[C_DEV] == s_dev]
+    if s_reg != "All Locations": f_df = f_df[f_df[C_REG] == s_reg]
+
+    st.markdown('<div class="project-grid">', unsafe_allow_html=True)
+    for _, r in f_df.iterrows():
+        if r[C_PROJ] != "-":
+            st.markdown(f"""
+                <div class="premium-card">
+                    <div>
+                        <div class="price-badge">{r[C_PRICE]}</div>
+                        <div class="project-title">{r[C_PROJ]}</div>
+                        <div class="dev-tag">🏢 {r[C_DEV]}</div>
                     </div>
-                """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        # General View
-        f_df = df.copy()
-        if s_reg != "All Regions": f_df = f_df[f_df[C_REG] == s_reg]
-        
-        st.markdown('<div class="project-grid">', unsafe_allow_html=True)
-        for _, r in f_df.iterrows():
-            if r[C_PROJ] != "-":
-                st.markdown(f"""
-                    <div class="premium-card">
-                        <div>
-                            <div class="price-badge">{r[C_PRICE]}</div>
-                            <div class="project-title">{r[C_PROJ]}</div>
-                            <div class="dev-tag">🏢 {r[C_DEV]}</div>
-                        </div>
-                        <div class="project-loc">📍 {r[C_REG]}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+                    <div class="project-loc">📍 {r[C_REG]}</div>
+                </div>
+            """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.warning("Syncing data from cloud...")
+    st.info("Loading inventory...")
