@@ -9,23 +9,37 @@ st.set_page_config(page_title="منصة معلوماتي العقارية", layo
 # 2. روابط البيانات
 PROJECTS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqvcugfByqHf-Hld_dKW6dEM5OKqhrZpK_gI8mYRbVnxiRs1rXoILP2jT3uDVNc8pVqUKfF-o6X3xx/pub?output=csv"
 
-# 3. التنسيق (CSS) - الهيدر المتحرك وشريط التمرير
+# 3. التنسيق (CSS) - نقل شريط التمرير لليسار + التصميم المودرن
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    html, body, [class*="st-"] { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
-    .stApp { background-color: #0d1117; color: white; }
+    
+    /* --- خدعة نقل شريط التمرير لليسار --- */
+    html {
+        direction: ltr !important; /* نقل كل شيء لليسار بما في ذلك السكرول */
+    }
+    body, [data-testid="stAppViewContainer"] {
+        direction: rtl !important; /* إعادة الكلام والمحتوى لليمين مرة أخرى */
+        font-family: 'Cairo', sans-serif;
+        background-color: #0d1117;
+        color: white;
+    }
+    
     [data-testid="stSidebar"] { display: none; }
     
-    /* شريط التمرير الذهبي العريض */
+    /* --- تخصيص شكل شريط التمرير (الآن في اليسار) --- */
     ::-webkit-scrollbar { width: 22px !important; }
     ::-webkit-scrollbar-track { background: #161b22 !important; }
-    ::-webkit-scrollbar-thumb { background: #d4af37 !important; border-radius: 10px; border: 4px solid #161b22; }
+    ::-webkit-scrollbar-thumb { 
+        background: #d4af37 !important; 
+        border-radius: 10px; 
+        border: 4px solid #161b22; 
+    }
 
     /* الهيدر المودرن المتحرك */
     .hero-section {
         position: relative;
-        height: 350px;
+        height: 300px;
         overflow: hidden;
         border-radius: 25px;
         margin-bottom: 40px;
@@ -37,7 +51,7 @@ st.markdown("""
     .hero-bg {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background-image: url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+        background-image: url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
         background-size: cover;
         background-position: center;
         z-index: 1;
@@ -46,40 +60,30 @@ st.markdown("""
     .hero-overlay {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(to bottom, rgba(13,17,23,0.3), rgba(13,17,23,0.9));
+        background: linear-gradient(to bottom, rgba(13,17,23,0.2), rgba(13,17,23,0.8));
         z-index: 2;
     }
-    .hero-content {
-        position: relative;
-        z-index: 3;
-        text-align: center;
-    }
-    .gold-title {
-        color: #d4af37;
-        font-size: 3.5em;
-        font-weight: 900;
-        text-shadow: 2px 2px 15px rgba(0,0,0,0.8);
-        margin: 0;
-    }
+    .hero-content { position: relative; z-index: 3; text-align: center; }
+    .gold-title { color: #d4af37; font-size: 3em; font-weight: 900; margin: 0; }
 
     @keyframes kenburns {
         0% { transform: scale(1); }
-        100% { transform: scale(1.2); }
+        100% { transform: scale(1.1); }
     }
 
     /* تنسيق الكروت والفلاتر */
     .stTextInput > div > div > input {
         background-color: #1c2128 !important; color: white !important;
         border: 1px solid #d4af37 !important; border-radius: 12px !important;
-        height: 50px; text-align: center; font-size: 1.1em;
+        text-align: center;
     }
     .project-card {
         background: #1c2128; border: 1px solid #30363d; border-radius: 20px;
-        padding: 30px; margin-bottom: 25px; transition: 0.3s;
+        padding: 25px; margin-bottom: 20px; transition: 0.3s;
+        text-align: right;
     }
-    .project-card:hover { border-color: #d4af37; transform: translateY(-5px); }
+    .project-card:hover { border-color: #d4af37; }
     .price-badge { background: #d4af37; color: black; padding: 5px 15px; border-radius: 8px; font-weight: bold; float: left; }
-    .gold { color: #d4af37; font-weight: bold; }
     </style>
     
     <div class="hero-section">
@@ -87,7 +91,7 @@ st.markdown("""
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="gold-title">منصة معلوماتي العقارية</h1>
-            <p style="font-size: 1.2em; text-shadow: 1px 1px 5px black;">دليلك الذكي للمشروعات والمطورين في مصر</p>
+            <p style="font-size: 1.1em;">دليلك العقاري الأسرع في مصر</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -108,33 +112,32 @@ df = load_data()
 
 if not df.empty:
     # 5. ثلاث خانات بحث
-    st.markdown("<h3 style='text-align:center;'>🔍 ابحث عن عقارك المفضل</h3>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    with c1: s_region = st.text_input("📍 المنطقة", placeholder="مثال: التجمع / زايد")
-    with c2: s_price = st.text_input("💰 السعر", placeholder="مثال: 5,000,000")
-    with c3: s_type = st.text_input("🏗️ نوع الوحدة", placeholder="مثال: سكني / تجاري")
+    with c1: s_region = st.text_input("📍 تصفية بالمنطقة")
+    with c2: s_price = st.text_input("💰 تصفية بالسعر")
+    with c3: s_type = st.text_input("🏗️ نوع الوحدة")
 
     # منطق الفلترة
     f_df = df.copy()
     if s_region: f_df = f_df[f_df['المنطقة'].str.contains(s_region, case=False)]
     if s_price: f_df = f_df[f_df['السعر'].str.contains(s_price, case=False)]
     if s_type:
-        col_to_search = 'النوع' if 'النوع' in f_df.columns else f_df.columns[0]
-        f_df = f_df[f_df[col_to_search].str.contains(s_type, case=False)]
+        col = 'النوع' if 'النوع' in f_df.columns else f_df.columns[0]
+        f_df = f_df[f_df[col].str.contains(s_type, case=False)]
 
-    st.markdown(f"<p style='opacity:0.6;'>تم إيجاد {len(f_df)} مشروع</p>", unsafe_allow_html=True)
+    st.markdown(f"**عدد المشاريع: {len(f_df)}**")
 
     # 6. عرض النتائج
     for _, row in f_df.iterrows():
         st.markdown(f"""
             <div class="project-card">
                 <div class="price-badge">{row.get('السعر', '-')}</div>
-                <h2 style="color:#d4af37; margin-top:0;">{row.get('المشروع', '-')}</h2>
+                <h3 style="color:#d4af37; margin:0;">{row.get('المشروع', '-')}</h3>
                 <p>📍 {row.get('المنطقة', '-')} | 🏢 {row.get('المطور', '-')}</p>
-                <div style="background:rgba(212,175,55,0.05); padding:15px; border-right:4px solid #d4af37; border-radius:5px;">
-                    <span class="gold">📜 التفاصيل:</span> {row.get('سابقة_الأعمال', '-')}
+                <div style="background:rgba(212,175,55,0.05); padding:10px; border-right:3px solid #d4af37; border-radius:5px;">
+                    <small><b>الوصف:</b> {row.get('سابقة_الأعمال', '-')}</small>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 else:
-    st.info("جاري مزامنة البيانات...")
+    st.info("جاري التحميل...")
