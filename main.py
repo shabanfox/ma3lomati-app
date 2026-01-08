@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide")
@@ -8,19 +7,7 @@ st.set_page_config(page_title="منصة معلوماتي العقارية", layo
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 3. دالة جلب البيانات (بتقرأ من الإكسيل بنفس التصميم)
-def load_data():
-    try:
-        return pd.read_csv('data.csv')
-    except:
-        return pd.DataFrame({
-            'المشروع': ['كمبوند ايفوري جولي', 'سولاري رأس الحكمة'],
-            'المنطقة': ['الشيخ زايد الجديدة', 'الساحل الشمالي'],
-            'السعر': ['9,200,000', '15,000,000'],
-            'الصورة': ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400']
-        })
-
-# 4. التصميم اللي بعته (ممنوع اللمس)
+# 3. الـ CSS الملكي (الذي اعتمدته أنت)
 st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -55,43 +42,36 @@ st.markdown("""
         justify-content: center; align-items: center; color: white; 
     }
     
-    /* كروت المشاريع */
+    /* كروت المشاريع (فارغة للتعبئة لاحقاً) */
     .project-card { 
         background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
         display: flex; height: 190px; margin-bottom: 15px; overflow: hidden; 
     }
-    .card-img { 
-        width: 260px; background-size: cover; background-position: center; 
-    }
-    .card-body { 
-        padding: 20px; flex: 1; display: flex; flex-direction: column; 
-        justify-content: space-between; 
-    }
+    .card-img { width: 260px; background-size: cover; background-position: center; }
+    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     .price { color: #003366; font-weight: 900; font-size: 1.4rem; }
     
-    .btn-details {
-        background:#003366; border:none; color:white; padding:8px 20px; 
-        border-radius:6px; font-weight:700; cursor:pointer;
-    }
+    .btn-details { background:#003366; border:none; color:white; padding:8px 20px; border-radius:6px; font-weight:700; cursor:pointer; }
     </style>
 """, unsafe_allow_html=True)
 
-# العرض
+# 4. منطق العرض
 if not st.session_state.logged_in:
-    # صفحة الدخول باللوجو الفخم
+    # صفحة الدخول
     st.markdown('<div class="header-nav"><div class="logo-container"><div class="logo-main">معلوماتى <span class="logo-sub">العقارية</span></div></div></div>', unsafe_allow_html=True)
-    _, login_col, _ = st.columns([1, 1.2, 1])
-    with login_col:
+    
+    _, col, _ = st.columns([1, 1, 1])
+    with col:
         st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align:center; color:#003366;'>دخول المنصة</h2>", unsafe_allow_html=True)
-        u = st.text_input("اسم المستخدم")
-        p = st.text_input("كلمة المرور", type="password")
+        st.markdown("<h2 style='text-align:center; color:#003366; font-weight:900;'>دخول المنصة</h2>", unsafe_allow_html=True)
+        user = st.text_input("اسم المستخدم")
+        pwd = st.text_input("كلمة المرور", type="password")
         if st.button("دخول", use_container_width=True):
-            if u == "admin" and p == "123":
+            if user == "admin" and pwd == "123":
                 st.session_state.logged_in = True
                 st.rerun()
 else:
-    # الموقع الرئيسي بالتصميم الملكي
+    # الموقع الرئيسي (الهيكل فقط)
     st.markdown("""
         <div class="header-nav">
             <div class="logo-container">
@@ -100,34 +80,14 @@ else:
             </div>
             <div style="color:#475569; font-weight:600;">الرئيسية</div>
         </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
+        
         <div class="hero-outer">
             <div class="hero-inner">
                 <h1 style="font-weight:900; font-size:2.5rem;">بوابتك لأدق البيانات العقارية</h1>
             </div>
         </div>
+        
+        <div style="padding: 0 8%; margin-top:25px;">
+            <h3 style="color:#cbd5e1; text-align:center; margin-top:50px;">المحتوى فارغ.. بانتظار إضافة المشاريع</h3>
+        </div>
     """, unsafe_allow_html=True)
-
-    # عرض البيانات
-    df = load_data()
-    st.markdown('<div style="padding: 0 8%; margin-top:25px;">', unsafe_allow_html=True)
-    
-    for _, row in df.iterrows():
-        st.markdown(f"""
-            <div class="project-card">
-                <div class="card-img" style="background-image: url('{row['الصورة']}')"></div>
-                <div class="card-body">
-                    <div>
-                        <div class="price">{row['السعر']} ج.م</div>
-                        <div style="font-weight: 700; font-size: 1.2rem; color: #1e293b; margin-top:5px;">{row['المشروع']}</div>
-                        <div style="color:#64748b; font-size:0.95rem; margin-top:5px;">📍 {row['المنطقة']}</div>
-                    </div>
-                    <div style="text-align: left;">
-                        <button class="btn-details">عرض التفاصيل</button>
-                    </div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
