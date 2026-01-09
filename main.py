@@ -13,53 +13,64 @@ st.markdown("""
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f0f2f5; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8fafc; 
     }
 
-    /* هيدر نحيف جداً */
-    .compact-header {
-        text-align: center; color: #ffffff; background: #001a33;
-        font-weight: 900; font-size: 1.2rem; padding: 5px;
-        border-radius: 5px; margin-bottom: 5px;
+    /* الهيدر الكبير والفخم */
+    .main-header {
+        text-align: center; 
+        background: linear-gradient(135deg, #001a33 0%, #1e3a8a 100%);
+        color: #ffffff; 
+        font-weight: 900; 
+        font-size: 2.2rem; 
+        padding: 20px;
+        border-radius: 15px; 
+        margin-bottom: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
 
-    /* شريط البحث المطور */
-    .search-bar-container {
-        background: white; padding: 10px; border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px;
-        display: flex; gap: 10px; align-items: center;
+    /* حاوية الفلاتر المطورة */
+    .filter-section {
+        background: white; 
+        padding: 15px; 
+        border-radius: 12px; 
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
 
-    /* كروت نانو مطورة */
-    .nano-card {
-        background: #ffffff; border: 1px solid #e5e7eb; 
-        border-right: 4px solid #1e40af; border-radius: 6px; 
-        padding: 6px 10px; margin-bottom: 4px; 
-        min-height: 90px; display: flex; flex-direction: column; justify-content: space-between;
+    /* كروت واضحة جداً بحجم نانو */
+    .premium-nano-card {
+        background: #ffffff; 
+        border: 1px solid #cbd5e1; 
+        border-right: 6px solid #001a33; 
+        border-radius: 10px; 
+        padding: 12px; 
+        margin-bottom: 8px; 
+        min-height: 120px;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between;
+        transition: 0.3s ease-in-out;
     }
+    .premium-nano-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
 
-    .t-dev { color: #000 !important; font-size: 0.85rem; font-weight: 900; line-height: 1; }
-    .t-proj { color: #2563eb !important; font-size: 0.75rem; font-weight: 700; }
-    .t-price { color: #059669 !important; font-size: 0.95rem; font-weight: 900; }
-    .t-info { color: #64748b; font-size: 0.7rem; font-weight: 600; margin-top: 1px; }
+    /* تفاصيل النصوص الكبيرة */
+    .c-dev { color: #000000 !important; font-size: 1.15rem; font-weight: 900; line-height: 1.2; }
+    .c-proj { color: #1d4ed8 !important; font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .c-price { color: #15803d !important; font-size: 1.2rem; font-weight: 900; margin: 5px 0; }
+    .c-meta { color: #475569; font-size: 0.85rem; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 5px; }
 
-    /* زر تفاصيل ميكرو */
+    /* زر تفاصيل واضح ومرتب */
     div.stButton > button {
-        background: #0f172a !important; color: white !important;
-        font-size: 0.65rem !important; height: 18px !important;
-        border-radius: 3px !important; width: 100%; border: none !important;
-        font-weight: 700 !important; padding: 0 !important; margin-top: 2px !important;
-        line-height: 18px !important;
-    }
-
-    /* تصغير المدخلات */
-    .stTextInput > div > div > input, .stSelectbox > div > div > div {
-        height: 30px !important; font-size: 0.8rem !important;
+        background: #001a33 !important; color: white !important;
+        font-size: 0.8rem !important; height: 28px !important;
+        border-radius: 6px !important; width: 100%; border: none !important;
+        font-weight: 900 !important; margin-top: 8px !important;
     }
     
-    /* ضغط مساحة العمل */
-    .stMainBlockContainer { padding: 0.5rem 1.5rem !important; }
-    [data-testid="stVerticalBlock"] { gap: 0rem !important; }
+    /* تنسيق الفلاتر */
+    label { font-weight: 900 !important; color: #001a33 !important; font-size: 0.9rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -84,13 +95,15 @@ if df is not None:
     if 'curr' not in st.session_state: st.session_state.curr = 0
 
     if st.session_state.page == 'main':
-        st.markdown('<div class="compact-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
         
-        # شريط البحث والفلاتر في سطر واحد مضغوط
-        col_s1, col_s2, col_s3 = st.columns([2, 1, 1])
-        with col_s1: sq = st.text_input("بحث", placeholder="المطور أو المشروع...", label_visibility="collapsed")
-        with col_s2: sa = st.selectbox("المكان", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()), label_visibility="collapsed")
-        with col_s3: sp = st.number_input("السعر", value=0, label_visibility="collapsed")
+        # قسم الفلاتر المطور
+        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+        col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
+        with col_f1: sq = st.text_input("🔍 ابحث عن مطور أو مشروع محدد:", placeholder="مثال: طلعت مصطفى، بالم هيلز...")
+        with col_f2: sa = st.selectbox("📍 اختر المنطقة:", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()))
+        with col_f3: sp = st.number_input("💰 ميزانيتك القصوى (جنيه):", value=0, step=1000000)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         f_df = df.copy()
         if sq: f_df = f_df[f_df.iloc[:, 0].str.contains(sq, na=False, case=False) | f_df.iloc[:, 2].str.contains(sq, na=False, case=False)]
@@ -98,7 +111,7 @@ if df is not None:
         if sp > 0: f_df = f_df[f_df['p_val'] <= sp]
 
         # توزيع الصفحة (يمين للكروت، يسار للإضافات)
-        main_area, side_area = st.columns([3.4, 0.6])
+        main_area, side_area = st.columns([3.3, 0.7])
 
         with main_area:
             items = 9 
@@ -113,43 +126,45 @@ if df is not None:
                         row = curr_items.iloc[i + j]
                         with cols[j]:
                             st.markdown(f"""
-                                <div class="nano-card">
+                                <div class="premium-nano-card">
                                     <div>
-                                        <div class="t-dev">{row[0]}</div>
-                                        <div class="t-proj">{row[2]}</div>
+                                        <div class="c-dev">{row[0]}</div>
+                                        <div class="c-proj">🏢 {row[2]}</div>
                                     </div>
                                     <div>
-                                        <div class="t-price">{row[4]}</div>
-                                        <div class="t-info">📍 {row[3]} | 💳 {row[10]}</div>
+                                        <div class="c-price">{row[4]}</div>
+                                        <div class="c-meta">📍 {row[3]} | 💳 مقدم {row[10]}</div>
                                     </div>
                                 </div>
                             """, unsafe_allow_html=True)
-                            if st.button("تفاصيل", key=f"b_{start+i+j}"):
+                            if st.button("التفاصيل الفنية", key=f"b_{start+i+j}"):
                                 st.session_state.selected_dev = row[0]
                                 st.session_state.page = 'details'
                                 st.rerun()
 
-            # أزرار تنقل مدمجة
-            n1, n2, n3 = st.columns([1,2,1])
+            # التحكم في الصفحات
+            st.markdown("<br>", unsafe_allow_html=True)
+            n1, n2, n3 = st.columns([1,1,1])
             with n1: 
                 if st.session_state.curr > 0:
-                    if st.button("السابق", key="prev"): st.session_state.curr -= 1; st.rerun()
-            with n2: st.markdown(f"<p style='text-align:center; font-size:0.7rem; font-weight:700;'>{st.session_state.curr+1} / {total}</p>", unsafe_allow_html=True)
+                    if st.button("⬅️ السابق"): st.session_state.curr -= 1; st.rerun()
+            with n2: st.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.curr+1} من {total}</p>", unsafe_allow_html=True)
             with n3:
                 if st.session_state.curr < total - 1:
-                    if st.button("التالي", key="next"): st.session_state.curr += 1; st.rerun()
+                    if st.button("التالي ➡️"): st.session_state.curr += 1; st.rerun()
 
         with side_area:
-            st.markdown("<div style='border-right:2px solid #001a33; padding:5px; font-size:0.75rem;'>", unsafe_allow_html=True)
-            st.markdown("**⭐ إضافات:**")
-            st.markdown("مساحة مخصصة للتنبيهات السريعة.")
+            st.markdown("<div style='border-right:3px solid #1e3a8a; padding:15px; background:white; border-radius:10px;'>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#1e3a8a; margin:0;'>⭐ ملاحظات</h4>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:0.9rem;'>يوجد حالياً <b>{len(f_df)}</b> مشروع مطابق لبحثك.</p>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
     elif st.session_state.page == 'details':
-        if st.button("⬅️ عودة"): st.session_state.page = 'main'; st.rerun()
+        if st.button("🔙 العودة لنتائج البحث"): st.session_state.page = 'main'; st.rerun()
         dev = st.session_state.selected_dev
         projs = df[df.iloc[:, 0] == dev]
-        st.markdown(f"<h6>🏢 {dev}</h6>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='background:#001a33; color:white; padding:15px; border-radius:10px;'>🏢 {dev}</h2>", unsafe_allow_html=True)
         for _, r in projs.iterrows():
-            with st.expander(f"{r[2]} - {r[4]}"):
-                st.info(f"**الزتونة:** {r[11]}")
+            with st.expander(f"📌 مشروع: {r[2]} | السعر: {r[4]}", expanded=True):
+                st.success(f"**📍 الموقع:** {r[3]} | **💳 نظام السداد:** مقدم {r[10]} | تقسيط {r[9]} سنوات")
+                st.error(f"**💡 الزتونة الفنية (تحليل المطور):**\n\n{r[11]}")
