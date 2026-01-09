@@ -5,48 +5,52 @@ import math
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. تصميم CSS مرن (Responsive)
+# 2. تصميم CSS يركز على وضوح الخط وعرضه (Bold & High Contrast)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f1f5f9; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8fafc; 
     }
 
-    /* تحسين عرض الحاويات على الموبايل */
-    [data-testid="column"] {
-        width: 100% !important;
-        flex: 1 1 calc(100% - 1rem) !important;
+    /* جعل كل النصوص عريضة وواضحة */
+    h1, h2, h3, h4, h5, b, p, span, div {
+        font-family: 'Cairo', sans-serif !important;
     }
 
-    /* الكارت الرئيسي */
+    /* كروت المشاريع الرئيسية - يمين */
     .mini-card {
-        background: white; border-radius: 12px; padding: 15px;
-        border-right: 6px solid #003366; margin-bottom: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        min-height: 160px; display: flex; flex-direction: column; justify-content: space-between;
+        background: white; border-radius: 12px; padding: 18px;
+        border-right: 8px solid #003366; margin-bottom: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        min-height: 180px; display: flex; flex-direction: column; justify-content: space-between;
     }
     
-    .title-text { color: #003366; font-size: 1.1rem; font-weight: 900; margin: 0; }
-    .price-text { color: #15803d; font-weight: 900; font-size: 1.1rem; margin: 5px 0; }
+    .title-text { color: #003366; font-size: 1.2rem; font-weight: 900; margin: 0; line-height: 1.3; }
+    .dev-text { color: #475569; font-size: 1rem; font-weight: 700; margin-top: 5px; }
+    .price-text { color: #15803d; font-weight: 900; font-size: 1.3rem; margin: 8px 0; }
     
-    /* قائمة أقوى 10 مشاريع */
+    /* قائمة أقوى 10 مشاريع - يسار */
     .top-project-card {
-        background: white; border-radius: 8px; padding: 10px;
-        border-right: 4px solid #fbbf24; margin-bottom: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        background: white; border-radius: 10px; padding: 12px;
+        border-right: 6px solid #fbbf24; margin-bottom: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.08);
     }
+    .top-title { color: #1e293b; font-size: 1.05rem; font-weight: 900; }
+    .rank-num { color: #fbbf24; font-weight: 900; font-size: 1.2rem; margin-left: 10px; }
 
-    /* إخفاء المساحات الزائدة في الموبايل */
+    /* تحسين شكل الأزرار */
+    .stButton>button { 
+        background-color: #003366 !important; color: white !important;
+        width: 100%; font-family: 'Cairo' !important; font-weight: 900 !important;
+        font-size: 1rem !important; border-radius: 8px; height: 45px; border: none;
+    }
+    
+    /* استجابة الموبايل */
     @media (max-width: 768px) {
         .mini-card { height: auto; }
         [data-testid="stHorizontalBlock"] { flex-direction: column !important; }
-    }
-    
-    .stButton>button { 
-        background-color: #003366 !important; color: white !important;
-        width: 100%; font-family: 'Cairo'; font-weight: 700;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -69,23 +73,25 @@ if df is not None:
 
     # --- القائمة الجانبية (أفضل الشركات) ---
     with st.sidebar:
-        st.markdown("<h3 style='text-align:center;'>🏆 أفضل المطورين</h3>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; font-weight:900;'>🏆 أفضل المطورين</h2>", unsafe_allow_html=True)
         top_list = ["Mountain View", "Palm Hills", "SODIC", "Emaar Misr", "Ora Dev", "Nile Dev", "Hassan Allam", "TMG"]
         for i, name in enumerate(top_list, 1):
-            st.markdown(f"""<div style='background:#003366; color:white; padding:8px; border-radius:8px; margin-bottom:5px; text-align:center; font-weight:700; font-size:0.9rem;'>{i}# {name}</div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div style='background:#003366; color:white; padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; font-weight:900; font-size:1.1rem; border-left: 5px solid #fbbf24;'>{i}# {name}</div>""", unsafe_allow_html=True)
 
     # --- الصفحة الرئيسية ---
     if st.session_state.page == 'main':
-        st.markdown("<h1 style='color:#003366; text-align:center; font-size:1.8rem;'>🏠 منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color:#003366; text-align:center; font-size:2.5rem; font-weight:900;'>🏠 منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
         
-        # البحث والفلاتر (ستترتب تحت بعضها في الموبايل تلقائياً)
-        search_q = st.text_input("🔍 ابحث عن مشروع أو مطور")
-        c_area, c_type = st.columns(2)
-        with c_area: s_area = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df.iloc[:, 3].unique().tolist()))
-        with c_type: s_type = st.selectbox("🏠 النوع", ["الكل"] + sorted(df.iloc[:, 7].unique().tolist()))
+        # البحث والفلاتر
+        search_q = st.text_input("🔍 ابحث عن مشروع أو مطور (اكتب هنا)", key="search_bar")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1: s_area = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df.iloc[:, 3].unique().tolist()))
+        with col_f2: s_type = st.selectbox("🏠 النوع", ["الكل"] + sorted(df.iloc[:, 7].unique().tolist()))
 
-        # تقسيم الشاشة (في الموبايل سيظهر اليمين ثم يسار تحت بعض)
-        main_col, left_panel = st.columns([2.5, 1])
+        st.markdown("---")
+
+        # توزيع الشاشة: يمين (المشاريع) | يسار (أقوى 10)
+        main_col, left_panel = st.columns([2.8, 1.2])
 
         with main_col:
             f_df = df.copy()
@@ -95,10 +101,9 @@ if df is not None:
 
             items_per_page = 9
             total_pages = math.ceil(len(f_df) / items_per_page)
-            start_idx = st.session_state.current_page * items_per_page
-            current_items = f_df.iloc[start_idx : start_idx + items_per_page]
+            current_items = f_df.iloc[st.session_state.current_page * items_per_page : (st.session_state.current_page + 1) * items_per_page]
 
-            # عرض الكروت: في الكمبيوتر 3 أعمدة، وفي الموبايل ستتحول تلقائياً لعمود واحد
+            # عرض الكروت
             for i in range(0, len(current_items), 3):
                 cols = st.columns(3)
                 for j in range(3):
@@ -109,46 +114,47 @@ if df is not None:
                                 <div class="mini-card">
                                     <div>
                                         <p class="title-text">{row[2]}</p>
-                                        <p style="color:#64748b; font-size:0.9rem; font-weight:700;">{row[0]}</p>
-                                        <p style="font-size:0.85rem;">📍 {row[3]}</p>
+                                        <p class="dev-text">{row[0]}</p>
+                                        <p style="font-size:1rem; font-weight:700;">📍 {row[3]}</p>
                                     </div>
                                     <div>
                                         <p class="price-text">{row[4]}</p>
-                                        <div style="font-size:0.85rem; color:#1e293b; background:#e2e8f0; padding:5px; border-radius:5px; text-align:center; font-weight:700;">
-                                            مقدم {row[10]} | {row[9]}س
+                                        <div style="font-size:1rem; color:#1e293b; background:#e2e8f0; padding:8px; border-radius:8px; text-align:center; font-weight:900;">
+                                            مقدم {row[10]} | {row[9]} سنوات
                                         </div>
                                     </div>
                                 </div>
                             """, unsafe_allow_html=True)
-                            if st.button(f"تفاصيل {row[2][:12]}", key=f"btn_{start_idx+i+j}"):
+                            if st.button(f"تفاصيل {row[2][:15]}", key=f"btn_{row[2]}_{i+j}"):
                                 st.session_state.selected_item = row.to_list()
                                 st.session_state.page = 'details'
                                 st.rerun()
             
-            # أزرار الصفحات
-            st.divider()
+            # أزرار التنقل بين الصفحات
+            st.markdown("---")
             b1, b2, b3 = st.columns([1,1,1])
             with b1: 
-                if st.session_state.current_page > 0 and st.button("⬅️"): st.session_state.current_page -= 1; st.rerun()
-            with b2: st.write(f"<p style='text-align:center;'>{st.session_state.current_page+1}/{total_pages}</p>", unsafe_allow_html=True)
+                if st.session_state.current_page > 0 and st.button("⬅️ السابق"): st.session_state.current_page -= 1; st.rerun()
+            with b2: st.write(f"<p style='text-align:center; font-weight:900; font-size:1.2rem;'>{st.session_state.current_page+1} / {total_pages}</p>", unsafe_allow_html=True)
             with b3: 
-                if st.session_state.current_page < total_pages - 1 and st.button("➡️"): st.session_state.current_page += 1; st.rerun()
+                if st.session_state.current_page < total_pages - 1 and st.button("التالي ➡️"): st.session_state.current_page += 1; st.rerun()
 
         with left_panel:
-            st.markdown("<h4 style='text-align:center; color:#003366; background:#fbbf24; padding:8px; border-radius:8px;'>🔥 أقوى 10 مشاريع</h4>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align:center; color:#003366; background:#fbbf24; padding:12px; border-radius:12px; font-weight:900;'>🔥 أقوى 10 مشاريع</h3>", unsafe_allow_html=True)
             top_10 = df.head(10)
             for idx, row in top_10.iterrows():
                 st.markdown(f"""
                     <div class="top-project-card">
-                        <b><span style="color:#fbbf24;">#{idx+1}</span> {row[2]}</b><br>
-                        <small>{row[3]} | {row[4]}</small>
+                        <span class="rank-num">#{idx+1}</span>
+                        <span class="top-title">{row[2]}</span><br>
+                        <b style="color:#15803d; font-size:1rem;">{row[4]}</b> | <small style="font-weight:700;">{row[3]}</small>
                     </div>
                 """, unsafe_allow_html=True)
 
     # --- صفحة التفاصيل ---
     elif st.session_state.page == 'details':
         item = st.session_state.selected_item
-        if st.button("🔙 عودة"): st.session_state.page = 'main'; st.rerun()
-        st.markdown(f"<h2 style='color:#003366;'>{item[2]}</h2>", unsafe_allow_html=True)
-        st.info(f"**الزتونة الفنية:**\n\n{item[11]}")
-        st.success(f"المطور: {item[0]} | السعر: {item[4]} | المقدم: {item[10]} | التقسيط: {item[9]} سنوات")
+        if st.button("⬅️ العودة للقائمة"): st.session_state.page = 'main'; st.rerun()
+        st.markdown(f"<h1 style='color:#003366; font-weight:900;'>{item[2]}</h1>", unsafe_allow_html=True)
+        st.error(f"### 💡 الزتونة الفنية (Bold Info):\n\n**{item[11]}**")
+        st.info(f"**المطور:** {item[0]} | **السعر:** {item[4]} | **المقدم:** {item[10]} | **التقسيط:** {item[9]} سنوات")
