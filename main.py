@@ -1,73 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="معلوماتى العقارية", layout="wide")
+# 1. إعدادات الصفحة الأساسية
+st.set_page_config(page_title="معلوماتى العقارية | محرك البحث", layout="wide")
 
-# 2. كود التصميم (CSS) - نظيف ومرتب
+# 2. تصميم الواجهة (نظيف واحترافي)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
     [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
-    
-    /* الخلفية الهادئة */
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; 
-        font-family: 'Cairo', sans-serif; 
-        background-color: #f1f5f9; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8fafc; 
     }
-
-    .block-container { 
-        max-width: 1100px; 
-        margin: auto; 
-        padding: 1rem 3% !important; 
-    }
-
-    /* الهيدر: كلمة معلوماتى على اليمين */
-    .header-nav { 
-        display: flex; 
-        justify-content: flex-start; /* لضمان البدء من اليمين */
-        align-items: center; 
-        padding: 20px 0; 
-        margin-bottom: 10px;
-    }
-
-    /* صندوق الفلاتر */
-    .filter-box { 
-        background: white; 
-        padding: 20px; 
-        border-radius: 12px; 
-        margin-bottom: 15px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    
-    /* الكروت: مسافات صغيرة جداً */
-    .project-card { 
-        background: white; 
-        border-radius: 10px; 
-        margin-bottom: 5px !important; 
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    /* زرار التفاصيل الأزرق الصغير بجانب الكلام */
-    div.stButton > button {
-        background-color: #003366 !important;
-        color: white !important;
-        border-radius: 6px !important;
-        padding: 4px 15px !important;
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        border: none !important;
-        width: auto !important;
-    }
-    
-    div.stButton > button:hover {
-        background-color: #D4AF37 !important;
-    }
+    .main-header { background: white; padding: 20px 5%; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
+    .filter-section { background: #ffffff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .card-style { background: white; padding: 20px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #003366; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -83,68 +30,90 @@ def load_data():
 
 df = load_data()
 
+# إدارة التنقل
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
     st.session_state.selected_item = None
 
 # --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
-    # الهيدر (معلوماتى على اليمين)
-    st.markdown('<div class="header-nav"><div style="color:#003366; font-weight:900; font-size:1.8rem; text-align:right; width:100%;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header"><h2 style="color:#003366; margin:0;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></h2></div>', unsafe_allow_html=True)
 
     if df is not None:
-        # الفلاتر
-        st.markdown('<div class="filter-box">', unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        with c1: search_dev = st.text_input("🔍 اسم المطور")
-        with c2: search_area = st.selectbox("📍 المنطقة", ["كل المناطق"] + sorted(list(df['Area'].dropna().unique())))
-        with c3: search_price = st.selectbox("💰 السعر", ["الكل", "أقل من 5 مليون", "10 مليون+"])
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        f_df = df.copy()
-        if search_dev: f_df = f_df[f_df['Developer'].str.contains(search_dev, case=False, na=False)]
-        if search_area != "كل المناطق": f_df = f_df[f_df['Area'] == search_area]
-
-        # عرض الكروت (زر التفاصيل يسار الكلام مباشرة)
-        for _, row in f_df.iterrows():
-            # تقسيم الصف: محتوى (كلام وزرار) وصورة
-            col_content, col_img = st.columns([4, 1])
+        # شريط الفلاتر المتقدمة
+        with st.container():
+            st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+            col1, col2, col3, col4 = st.columns(4)
             
-            with col_content:
-                # تقسيم داخلي ليكون الزرار يسار الكلام
-                txt_c, btn_c = st.columns([3, 1])
-                with txt_c:
-                    st.markdown(f"""
-                        <div style="text-align: right; padding: 5px;">
-                            <div style="color: #003366; font-weight: 900; font-size: 1.3rem;">{row.get('Developer')}</div>
-                            <div style="color: #D4AF37; font-weight: 700; font-size: 0.9rem;">المالك: {row.get('Owner')}</div>
-                            <div style="color: #64748b; font-size: 0.8rem;">📍 {row.get('Area')} | {row.get('Price')} ج.م</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with btn_c:
-                    st.write("") # موازنة
-                    st.write("")
-                    if st.button("التفاصيل", key=f"btn_{row.get('Developer')}"):
-                        st.session_state.selected_item = row.to_dict()
-                        st.session_state.page = 'details'
-                        st.rerun()
+            with col1:
+                area_list = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
+                sel_area = st.selectbox("📍 المنطقة", area_list)
+            
+            with col2:
+                # فلتر النوع (سكني/تجاري) - يظهر المتاح فقط في المنطقة المختارة
+                temp_df = df if sel_area == "الكل" else df[df['Area'] == sel_area]
+                type_list = ["الكل"] + sorted(temp_df['Type'].dropna().unique().tolist()) if 'Type' in df.columns else ["الكل"]
+                sel_type = st.selectbox("🏠 نوع الوحدة", type_list)
+                
+            with col3:
+                # فلتر سنوات القسط
+                inst_list = ["الكل"] + sorted(df['Installments'].dropna().unique().tolist()) if 'Installments' in df.columns else ["الكل"]
+                sel_inst = st.selectbox("⏳ سنوات القسط", inst_list)
+                
+            with col4:
+                search_name = st.text_input("🔍 ابحث عن مطور")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            with col_img:
-                img_url = row.get('Image_URL', 'https://via.placeholder.com/400')
+        # منطق الفلترة
+        filtered_df = df.copy()
+        if sel_area != "الكل": filtered_df = filtered_df[filtered_df['Area'] == sel_area]
+        if sel_type != "الكل": filtered_df = filtered_df[filtered_df['Type'] == sel_type]
+        if sel_inst != "الكل": filtered_df = filtered_df[filtered_df['Installments'] == sel_inst]
+        if search_name: filtered_df = filtered_df[filtered_df['Developer'].str.contains(search_name, case=False, na=False)]
+
+        # عرض النتائج
+        st.write(f"تم العثور على ({len(filtered_df)}) مطورين")
+        
+        for _, row in filtered_df.iterrows():
+            c_main, c_img = st.columns([4, 1])
+            with c_main:
                 st.markdown(f"""
-                    <div style="height: 100px; border-radius: 12px; background-image: url('{img_url}'); background-size: cover; background-position: center;"></div>
+                <div class="card-style">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin:0; color:#003366;">{row.get('Developer')}</h3>
+                            <p style="margin:5px 0; color:#64748b; font-size:0.9rem;">
+                                📍 {row.get('Area')} | 🏢 النوع: {row.get('Type', 'غير محدد')} | 💳 قسط: {row.get('Installments', '-')} سنين
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 """, unsafe_allow_html=True)
-            
-            st.markdown("<hr style='margin: 4px 0; opacity: 0.05;'>", unsafe_allow_html=True)
+                
+                # زر التفاصيل بجانب الكلام
+                st.markdown('<div style="margin-top:-50px; margin-right:20px;">', unsafe_allow_html=True)
+                if st.button("التفاصيل", key=f"btn_{row.get('Developer')}"):
+                    st.session_state.selected_item = row.to_dict()
+                    st.session_state.page = 'details'
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            with c_img:
+                img_url = row.get('Image_URL', 'https://via.placeholder.com/400')
+                st.markdown(f'<div style="height:100px; border-radius:12px; background-image:url(\'{img_url}\'); background-size:cover; background-position:center; margin-top:5px;"></div>', unsafe_allow_html=True)
 
 # --- صفحة التفاصيل ---
-else:
+elif st.session_state.page == 'details':
     item = st.session_state.selected_item
-    st.markdown('<div style="background:white; padding:30px; border-radius:15px; margin-top:10px;">', unsafe_allow_html=True)
-    if st.button("⬅️ عودة للقائمة"):
+    st.markdown('<div style="background:white; padding:40px; border-radius:20px; margin-top:20px;">', unsafe_allow_html=True)
+    if st.button("⬅️ العودة للبحث"):
         st.session_state.page = 'main'
         st.rerun()
     
-    st.markdown(f"<h2 style='color:#003366;'>{item.get('Developer')}</h2>", unsafe_allow_html=True)
-    st.write(item.get('Description', 'جاري تحديث النبذة...'))
+    st.markdown(f"<h1 style='color:#003366;'>{item.get('Developer')}</h1>", unsafe_allow_html=True)
+    st.info(f"📍 المنطقة: {item.get('Area')} | 📅 الاستلام: {item.get('Delivery', 'غير محدد')}")
+    st.write(f"### عن المطور")
+    st.write(item.get('Description', 'لا يوجد وصف متاح حالياً.'))
+    st.write(f"### أهم المشاريع")
+    st.write(item.get('Projects'))
     st.markdown('</div>', unsafe_allow_html=True)
