@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (تحويل الزر إلى كارت احترافي حاد)
+# 2. تصميم CSS (أزرار نانو حادة + حاسبات فخمة)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -14,49 +14,43 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* العنوان الرئيسي العلوي */
     .main-header {
         background: #000; color: #f59e0b; padding: 15px; text-align: center;
-        border-bottom: 6px solid #f59e0b; font-weight: 900; font-size: 2.5rem; margin-bottom: 20px;
+        border-bottom: 6px solid #f59e0b; font-weight: 900; font-size: 2rem; margin-bottom: 20px;
     }
 
-    /* السحر هنا: تحويل زر Streamlit لشكل كارت حاد ومربّع */
+    /* أزرار نانو: صغيرة، حادة، وظل قوي */
     div.stButton > button {
         width: 100% !important;
-        height: 220px !important; /* طول الكارت */
+        height: 80px !important; /* حجم نانو */
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 4px solid #000000 !important;
-        border-radius: 0px !important; /* حواف حادة جداً */
-        box-shadow: 8px 8px 0px #000 !important; /* ظل حاد أسود */
-        padding: 0px !important;
-        transition: 0.2s;
-        display: block !important;
+        border: 3px solid #000000 !important;
+        border-radius: 0px !important;
+        box-shadow: 5px 5px 0px #000 !important;
+        margin-bottom: 10px !important;
+        transition: 0.1s;
     }
 
     div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        box-shadow: 8px 8px 0px #f59e0b !important;
-        transform: translate(-3px, -3px);
+        background-color: #000 !important;
+        color: #f59e0b !important;
+        box-shadow: 5px 5px 0px #f59e0b !important;
     }
 
-    /* تنسيق النصوص داخل الزر يدويًا عبر CSS (لجعلها تشبه الصورة) */
-    /* بما أن زر ستريمليت لا يقبل HTML داخله، سنلعب بتنسيق النص الافتراضي */
     div.stButton > button p {
-        font-family: 'Cairo', sans-serif;
         font-weight: 900 !important;
-        font-size: 1.4rem !important; /* اسم المشروع */
-        line-height: 1.4;
-        margin: 10px !important;
-        color: #000;
+        font-size: 0.9rem !important;
+        line-height: 1.1;
     }
-    
-    /* فلاتر البحث والمدخلات */
-    .stTextInput input {
-        border: 3px solid #000 !important;
-        border-radius: 0px !important;
-        font-weight: 900 !important;
+
+    /* صناديق الحاسبة (Calc-Box) */
+    .calc-box {
+        background: #000; color: #fff; padding: 20px;
+        border: 4px solid #f59e0b; text-align: center;
+        box-shadow: 10px 10px 0px #000; margin-top: 10px;
     }
+    .calc-val { font-size: 2.2rem; font-weight: 900; color: #f59e0b; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,77 +70,76 @@ if 'selected_row' not in st.session_state: st.session_state.selected_row = None
 
 df = load_data()
 
-# --- محتوى المنصة ---
+# --- التنقل المحتوى ---
 
 if st.session_state.view == 'main':
     st.markdown('<div class="main-header">🏠 منصة معلوماتى</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("🏢 استعراض دليل المشاريع"):
-            st.session_state.view = 'comp'
-            st.rerun()
-    with c2:
-        if st.button("🛠️ فتح حاسبة الأدوات"):
+    
+    col_right, col_left = st.columns([0.5, 0.5])
+    
+    with col_right:
+        st.markdown("<h3 style='font-weight:900;'>🏢 دليل المشاريع (نانو)</h3>", unsafe_allow_html=True)
+        # شبكة 2 زر في السطر و 3 أسطر (إجمالي 6 أزرار نانو)
+        for i in range(0, 6, 2):
+            cols = st.columns(2)
+            for j in range(2):
+                if i + j < len(df):
+                    row = df.iloc[i + j]
+                    with cols[j]:
+                        if st.button(f"{row[0]}\n{row[2]}", key=f"n_{i+j}"):
+                            st.session_state.selected_row = row
+                            st.session_state.view = 'details'
+                            st.rerun()
+        
+        if st.button("🛠️ الدخول للأدوات والحاسبات", key="goto_tools"):
             st.session_state.view = 'tools'
             st.rerun()
 
-elif st.session_state.view == 'comp':
-    st.markdown('<div class="main-header">🏢 دليل المشاريع</div>', unsafe_allow_html=True)
-    
-    # شريط البحث والعودة
-    col_back, col_search = st.columns([1, 3])
-    with col_back:
-        if st.button("🔙 عودة"):
-            st.session_state.view = 'main'
-            st.rerun()
-    with col_search:
-        q = st.text_input("🔍 ابحث عن مشروع أو مطور...")
-
-    # فلترة البيانات
-    df_f = df
-    if q:
-        df_f = df[df.apply(lambda r: q.lower() in r.astype(str).str.lower().values, axis=1)]
-
-    st.markdown("---")
-
-    # عرض الشبكة 3x3 (الأزرار التي تشبه الكروت)
-    for i in range(0, len(df_f.head(15)), 3):
-        grid = st.columns(3)
-        for j in range(3):
-            if i + j < len(df_f):
-                row = df_f.iloc[i + j]
-                with grid[j]:
-                    # نص الزر منسق ليعطي إيحاء الكارت
-                    # (اسم المشروع) + (المطور) + (السعر)
-                    card_content = f"📌 {row[0]}\n───\n🏢 {row[2]}\n───\n💰 {row[4]}"
-                    if st.button(card_content, key=f"p_{i+j}"):
-                        st.session_state.selected_row = row
-                        st.session_state.view = 'details'
-                        st.rerun()
-
 elif st.session_state.view == 'details':
     r = st.session_state.selected_row
-    st.markdown(f'<div class="main-header">📍 تفاصيل {r[0]}</div>', unsafe_allow_html=True)
-    if st.button("🔙 العودة للشبكة"):
-        st.session_state.view = 'comp'
+    st.markdown(f'<div class="main-header">📍 {r[0]}</div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة"):
+        st.session_state.view = 'main'
         st.rerun()
-
-    # تصميم صفحة التفاصيل بشكل حاد ونظيف
+    
     st.markdown(f"""
-    <div style="border:10px solid #000; padding:40px; background:#fff; text-align:center;">
-        <h1 style="font-size:3.5rem; font-weight:900;">{r[0]}</h1>
-        <h2 style="color:#f59e0b; font-size:2.5rem;">المطور: {r[2]}</h2>
-        <hr style="border:2px solid #000">
-        <h3 style="font-size:2rem;">الموقع: {r[3]}</h3>
-        <div style="background:#000; color:#f59e0b; padding:20px; font-size:2.2rem; font-weight:900; margin-top:20px;">
-            {r[4]}
+    <div style="border:5px solid #000; padding:25px; background:#fff;">
+        <h2 style="font-weight:900;">المطور: <span style="color:#f59e0b;">{r[2]}</span></h2>
+        <p style="font-size:1.2rem; font-weight:700;">الموقع: {r[3]}</p>
+        <div style="background:#000; color:#fff; padding:15px; font-weight:900;">
+            نظام السداد: {r[4]}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 elif st.session_state.view == 'tools':
-    st.markdown('<div class="main-header">🛠️ أدوات الحاسبة</div>', unsafe_allow_html=True)
-    if st.button("🔙 عودة"):
+    st.markdown('<div class="main-header">🛠️ أدوات البروكر العقاري</div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة للرئيسية"):
         st.session_state.view = 'main'
         st.rerun()
-    st.write("أضف هنا كود الحاسبة الذي تريده")
+    
+    t1, t2 = st.tabs(["💰 حاسبة القسط", "📈 ROI الاستثماري"])
+    
+    with t1:
+        c1, c2 = st.columns(2)
+        price = c1.number_input("سعر الوحدة", value=1000000)
+        years = c2.number_input("سنوات التقسيط", value=10)
+        monthly = price / (years * 12) if years > 0 else 0
+        st.markdown(f"""
+        <div class="calc-box">
+            <p>القسط الشهري المتوقع</p>
+            <div class="calc-val">{monthly:,.0f} ج.م</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with t2:
+        c1, c2 = st.columns(2)
+        cost = c1.number_input("تكلفة الشراء", value=1000000)
+        rent = c2.number_input("الإيجار السنوي", value=100000)
+        roi = (rent / cost) * 100 if cost > 0 else 0
+        st.markdown(f"""
+        <div class="calc-box" style="border-color:#fff;">
+            <p>نسبة العائد السنوي (ROI)</p>
+            <div class="calc-val">%{roi:.1f}</div>
+        </div>
+        """, unsafe_allow_html=True)
