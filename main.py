@@ -5,7 +5,7 @@ import math
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - ألوان واضحة جداً
+# 2. كود التصميم (CSS) - الأزرار الزرقاء والنصوص الغامقة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -17,10 +17,12 @@ st.markdown("""
         background-color: #f4f7f9; 
     }
 
-    /* نصوص واضحة جداً */
-    .stMarkdown, p, span, label {
-        color: #1e293b !important; /* لون رمادي غامق جداً قريب للأسود */
-        font-weight: 500;
+    /* النصوص خارج الأزرار: لون غامق، عريض، وواضح جداً */
+    .dark-bold-text {
+        color: #001a33 !important; /* كحلي غامق جداً */
+        font-weight: 900 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 10px;
     }
 
     /* كروت اليمين */
@@ -28,34 +30,29 @@ st.markdown("""
         background: white; border-radius: 10px; padding: 12px;
         height: 100px; display: flex; flex-direction: column;
         justify-content: center; border: 1px solid #e2e8f0;
-        border-right: 4px solid #003366; margin-bottom: 5px;
+        border-right: 5px solid #0044ff; margin-bottom: 5px;
     }
 
-    /* عداد الصفحات */
-    .page-info {
-        color: #003366 !important;
-        font-weight: 900 !important;
-        font-size: 1.1rem;
-        text-align: center;
-        margin-bottom: 10px;
+    /* تنسيق الأزرار (أزرق والكتابة بيضاء) */
+    div.stButton > button {
+        background-color: #0044ff !important; /* أزرق صريح */
+        color: white !important; /* كتابة بيضاء */
+        border: None !important;
+        border-radius: 8px !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: bold !important;
+        height: 38px;
+        width: 100%;
+        transition: 0.3s;
+    }
+    div.stButton > button:hover {
+        background-color: #0033cc !important; /* أزرق أغمق عند الوقوف عليه */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
     .stat-card {
         background: white; padding: 20px; border-radius: 15px;
         border: 1px solid #e2e8f0; text-align: center; margin-bottom: 20px;
-    }
-
-    /* أزرار واضحة */
-    div.stButton > button {
-        border-radius: 6px !important; 
-        font-family: 'Cairo', sans-serif !important;
-        color: #003366 !important;
-        border: 1px solid #003366 !important;
-        font-weight: bold !important;
-    }
-    div.stButton > button:hover {
-        background-color: #003366 !important;
-        color: white !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -83,7 +80,7 @@ top_10_list = ["Mountain View", "SODIC", "Emaar", "TMG", "Ora Developers", "Palm
 
 # --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
-    st.markdown('<h2 style="color:#003366; font-weight:900;">منصة معلوماتى العقارية</h2>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:#001a33; font-weight:900;">منصة معلوماتى العقارية</h1>', unsafe_allow_html=True)
 
     if df is not None:
         col_right, col_left = st.columns([1.8, 1])
@@ -93,13 +90,13 @@ if st.session_state.page == 'main':
             st.markdown('<div style="background:white; padding:15px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px;">', unsafe_allow_html=True)
             f_c1, f_c2 = st.columns([2, 1])
             with f_c1:
-                search_input = st.text_input("🔍 ابحث عن مطور (عربي/English)...", value=st.session_state.search_query)
+                search_input = st.text_input("🔍 ابحث عن مطور...", value=st.session_state.search_query)
                 if search_input != st.session_state.search_query:
                     st.session_state.search_query = search_input
                     st.session_state.current_page_num = 1
             with f_c2:
                 areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
-                s_area = st.selectbox("تصفية بالمنطقة", areas)
+                s_area = st.selectbox("المنطقة", areas)
             st.markdown('</div>', unsafe_allow_html=True)
 
             # فلترة
@@ -108,7 +105,7 @@ if st.session_state.page == 'main':
             if st.session_state.search_query:
                 f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
 
-            # نظام 3 صفوف (6 كروت)
+            # نظام 6 كروت
             items_per_page = 6 
             total_pages = math.ceil(len(f_df) / items_per_page)
             start_idx = (st.session_state.current_page_num - 1) * items_per_page
@@ -119,31 +116,38 @@ if st.session_state.page == 'main':
                 with grid_cols[idx % 2]:
                     st.markdown(f"""
                         <div class="small-grid-card">
-                            <div style="color:#003366; font-weight:900; font-size:1rem;">{row.get('Developer')}</div>
-                            <div style="color:#475569; font-size:0.8rem;">📍 {row.get('Area')}</div>
+                            <div style="color:#001a33; font-weight:900; font-size:1.1rem;">{row.get('Developer')}</div>
+                            <div style="color:#475569; font-weight:bold;">📍 {row.get('Area')}</div>
                         </div>
                     """, unsafe_allow_html=True)
                     if st.button("عرض البروفايل", key=f"btn_{i}"):
                         st.session_state.selected_item = row.to_dict()
                         st.session_state.page = 'details'; st.rerun()
 
-            # --- أزرار التنقل (بألوان واضحة) ---
+            # --- عداد الصفحات والتنقل ---
             if total_pages > 1:
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown(f'<div class="page-info">صفحة {st.session_state.current_page_num} من {total_pages}</div>', unsafe_allow_html=True)
+                st.markdown(f'<p class="dark-bold-text" style="text-align:center;">صفحة {st.session_state.current_page_num} من {total_pages}</p>', unsafe_allow_html=True)
                 p_c1, p_c2, p_c3, p_c4 = st.columns([1,1,1,1])
                 with p_c2:
-                    if st.button("⬅️ السابق") and st.session_state.current_page_num > 1:
+                    if st.button("السابق") and st.session_state.current_page_num > 1:
                         st.session_state.current_page_num -= 1; st.rerun()
                 with p_c3:
-                    if st.button("التالي ➡️") and st.session_state.current_page_num < total_pages:
+                    if st.button("التالي") and st.session_state.current_page_num < total_pages:
                         st.session_state.current_page_num += 1; st.rerun()
 
         with col_left:
-            st.markdown(f'<div class="stat-card"><h5 style="color:#475569;">نتائج البحث</h5><h2 style="color:#003366;">{len(f_df)} شركة</h2></div>', unsafe_allow_html=True)
-            st.markdown('<div class="stat-card" style="text-align:right;"><h4 style="color:#003366;">🏆 أقوى 10 شركات</h4>', unsafe_allow_html=True)
+            # عداد الشركات بنص غامق وعريض
+            st.markdown(f"""
+                <div class="stat-card">
+                    <p class="dark-bold-text">عدد الشركات المطابقة</p>
+                    <h1 style="color:#0044ff; margin:0;">{len(f_df)}</h1>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # توب 10 بأزرار زرقاء
+            st.markdown('<div class="stat-card" style="text-align:right;"><p class="dark-bold-text">🏆 الشركات الكبرى</p>', unsafe_allow_html=True)
             for company in top_10_list:
-                if st.button(f"🏢 {company}", key=f"top_{company}", use_container_width=True):
+                if st.button(f"🏢 {company}", key=f"top_{company}"):
                     st.session_state.search_query = company
                     st.session_state.current_page_num = 1
                     st.rerun()
@@ -152,13 +156,13 @@ if st.session_state.page == 'main':
 # --- صفحة التفاصيل ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
-    if st.button("🔙 عودة للرئيسية"): st.session_state.page = 'main'; st.rerun()
+    if st.button("⬅️ العودة للقائمة"): st.session_state.page = 'main'; st.rerun()
     st.markdown(f"""
-        <div style="background:#003366; padding:30px; border-radius:12px; color:white; text-align:center; margin-bottom:20px;">
-            <h2 style="color:white !important;">{item.get('Developer')}</h2>
+        <div style="background:#001a33; padding:30px; border-radius:12px; color:white; text-align:center; margin-bottom:20px;">
+            <h1 style="color:white !important;">{item.get('Developer')}</h1>
         </div>
-        <div class="stat-card" style="text-align:right; border-right:8px solid #D4AF37;">
-            <h3 style="color:#003366;">📖 نبذة عن الشركة</h3>
-            <p style="color:#1e293b; font-size:1.1rem; line-height:1.7;">{item.get('Company_Bio', 'المعلومات ستتوفر قريباً.')}</p>
+        <div class="stat-card" style="text-align:right; border-right:8px solid #0044ff;">
+            <p class="dark-bold-text">📖 نبذة عن الشركة</p>
+            <p style="color:#1e293b; font-size:1.1rem; line-height:1.7; font-weight:bold;">{item.get('Company_Bio', 'المعلومات ستتوفر قريباً.')}</p>
         </div>
     """, unsafe_allow_html=True)
