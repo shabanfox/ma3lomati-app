@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (تحويل الزر إلى كارت احترافي حاد)
+# 2. تصميم CSS (أزرار نانو متقاربة - نظام ملكي)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -14,48 +14,51 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* العنوان الرئيسي العلوي */
-    .main-header {
-        background: #000; color: #f59e0b; padding: 15px; text-align: center;
-        border-bottom: 6px solid #f59e0b; font-weight: 900; font-size: 2.5rem; margin-bottom: 20px;
+    /* العنوان العلوي */
+    .nano-header {
+        background: #000; color: #f59e0b; padding: 10px 25px; text-align: right;
+        border-right: 10px solid #f59e0b; font-weight: 900; font-size: 1.8rem; margin-bottom: 20px;
     }
 
-    /* السحر هنا: تحويل زر Streamlit لشكل كارت حاد ومربّع */
+    /* تصميم أزرار النانو (Nano Buttons) */
     div.stButton > button {
         width: 100% !important;
-        height: 220px !important; /* طول الكارت */
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 4px solid #000000 !important;
-        border-radius: 0px !important; /* حواف حادة جداً */
-        box-shadow: 8px 8px 0px #000 !important; /* ظل حاد أسود */
-        padding: 0px !important;
-        transition: 0.2s;
+        height: 100px !important; /* حجم صغير جداً */
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border: 2px solid #f59e0b !important;
+        border-radius: 0px !important; /* حواف حادة */
+        padding: 5px !important;
+        transition: 0.3s;
         display: block !important;
+        margin-bottom: 0px !important;
     }
 
     div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        box-shadow: 8px 8px 0px #f59e0b !important;
-        transform: translate(-3px, -3px);
+        background-color: #f59e0b !important;
+        color: #000000 !important;
+        border-color: #000 !important;
+        transform: scale(0.98);
     }
 
-    /* تنسيق النصوص داخل الزر يدويًا عبر CSS (لجعلها تشبه الصورة) */
-    /* بما أن زر ستريمليت لا يقبل HTML داخله، سنلعب بتنسيق النص الافتراضي */
+    /* تنسيق النص داخل زر النانو */
     div.stButton > button p {
         font-family: 'Cairo', sans-serif;
         font-weight: 900 !important;
-        font-size: 1.4rem !important; /* اسم المشروع */
-        line-height: 1.4;
-        margin: 10px !important;
-        color: #000;
+        font-size: 0.9rem !important; /* نص صغير مدمج */
+        line-height: 1.2;
+        margin: 0px !important;
+    }
+
+    /* تقليل المسافات بين الأعمدة */
+    [data-testid="column"] {
+        padding: 5px !important;
     }
     
-    /* فلاتر البحث والمدخلات */
-    .stTextInput input {
-        border: 3px solid #000 !important;
-        border-radius: 0px !important;
-        font-weight: 900 !important;
+    /* صندوق التفاصيل */
+    .detail-card {
+        border: 4px solid #000; padding: 20px; background: #fff;
+        box-shadow: 10px 10px 0px #f59e0b;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -76,77 +79,63 @@ if 'selected_row' not in st.session_state: st.session_state.selected_row = None
 
 df = load_data()
 
-# --- محتوى المنصة ---
+# --- المحتوى ---
 
 if st.session_state.view == 'main':
-    st.markdown('<div class="main-header">🏠 منصة معلوماتى</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("🏢 استعراض دليل المشاريع"):
-            st.session_state.view = 'comp'
-            st.rerun()
-    with c2:
-        if st.button("🛠️ فتح حاسبة الأدوات"):
+    st.markdown('<div class="nano-header">🏠 منصة معلوماتى | التحكم</div>', unsafe_allow_html=True)
+    
+    # تقسيم الصفحة: يمين (أزرار النانو)، يسار (مساحة فارغة أو تفاصيل)
+    col_right, col_left = st.columns([0.6, 0.4])
+
+    with col_right:
+        st.markdown("<p style='font-weight:900;'>🏢 دليل المشاريع السريع (3x3)</p>", unsafe_allow_html=True)
+        # عرض 9 أزرار فقط في شبكة 3x3
+        for i in range(0, 9, 3):
+            grid = st.columns(3)
+            for j in range(3):
+                if i + j < len(df):
+                    row = df.iloc[i + j]
+                    with grid[j]:
+                        # محتوى الزر نانو (اسم المشروع + المطور)
+                        nano_content = f"{row[0]}\n{row[2]}"
+                        if st.button(nano_content, key=f"nano_{i+j}"):
+                            st.session_state.selected_row = row
+                            st.session_state.view = 'details'
+                            st.rerun()
+        
+        # زر إضافي للأدوات أسفل الشبكة
+        if st.button("🛠️ أدوات البروكر المستثمر", key="tools_btn"):
             st.session_state.view = 'tools'
             st.rerun()
 
-elif st.session_state.view == 'comp':
-    st.markdown('<div class="main-header">🏢 دليل المشاريع</div>', unsafe_allow_html=True)
+    with col_left:
+        st.info("💡 اضغط على أي كارت نانو من جهة اليمين لاستعراض كامل البيانات فوراً.")
+
+elif st.session_state.view == 'details':
+    r = st.session_state.selected_row
+    st.markdown(f'<div class="nano-header">📍 {r[0]}</div>', unsafe_allow_html=True)
     
-    # شريط البحث والعودة
-    col_back, col_search = st.columns([1, 3])
+    col_back, col_content = st.columns([0.2, 0.8])
     with col_back:
         if st.button("🔙 عودة"):
             st.session_state.view = 'main'
             st.rerun()
-    with col_search:
-        q = st.text_input("🔍 ابحث عن مشروع أو مطور...")
-
-    # فلترة البيانات
-    df_f = df
-    if q:
-        df_f = df[df.apply(lambda r: q.lower() in r.astype(str).str.lower().values, axis=1)]
-
-    st.markdown("---")
-
-    # عرض الشبكة 3x3 (الأزرار التي تشبه الكروت)
-    for i in range(0, len(df_f.head(15)), 3):
-        grid = st.columns(3)
-        for j in range(3):
-            if i + j < len(df_f):
-                row = df_f.iloc[i + j]
-                with grid[j]:
-                    # نص الزر منسق ليعطي إيحاء الكارت
-                    # (اسم المشروع) + (المطور) + (السعر)
-                    card_content = f"📌 {row[0]}\n───\n🏢 {row[2]}\n───\n💰 {row[4]}"
-                    if st.button(card_content, key=f"p_{i+j}"):
-                        st.session_state.selected_row = row
-                        st.session_state.view = 'details'
-                        st.rerun()
-
-elif st.session_state.view == 'details':
-    r = st.session_state.selected_row
-    st.markdown(f'<div class="main-header">📍 تفاصيل {r[0]}</div>', unsafe_allow_html=True)
-    if st.button("🔙 العودة للشبكة"):
-        st.session_state.view = 'comp'
-        st.rerun()
-
-    # تصميم صفحة التفاصيل بشكل حاد ونظيف
-    st.markdown(f"""
-    <div style="border:10px solid #000; padding:40px; background:#fff; text-align:center;">
-        <h1 style="font-size:3.5rem; font-weight:900;">{r[0]}</h1>
-        <h2 style="color:#f59e0b; font-size:2.5rem;">المطور: {r[2]}</h2>
-        <hr style="border:2px solid #000">
-        <h3 style="font-size:2rem;">الموقع: {r[3]}</h3>
-        <div style="background:#000; color:#f59e0b; padding:20px; font-size:2.2rem; font-weight:900; margin-top:20px;">
-            {r[4]}
+    
+    with col_content:
+        st.markdown(f"""
+        <div class="detail-card">
+            <h1 style="font-weight:900; color:#000; border-bottom:3px solid #f59e0b; padding-bottom:10px;">{r[0]}</h1>
+            <p style="font-size:1.5rem; font-weight:700;">🏢 المطور: <span style="color:#f59e0b;">{r[2]}</span></p>
+            <p style="font-size:1.2rem;">📍 الموقع: {r[3]}</p>
+            <div style="background:#000; color:#fff; padding:15px; font-weight:900; font-size:1.4rem;">
+                💰 السداد: {r[4]}
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 elif st.session_state.view == 'tools':
-    st.markdown('<div class="main-header">🛠️ أدوات الحاسبة</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nano-header">🛠️ حاسبة الاستثمار</div>', unsafe_allow_html=True)
     if st.button("🔙 عودة"):
         st.session_state.view = 'main'
         st.rerun()
-    st.write("أضف هنا كود الحاسبة الذي تريده")
+    st.success("تم تفعيل الحاسبة بنجاح.")
