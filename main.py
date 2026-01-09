@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة
+# 1. الإعدادات الملكية (أول سطر في الكود)
 st.set_page_config(page_title="الموسوعة العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - الشكل الأساسي الأصلي
+# 2. كود التصميم CSS الأصلي (اللي أنت متعود عليه)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
@@ -23,33 +23,37 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. التأكد من وجود متغيرات الصفحة (لحماية التطبيق من الـ NameError)
+# 3. منع أخطاء الجلسة (الضمان الملكي)
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
 if 'selected_item' not in st.session_state:
     st.session_state.selected_item = None
 
-# 4. تحميل البيانات (تأكد من وضع الرابط الخاص بك هنا)
+# 4. دالة جلب البيانات (تأكد من وضع الرابط الصحيح)
 @st.cache_data
 def load_data():
-    # استبدل هذا الرابط برابط الشيت الخاص بك
-    csv_url = "https://docs.google.com/spreadsheets/d/e/YOUR_LINK_HERE/pub?output=csv"
+    # حط رابط الشيت المجمع (الـ 100 مطور) هنا
+    csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS-o6G_M6F9YI8Y5D6E7L9k-y9W3H8P0U5L-Yv1K9M-N0V-W3H8P0U5L/pub?output=csv" 
     try:
         return pd.read_csv(csv_url)
     except:
-        return pd.DataFrame([{"Developer": "يرجى وضع رابط الشيت", "Area": "-", "Price": "-", "Detailed_Info": "-"}])
+        return pd.DataFrame([{"Developer": "يرجى ربط الشيت", "Area": "-", "Price": "-", "Detailed_Info": "-"}])
 
 df = load_data()
 
-# --- إدارة الصفحات (الشكل الأساسي) ---
+# --- إدارة الصفحات الملكية ---
 
+# الصفحة الرئيسية
 if st.session_state.page == 'main':
-    st.title("🏛️ موسوعة المطورين")
-    search = st.text_input("🔍 ابحث هنا...")
+    st.markdown("<h1 style='color: #003366;'>🏛️ موسوعة المطورين</h1>", unsafe_allow_html=True)
+    
+    search = st.text_input("🔍 ابحث هنا عن أي مطور أو منطقة...")
     
     filtered = df.copy()
     if search:
-        filtered = filtered[filtered['Developer'].str.contains(search, case=False, na=False)]
+        # البحث في الاسم أو الزتونة الفنية
+        filtered = filtered[filtered['Developer'].str.contains(search, case=False, na=False) | 
+                            filtered['Detailed_Info'].str.contains(search, case=False, na=False)]
 
     for i, row in filtered.iterrows():
         st.markdown(f"""
@@ -60,25 +64,26 @@ if st.session_state.page == 'main':
             </div>
         """, unsafe_allow_html=True)
         
-        if st.button(f"التفاصيل", key=f"btn_{i}"):
+        if st.button(f"عرض التفاصيل", key=f"btn_{i}"):
             st.session_state.selected_item = row.to_dict()
             st.session_state.page = 'details'
             st.rerun()
 
+# صفحة التفاصيل (الشكل القديم البسيط اللي مريحك)
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
     
-    if st.button("🔙 عودة"):
+    if st.button("🔙 العودة للقائمة"):
         st.session_state.page = 'main'
         st.rerun()
     
-    # صفحة التفاصيل بالشكل الأساسي البسيط
     st.header(f"🏢 {item['Developer']}")
     
-    st.info(f"💡 الزتونة الفنية: {item.get('Detailed_Info', 'لا توجد بيانات')}")
+    # استخدام الـ Blocks العادية الواضحة
+    st.info(f"💡 الزتونة الفنية: {item.get('Detailed_Info', 'لا توجد بيانات إضافية')}")
     
     st.write(f"**👤 المالك:** {item.get('Owner', '-')}")
-    st.write(f"**🏗️ المشاريع:** {item.get('Projects', '-')}")
-    st.write(f"**💰 السعر:** {item.get('Price', '-')}")
-    st.write(f"**⏳ التقسيط:** {item.get('Installments', '-')}")
-    st.write(f"**📝 وصف المطور:** {item.get('Description', '-')}")
+    st.write(f"**🏗️ أهم المشاريع:** {item.get('Projects', '-')}")
+    st.write(f"**💰 متوسط السعر:** {item.get('Price', '-')}")
+    st.write(f"**⏳ أنظمة التقسيط:** {item.get('Installments', '-')}")
+    st.write(f"**📝 وصف عام:** {item.get('Description', '-')}")
