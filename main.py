@@ -1,10 +1,10 @@
 import streamlit as st
-import pd as pd
+import pandas as pd
 
-# 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="Real Estate Wiki", layout="wide")
+# 1. الإعدادات الأساسية
+st.set_page_config(page_title="الموسوعة العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - الألوان اللي طلبتها
+# 2. كود التصميم (CSS) الموحد
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
@@ -17,8 +17,8 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .info-badge {
-        background-color: #f1f5f9; color: #475569; padding: 2px 8px; 
-        border-radius: 5px; font-size: 0.8rem; margin-left: 5px;
+        background-color: #f1f5f9; color: #003366; padding: 2px 8px; 
+        border-radius: 5px; font-size: 0.8rem; margin-left: 5px; font-weight: bold;
     }
     div.stButton > button {
         background-color: #003366 !important; color: white !important;
@@ -27,26 +27,29 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. منع أخطاء الـ NameError بتعريف الـ Session State
-if 'page' not in st.session_state: st.session_state.page = 'main'
-if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+# 3. إدارة الجلسة (عشان الأخطاء اللي ظهرت لك)
+if 'page' not in st.session_state:
+    st.session_state.page = 'main'
 
-# 4. دالة التحميل (تأكد من وضع رابط الـ CSV الخاص بك)
+# 4. تحميل البيانات
 @st.cache_data
 def load_data():
     csv_url = "رابط_شيت_جوجل_هنا"
     try:
-        return pd.read_csv(csv_url)
+        df = pd.read_csv(csv_url)
+        return df
     except:
-        return pd.DataFrame([{"Developer": "يرجى ربط الشيت", "Area": "-", "Price": "-", "Detailed_Info": "-"}])
+        return pd.DataFrame([{"Developer": "انتظر ربط الشيت", "Area": "-", "Price": "-", "Detailed_Info": "لا توجد بيانات"}])
 
 df = load_data()
 
-# --- التنقل بين الصفحات ---
+# --- بداية المنطق البرمجي (Logic) ---
 
+# الصفحة الرئيسية
 if st.session_state.page == 'main':
-    st.title("🏛️ موسوعة المطورين")
-    search = st.text_input("🔍 ابحث هنا...")
+    st.title("🏛️ موسوعة المطورين العقاريين")
+    
+    search = st.text_input("🔍 ابحث عن أي مطور أو منطقة...")
     
     filtered = df.copy()
     if search:
@@ -56,37 +59,38 @@ if st.session_state.page == 'main':
         st.markdown(f"""
             <div class="main-card">
                 <span style="color:#003366; font-size:1.2rem; font-weight:bold;">{row['Developer']}</span><br>
-                <span class="info-badge">📍 {row['Area']}</span>
-                <span class="info-badge">💰 {row['Price']}</span>
+                <span class="info-badge">📍 {row.get('Area', '-')}</span>
+                <span class="info-badge">💰 {row.get('Price', '-')}</span>
             </div>
         """, unsafe_allow_html=True)
         
-        if st.button(f"التفاصيل", key=f"btn_{i}"):
+        if st.button(f"تفاصيل {row['Developer']}", key=f"btn_{i}"):
             st.session_state.selected_item = row.to_dict()
             st.session_state.page = 'details'
             st.rerun()
 
+# صفحة التفاصيل (بنفس ألوان الرئيسية اللي طلبتها)
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
     
-    if st.button("🔙 عودة"):
+    if st.button("🔙 عودة للقائمة"):
         st.session_state.page = 'main'
         st.rerun()
     
-    # صفحة التفاصيل بنفس ألوان الرئيسية
+    st.header(f"🏢 {item['Developer']}")
+    
+    # تفاصيل واضحة وبسيطة بنفس الوان الموقع
     st.markdown(f"""
-        <div style="background-color:#003366; padding:15px; border-radius:10px; color:white; text-align:center;">
-            <h2>{item['Developer']}</h2>
-        </div>
-        <br>
         <div class="main-card">
             <h3 style="color:#003366;">💡 الزتونة الفنية</h3>
-            <p style="font-size:1.1rem; line-height:1.6;">{item.get('Detailed_Info', 'لا يوجد بيانات')}</p>
+            <p style="font-size:1.1rem; line-height:1.6;">{item.get('Detailed_Info', 'لا توجد تفاصيل إضافية حالياً')}</p>
         </div>
+        
         <div class="main-card">
-            <p><b>👤 المالك:</b> {item.get('Owner')}</p>
-            <p><b>🏢 المشاريع:</b> {item.get('Projects')}</p>
-            <p><b>💰 المقدم:</b> {item.get('Down_Payment')}</p>
-            <p><b>⏳ التقسيط:</b> {item.get('Installments')}</p>
+            <p><b>👤 المالك:</b> {item.get('Owner', '-')}</p>
+            <p><b>🏗️ المشاريع:</b> {item.get('Projects', '-')}</p>
+            <p><b>💰 السعر:</b> {item.get('Price', '-')}</p>
+            <p><b>🕒 الاستلام:</b> {item.get('Delivery', '-')}</p>
+            <p><b>📝 الوصف:</b> {item.get('Description', '-')}</p>
         </div>
     """, unsafe_allow_html=True)
