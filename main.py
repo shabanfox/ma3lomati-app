@@ -5,7 +5,7 @@ import math
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - كروت صغيرة مجمعة لليمين مع مساحة لليسار
+# 2. كود التصميم (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -20,26 +20,25 @@ st.markdown("""
     /* كروت اليمين الصغيرة */
     .small-grid-card {
         background: white; border-radius: 10px; padding: 12px;
-        height: 100px; display: flex; flex-direction: column;
+        height: 105px; display: flex; flex-direction: column;
         justify-content: center; border: 1px solid #e2e8f0;
         border-right: 4px solid #003366; margin-bottom: 5px;
     }
 
-    /* ستايل العداد والقائمة في اليسار */
+    /* شريط المقارنة المقترح */
+    .comparison-bar {
+        background: #003366; color: white; padding: 15px;
+        border-radius: 12px; margin-top: 20px; text-align: center;
+        border-bottom: 4px solid #D4AF37;
+    }
+
     .stat-card {
         background: white; padding: 20px; border-radius: 15px;
-        border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        text-align: center; margin-bottom: 20px;
-    }
-    
-    .bio-section {
-        background: white; padding: 25px; border-radius: 15px;
-        border-right: 8px solid #D4AF37; margin-bottom: 20px;
+        border: 1px solid #e2e8f0; text-align: center; margin-bottom: 20px;
     }
 
     div.stButton > button {
         border-radius: 6px !important; font-family: 'Cairo', sans-serif !important;
-        height: 32px; font-size: 0.85rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -62,6 +61,7 @@ df = load_data()
 if 'page' not in st.session_state: st.session_state.page = 'main'
 if 'current_page_num' not in st.session_state: st.session_state.current_page_num = 1
 if 'search_query' not in st.session_state: st.session_state.search_query = ""
+if 'compare_list' not in st.session_state: st.session_state.compare_list = []
 
 top_10_list = ["Mountain View", "SODIC", "Emaar", "TMG", "Ora Developers", "Palm Hills", "Tatweer Misr", "Misr Italia", "Orascom", "Hassan Allam"]
 
@@ -77,10 +77,7 @@ if st.session_state.page == 'main':
             st.markdown('<div style="background:white; padding:15px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px;">', unsafe_allow_html=True)
             f_c1, f_c2 = st.columns([2, 1])
             with f_c1:
-                search_input = st.text_input("🔍 ابحث عن مطور...", value=st.session_state.search_query)
-                if search_input != st.session_state.search_query:
-                    st.session_state.search_query = search_input
-                    st.session_state.current_page_num = 1 # تصغير الصفحة عند البحث
+                st.session_state.search_query = st.text_input("🔍 ابحث عن مطور...", value=st.session_state.search_query)
             with f_c2:
                 areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
                 s_area = st.selectbox("المنطقة", areas)
@@ -92,70 +89,83 @@ if st.session_state.page == 'main':
             if st.session_state.search_query:
                 f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
 
-            # --- منطق الـ 3 صفوف (Pagination) ---
-            # بما إن الشاشة مقسومة واليمين فيه عمودين، 3 صفوف يعني 6 كروت
+            # منطق الـ 3 صفوف (6 كروت)
             items_per_page = 6 
-            total_items = len(f_df)
-            total_pages = math.ceil(total_items / items_per_page)
-            
+            total_pages = math.ceil(len(f_df) / items_per_page)
             start_idx = (st.session_state.current_page_num - 1) * items_per_page
             page_items = f_df.iloc[start_idx : start_idx + items_per_page]
 
-            # عرض الكروت 2*3 (كارتين في 3 صفوف)
             grid_cols = st.columns(2)
             for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
+                dev_name = row.get('Developer')
                 with grid_cols[idx % 2]:
                     st.markdown(f"""
                         <div class="small-grid-card">
-                            <div style="color:#003366; font-weight:900; font-size:0.9rem;">{row.get('Developer')}</div>
+                            <div style="color:#003366; font-weight:900; font-size:0.95rem;">{dev_name}</div>
                             <div style="color:#64748b; font-size:0.75rem;">📍 {row.get('Area')}</div>
                         </div>
                     """, unsafe_allow_html=True)
-                    if st.button("عرض البروفايل", key=f"btn_{i}"):
-                        st.session_state.selected_item = row.to_dict()
-                        st.session_state.page = 'details'; st.rerun()
+                    
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button("البروفايل", key=f"p_{i}"):
+                            st.session_state.selected_item = row.to_dict()
+                            st.session_state.page = 'details'; st.rerun()
+                    with b2:
+                        is_added = dev_name in st.session_state.compare_list
+                        if st.button("➕ قارن" if not is_added else "✅ مضاف", key=f"comp_{i}"):
+                            if not is_added and len(st.session_state.compare_list) < 3:
+                                st.session_state.compare_list.append(dev_name)
+                            elif is_added:
+                                st.session_state.compare_list.remove(dev_name)
+                            st.rerun()
 
-            # أزرار التنقل بين الصفحات
+            # --- الإضافة المقترحة: شريط المقارنة السريع ---
+            if st.session_state.compare_list:
+                st.markdown(f"""
+                    <div class="comparison-bar">
+                        ⚡ تم اختيار ({len(st.session_state.compare_list)}) شركات للمقارنة: 
+                        <b>{', '.join(st.session_state.compare_list)}</b>
+                    </div>
+                """, unsafe_allow_html=True)
+                if st.button("🚀 ابدأ المقارنة الفنية الآن", use_container_width=True):
+                    st.info("سيتم فتح لوحة المقارنة الشاملة في التحديث القادم!")
+
+            # أزرار التنقل
             if total_pages > 1:
                 st.write("---")
-                p_c1, p_c2, p_c3 = st.columns([1,1,1])
-                with p_c2:
-                    st.write(f"صفحة {st.session_state.current_page_num} من {total_pages}")
-                    b_prev, b_next = st.columns(2)
-                    if b_prev.button("السابق") and st.session_state.current_page_num > 1:
-                        st.session_state.current_page_num -= 1; st.rerun()
-                    if b_next.button("التالي") and st.session_state.current_page_num < total_pages:
-                        st.session_state.current_page_num += 1; st.rerun()
+                p1, p2, p3 = st.columns([1,1,1])
+                if p1.button("السابق") and st.session_state.current_page_num > 1:
+                    st.session_state.current_page_num -= 1; st.rerun()
+                if p3.button("التالي") and st.session_state.current_page_num < total_pages:
+                    st.session_state.current_page_num += 1; st.rerun()
 
         with col_left:
             # عداد الشركات
             st.markdown(f"""
                 <div class="stat-card">
-                    <h5 style="margin:0; color:#64748b;">شركات مطابقة للبحث</h5>
+                    <h5 style="margin:0; color:#64748b;">إجمالي نتائج البحث</h5>
                     <h1 style="margin:0; color:#003366;">{len(f_df)}</h1>
                 </div>
             """, unsafe_allow_html=True)
 
-            # فلتر أقوى 10 شركات
-            st.markdown('<div class="stat-card" style="text-align:right;">', unsafe_allow_html=True)
-            st.markdown('<h4 style="color:#003366; border-bottom:2px solid #D4AF37; padding-bottom:10px;">🏆 أقوى 10 مطورين</h4>', unsafe_allow_html=True)
+            # توب 10
+            st.markdown('<div class="stat-card" style="text-align:right;"><h4>🏆 الشركات الكبرى</h4>', unsafe_allow_html=True)
             for company in top_10_list:
-                if st.button(f"🏢 {company}", key=f"top_{company}", use_container_width=True):
-                    st.session_state.search_query = company
-                    st.session_state.current_page_num = 1
-                    st.rerun()
+                if st.button(f"🏢 {company}", key=f"t_{company}", use_container_width=True):
+                    st.session_state.search_query = company; st.session_state.current_page_num = 1; st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-# --- صفحة التفاصيل ---
+# --- صفحة التفاصيل (البروفايل) ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
-    if st.button("🔙 عودة"): st.session_state.page = 'main'; st.rerun()
+    if st.button("🔙 عودة للرئيسية"): st.session_state.page = 'main'; st.rerun()
     st.markdown(f"""
         <div style="background:#003366; padding:30px; border-radius:12px; color:white; text-align:center; margin-bottom:20px;">
             <h2>{item.get('Developer')}</h2>
         </div>
-        <div class="bio-section">
+        <div style="background:white; padding:25px; border-radius:15px; border-right:8px solid #D4AF37;">
             <h3>📖 نبذة عن الشركة</h3>
-            <p>{item.get('Company_Bio', 'سيتم إضافة النبذة قريباً.')}</p>
+            <p style="font-size:1.1rem; line-height:1.7;">{item.get('Company_Bio', 'المعلومات ستتوفر قريباً.')}</p>
         </div>
     """, unsafe_allow_html=True)
