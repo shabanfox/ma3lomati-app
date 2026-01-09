@@ -1,28 +1,30 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة (واسعة لـ 3 كروت)
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. تصميم CSS متطور
+# 2. تصميم CSS مخصص (3 كروت في الصف + قائمة جانبية)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f0f2f6; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f4f7f6; 
     }
-    .stSearchInput { border-radius: 20px; }
-    .top-dev-box {
-        background: white; padding: 15px; border-radius: 12px;
-        border-bottom: 4px solid #003366; text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
+    /* تصميم الكارت ليكون مناسب لـ 3 في الصف */
     .project-card {
-        background: white; border-radius: 15px; padding: 20px;
-        border-right: 10px solid #003366; margin-bottom: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        background: white; border-radius: 12px; padding: 15px;
+        border-top: 5px solid #003366; margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        height: 280px; display: flex; flex-direction: column; justify-content: space-between;
     }
-    .price-tag { color: #16a34a; font-weight: 900; font-size: 1.3rem; }
+    .top-rank-card {
+        background: #003366; color: white; padding: 10px;
+        border-radius: 8px; margin-bottom: 8px; text-align: center;
+        font-size: 0.9rem; border-right: 5px solid #fbbf24;
+    }
+    .price-tag { color: #16a34a; font-weight: 900; font-size: 1.1rem; }
+    .stButton>button { border-radius: 8px; font-family: 'Cairo'; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -41,67 +43,71 @@ df = load_data()
 if df is not None:
     if 'page' not in st.session_state: st.session_state.page = 'main'
 
-    # --- القائمة الجانبية (الفلاتر) ---
+    # --- القائمة الجانبية اليسرى (أفضل المطورين/المشاريع) ---
     with st.sidebar:
-        st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=100)
-        st.title("تصفية البحث")
-        f_area = st.multiselect("📍 المناطق", options=df.iloc[:, 3].unique().tolist(), default=[])
-        f_type = st.multiselect("🏠 نوع الوحدة", options=df.iloc[:, 7].unique().tolist(), default=[])
+        st.markdown("<h2 style='text-align:center;'>🏆 أفضل المطورين</h2>", unsafe_allow_html=True)
+        # قائمة مرتبة لأفضل الشركات
+        top_list = ["Mountain View", "Palm Hills", "SODIC", "Emaar Misr", "Hassan Allam", "Ora Dev", "TMG", "Nile Dev"]
+        for rank, name in enumerate(top_list, 1):
+            st.markdown(f'<div class="top-rank-card">{rank}# {name}</div>', unsafe_allow_html=True)
+        
         st.divider()
-        st.info("استخدم الفلاتر أعلاه لتحديد بحثك بدقة")
+        st.markdown("### 📍 فلاتر سريعة")
+        f_area = st.selectbox("اختار المنطقة", ["الكل"] + sorted(df.iloc[:, 3].unique().tolist()))
+        f_type = st.selectbox("نوع الوحدة", ["الكل"] + sorted(df.iloc[:, 7].unique().tolist()))
 
     # --- الصفحة الرئيسية ---
     if st.session_state.page == 'main':
         st.markdown("<h1 style='text-align:center; color:#003366;'>🏠 منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
         
-        # 1. شريط البحث العلوي
-        search_query = st.text_input("🔍 ابحث عن مطور أو مشروع محدد...", placeholder="اكتب اسم الشركة أو الكمبوند هنا")
+        # البحث العلوي
+        search_query = st.text_input("🔍 ابحث عن مشروع أو مطور...", placeholder="اكتب هنا للبحث السريع...")
 
-        # 2. قائمة أفضل المطورين (سلايدر أفقي بسيط)
-        st.subheader("🏆 أفضل المطورين")
-        top_devs = ["Mountain View", "Palm Hills", "SODIC", "Emaar Misr", "Ora Dev", "Nile Dev"]
-        cols_devs = st.columns(len(top_devs))
-        for i, dev in enumerate(top_devs):
-            with cols_devs[i]:
-                st.markdown(f'<div class="top-dev-box"><b>{dev}</b></div>', unsafe_allow_html=True)
-
-        st.divider()
-
-        # تطبيق الفلاتر والبحث
+        # تطبيق الفلترة
         f_df = df.copy()
-        if f_area: f_df = f_df[f_df.iloc[:, 3].isin(f_area)]
-        if f_type: f_df = f_df[f_df.iloc[:, 7].isin(f_type)]
+        if f_area != "الكل": f_df = f_df[f_df.iloc[:, 3] == f_area]
+        if f_type != "الكل": f_df = f_df[f_df.iloc[:, 7] == f_type]
         if search_query:
             f_df = f_df[f_df.iloc[:, 0].str.contains(search_query, na=False, case=False) | 
                         f_df.iloc[:, 2].str.contains(search_query, na=False, case=False)]
 
-        # 3. عرض النتائج
-        st.subheader(f"📂 المشاريع المتاحة ({len(f_df)})")
-        grid = st.columns(2)
-        for idx, (i, row) in enumerate(f_df.iterrows()):
-            with grid[idx % 2]:
-                st.markdown(f"""
-                    <div class="project-card">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <h2 style="margin:0; color:#003366;">{row[2]}</h2>
-                            <span class="price-tag">{row[4]}</span>
-                        </div>
-                        <p style="color:#64748b; font-size:1.1rem; margin:5px 0;">🏢 <b>المطور:</b> {row[0]}</p>
-                        <p>📍 {row[3]} | 🔑 استلام {row[8]}</p>
-                        <div style="background:#f8fafc; padding:10px; border-radius:8px; font-size:0.9rem;">
-                            💰 مقدم {row[10]} | ⏳ تقسيط {row[9]} سنوات
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"التفاصيل والزتونة لـ {row[2]}", key=f"btn_{i}", use_container_width=True):
-                    st.session_state.selected_item = row.to_list()
-                    st.session_state.page = 'details'
-                    st.rerun()
+        # --- عرض النتائج (3 كروت في الصف) ---
+        st.write(f"عرض **{len(f_df)}** مشروع")
+        
+        # إنشاء الصفوف بـ 3 أعمدة
+        for start_idx in range(0, len(f_df), 3):
+            cols = st.columns(3)
+            for i in range(3):
+                idx = start_idx + i
+                if idx < len(f_df):
+                    row = f_df.iloc[idx]
+                    with cols[i]:
+                        st.markdown(f"""
+                            <div class="project-card">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <b style="color:#003366; font-size:1.1rem;">{row[2]}</b>
+                                        <span class="price-tag">{row[4]}</span>
+                                    </div>
+                                    <p style="font-size:0.9rem; color:#64748b; margin:5px 0;">{row[0]}</p>
+                                    <div style="font-size:0.8rem;">📍 {row[3]}</div>
+                                </div>
+                                <div>
+                                    <div style="background:#f1f5f9; padding:8px; border-radius:5px; font-size:0.8rem; margin-bottom:10px;">
+                                        💰 مقدم {row[10]} | ⏳ {row[9]} سنين
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        if st.button(f"تفاصيل {row[2]}", key=f"btn_{idx}", use_container_width=True):
+                            st.session_state.selected_item = row.to_list()
+                            st.session_state.page = 'details'
+                            st.rerun()
 
     # --- صفحة التفاصيل ---
     elif st.session_state.page == 'details':
         item = st.session_state.selected_item
-        if st.button("🔙 العودة لنتائج البحث"):
+        if st.button("🔙 العودة للرئيسية"):
             st.session_state.page = 'main'
             st.rerun()
 
@@ -112,19 +118,12 @@ if df is not None:
             </div>
         """, unsafe_allow_html=True)
 
-        tab1, tab2 = st.tabs(["📝 الزتونة الفنية والمعلومات", "🏗️ كل مشاريع المطور"])
-        
+        tab1, tab2 = st.tabs(["📝 الزتونة الفنية", "🏗️ مشاريع المطور"])
         with tab1:
             c1, c2 = st.columns(2)
             with c1:
-                st.info(f"**الزتونة الفنية:**\n\n {item[11]}")
-                st.warning(f"**وصف المشروع:**\n\n {item[6]}")
+                st.info(f"**الزتونة:** {item[11]}")
+                st.write(f"**الوصف:** {item[6]}")
             with c2:
-                st.success(f"### نظام السداد\n- **السعر:** {item[4]}\n- **أقل استثمار:** {item[5]}\n- **المقدم:** {item[10]}\n- **السنوات:** {item[9]}")
-                st.write(f"**الاستلام:** {item[8]}")
-
-        with tab2:
-            st.subheader(f"مشاريع أخرى تابعة لـ {item[0]}")
-            others = df[df.iloc[:, 0] == item[0]]
-            for _, p in others.iterrows():
-                st.markdown(f"- **{p[2]}** في منطقة {p[3]} (السعر: {p[4]})")
+                st.success(f"**السعر:** {item[4]}\n\n**المقدم:** {item[10]}\n\n**التقسيط:** {item[9]} سنوات")
+                st.warning(f"**الاستلام:** {item[8]}")
