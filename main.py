@@ -1,112 +1,54 @@
 import streamlit as st
 import pandas as pd
-import math
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) المطور
+# 2. كود التصميم (CSS) - الحفاظ على الهوية البصرية الملكية
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
     [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
     
-    .block-container {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 5% !important;
-        padding-right: 5% !important;
-    }
-
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; 
         font-family: 'Cairo', sans-serif; 
-        background-color: #f0f4f8; 
+        background-color: #f1f5f9; 
     }
 
-    /* هيدر احترافي بصورة عقارات */
-    .hero-header {
-        background-image: linear-gradient(to left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.2)), 
-        url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
-        background-size: cover;
-        background-position: center;
-        height: 130px;
-        border-radius: 0 0 30px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 40px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        position: relative;
+    .filter-box { 
+        background: white; padding: 15px; border-radius: 12px; 
+        margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    /* اسم المنصة - أزرق وأقصى اليمين */
-    .platform-name {
-        color: #0044ff !important;
-        font-size: 2rem;
-        font-weight: 900;
-        margin: 0;
-        text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
+    .project-card-container { 
+        background-color: white; border-radius: 10px; 
+        padding: 15px; margin-bottom: 10px; 
+        border-right: 5px solid #003366;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* تنسيق أزرار التنقل (أعلى اليسار) */
-    .stButton > button {
-        background-color: #001a33 !important;
-        color: white !important;
-        border-radius: 10px !important;
-        font-family: 'Cairo', sans-serif !important;
-        font-weight: bold !important;
-        height: 40px !important;
-        padding: 0 25px !important;
-        border: 2px solid #0044ff !important;
-        transition: 0.4s !important;
-        margin-top: -65px; /* رفع الأزرار للأعلى */
-    }
-
-    .stButton > button:hover {
-        background-color: #0044ff !important;
-        box-shadow: 0 4px 15px rgba(0,68,255,0.4);
-        transform: translateY(-3px);
-    }
-
-    /* كروت الشركات في الوسط */
-    .dev-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        border: 1px solid #e2e8f0;
-        border-right: 6px solid #0044ff;
-        margin-bottom: 12px;
-        transition: 0.3s;
-    }
-    .dev-card:hover { border-right-color: #001a33; box-shadow: 0 8px 15px rgba(0,0,0,0.05); }
-
-    /* قائمة الكبار (الجانبية) */
-    .sidebar-title {
-        color: #001a33;
-        font-weight: 900;
-        font-size: 1.2rem;
-        border-bottom: 3px solid #0044ff;
-        padding-bottom: 8px;
-        margin-bottom: 15px;
-        text-align: center;
+    .comp-card {
+        background: white; border-radius: 15px; padding: 20px;
+        border: 2px solid #e2e8f0; text-align: center; height: 100%;
     }
     
-    .top-company-btn div.stButton > button {
-        background-color: white !important;
-        color: #001a33 !important;
-        border: 1px solid #e2e8f0 !important;
-        text-align: right !important;
-        margin-top: 0px !important; /* إلغاء الرفع للأزرار الجانبية */
-        margin-bottom: 5px !important;
-        height: 45px !important;
+    div.stButton > button {
+        background-color: #003366 !important; color: white !important;
+        border-radius: 6px !important; padding: 4px 10px !important;
+        font-size: 0.9rem !important; width: 100%;
+        font-family: 'Cairo', sans-serif;
     }
-    
-    .top-company-btn div.stButton > button:hover {
-        border-color: #0044ff !important;
-        background-color: #f0f7ff !important;
+
+    /* تنسيق خاص لصفحة التفاصيل */
+    .details-header {
+        background-color: #003366; padding: 25px; border-radius: 12px; 
+        margin-bottom: 20px; text-align: center; color: white;
+    }
+    .details-card {
+        background-color: white; padding: 20px; border-radius: 10px;
+        border-right: 6px solid #003366; margin-bottom: 15px;
+        color: #1e293b;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -123,71 +65,105 @@ def load_data():
 
 df = load_data()
 
-# 4. بناء الهيدر
-st.markdown('<div class="hero-header"><div class="platform-name">منصة معلوماتى العقارية</div></div>', unsafe_allow_html=True)
-
-# وضع الأزرار في أعلى اليسار
-nav_col1, nav_col2, nav_empty = st.columns([1.2, 1.2, 5])
-with nav_col1:
-    if st.button("🏠 الرئيسية"):
-        st.session_state.page = 'main'; st.session_state.search_query = ""; st.rerun()
-with nav_col2:
-    if st.button("👤 دخول"):
-        st.toast("مرحباً بك.. نافذة الدخول قريباً")
-
-# 5. إدارة الحالة
+# إدارة الحالة
+if 'compare_list' not in st.session_state: st.session_state.compare_list = []
 if 'page' not in st.session_state: st.session_state.page = 'main'
-if 'search_query' not in st.session_state: st.session_state.search_query = ""
+if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
 # --- الصفحة الرئيسية ---
-if st.session_state.page == 'main' and df is not None:
-    col_main, col_side = st.columns([2.3, 1])
+if st.session_state.page == 'main':
+    st.markdown('<div style="text-align:right;"><div style="color:#003366; font-weight:900; font-size:1.8rem;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
 
-    with col_main:
-        # البحث بستايل أنيق
-        st.markdown('<p style="font-weight:bold; color:#64748b; margin-bottom:0;">ابحث عن مطورك المفضل:</p>', unsafe_allow_html=True)
-        st.session_state.search_query = st.text_input("", value=st.session_state.search_query, placeholder="اكتب اسم الشركة هنا...", label_visibility="collapsed")
-        
+    if df is not None:
+        # شريط المقارنة
+        if st.session_state.compare_list:
+            c_top = st.columns([4, 1])
+            with c_top[0]: st.info(f"📋 القائمة المختارة: {', '.join(st.session_state.compare_list)}")
+            with c_top[1]:
+                if st.button("📊 قارن الآن"): 
+                    st.session_state.page = 'compare'
+                    st.rerun()
+
+        # الفلاتر
+        st.markdown('<div class="filter-box">', unsafe_allow_html=True)
+        f1, f2, f3 = st.columns(3)
+        with f1: s_dev = st.text_input("🔍 البحث بالمطور")
+        with f2: 
+            areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
+            s_area = st.selectbox("📍 المنطقة", areas)
+        with f3: s_price = st.selectbox("💰 السعر", ["الكل", "أقل من 5 مليون", "10 مليون+"])
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # منطق الفلترة
         f_df = df.copy()
-        if st.session_state.search_query:
-            f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
+        if s_dev: f_df = f_df[f_df['Developer'].astype(str).str.contains(s_dev, case=False, na=False)]
+        if s_area != "الكل": f_df = f_df[f_df['Area'] == s_area]
 
         # عرض الكروت
-        for idx, (i, row) in enumerate(f_df.head(8).reset_index().iterrows()):
+        for i, row in f_df.iterrows():
             st.markdown(f"""
-                <div class="dev-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-weight: 900; color: #001a33; font-size: 1.2rem;">{row['Developer']}</div>
-                            <div style="color: #64748b; font-size: 0.9rem;">📍 {row['Area']}</div>
+                <div class="project-card-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 3;">
+                            <div style="color: #003366; font-weight: 900; font-size: 1.2rem;">{row.get('Developer')}</div>
+                            <div style="color: #64748b; font-size: 0.85rem;">📍 {row.get('Area')} | {row.get('Price')}</div>
                         </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            if st.button(f"استكشاف مشروعات {row['Developer']}", key=f"main_btn_{i}"):
-                st.session_state.selected_item = row.to_dict(); st.session_state.page = 'details'; st.rerun()
+            
+            c_btn1, c_btn2 = st.columns([1, 1])
+            with c_btn1:
+                if st.button("👁️ التفاصيل", key=f"det_{i}"):
+                    st.session_state.selected_item = row.to_dict()
+                    st.session_state.page = 'details'
+                    st.rerun()
+            with c_btn2:
+                name = str(row['Developer'])
+                is_in = name in st.session_state.compare_list
+                if st.button("➕ مقارنة" if not is_in else "❌ إزالة", key=f"comp_{i}"):
+                    if not is_in: st.session_state.compare_list.append(name)
+                    else: st.session_state.compare_list.remove(name)
+                    st.rerun()
 
-    with col_side:
-        # قائمة الكبار بتعديل الاسم والتصميم
-        st.markdown('<div style="background:white; padding:20px; border-radius:20px; border:1px solid #e2e8f0;">', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-title">نخبة المطورين</div>', unsafe_allow_html=True)
-        
-        top_list = ["Mountain View", "SODIC", "Emaar", "TMG", "Palm Hills", "Ora Developers", "Hassan Allam", "Misr Italia"]
-        for comp in top_list:
-            st.markdown('<div class="top-company-btn">', unsafe_allow_html=True)
-            if st.button(f"🏢 {comp}", key=f"side_{comp}"):
-                st.session_state.search_query = comp; st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# صفحة التفاصيل
+# --- صفحة التفاصيل (بالألوان الموحدة) ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
+    
+    if st.button("⬅️ عودة للقائمة الرئيسية"):
+        st.session_state.page = 'main'
+        st.rerun()
+
     st.markdown(f"""
-        <div style="background:white; padding:40px; border-radius:25px; border:1px solid #e2e8f0; text-align:right; box-shadow: 0 15px 35px rgba(0,0,0,0.05);">
-            <h1 style="color:#0044ff; font-weight:900; font-size:2.5rem; margin-bottom:5px;">{item['Developer']}</h1>
-            <p style="color:#64748b; font-size:1.2rem;">نطاق العمل: {item['Area']}</p>
-            <div style="width:100px; height:5px; background:#001a33; margin:20px 0;"></div>
-            <p style="font-size:1.3rem; line-height:2; color:#1e293b;">{item.get('Company_Bio', 'معلومات المطور العقاري قيد التجهيز حالياً.. انتظرونا.')}</p>
+        <div class="details-header">
+            <h1 style="margin:0;">{item.get('Developer')}</h1>
+            <p style="opacity:0.8;">{item.get('Projects', 'بيانات المطور')}</p>
+        </div>
+        
+        <div class="details-card">
+            <h3 style="color:#003366;">💡 الزتونة الفنية</h3>
+            <p style="font-size:1.1rem; line-height:1.6;">{item.get('Detailed_Info', 'لا توجد بيانات تفصيلية متوفرة حالياً.')}</p>
+        </div>
+
+        <div class="details-card" style="border-right-color: #D4AF37;">
+            <p><b>👤 المالك:</b> {item.get('Owner', '-')}</p>
+            <p><b>📍 المنطقة:</b> {item.get('Area', '-')}</p>
+            <p><b>💰 السعر:</b> {item.get('Price', '-')}</p>
+            <p><b>⏳ التقسيط:</b> {item.get('Installments', '-')}</p>
+            <hr>
+            <p><b>📝 الوصف:</b> {item.get('Description', '-')}</p>
         </div>
     """, unsafe_allow_html=True)
+
+# --- صفحة المقارنة ---
+elif st.session_state.page == 'compare':
+    st.markdown("<h2 style='text-align:center;'>📊 جدول المقارنة</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ عودة"): 
+        st.session_state.page = 'main'
+        st.rerun()
+    
+    comp_df = df[df['Developer'].isin(st.session_state.compare_list)]
+    if not comp_df.empty:
+        st.table(comp_df[['Developer', 'Area', 'Price', 'Installments']])
+    else:
+        st.warning("القائمة فارغة")
