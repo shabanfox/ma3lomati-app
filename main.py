@@ -1,86 +1,125 @@
-# --- إدارة التنقل بين الصفحات ---
+import streamlit as st
+import pandas as pd
 
-# 1. الصفحة الرئيسية
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="موسوعة العقارات المصرية", layout="wide")
+
+# 2. كود التصميم (CSS)
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
+    
+    html, body, [data-testid="stAppViewContainer"] { 
+        direction: RTL; text-align: right; 
+        font-family: 'Cairo', sans-serif; 
+        background-color: #f8fafc; 
+    }
+
+    .main-card { 
+        background-color: white; border-radius: 12px; 
+        padding: 15px; margin-bottom: 10px;
+        border-right: 5px solid #003366;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .info-badge {
+        background-color: #f1f5f9; color: #475569;
+        padding: 2px 8px; border-radius: 5px; font-size: 0.8rem;
+        margin-left: 5px; border: 1px solid #e2e8f0;
+    }
+
+    div.stButton > button {
+        background-color: #003366 !important; color: white !important;
+        border-radius: 8px !important; width: 100%; font-weight: 700;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. جلب البيانات
+@st.cache_data(ttl=60)
+def load_data():
+    csv_url = "رابط_شيت_جوجل_الخاص_بك_هنا"
+    try:
+        df = pd.read_csv(csv_url)
+        df.columns = [str(c).strip() for c in df.columns]
+        return df
+    except: return None
+
+df = load_data()
+
+# إدارة الجلسة
+if 'page' not in st.session_state: st.session_state.page = 'main'
+
+# --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
-    st.markdown("<h1 style='text-align: center; color: #003366;'>🏛️ موسوعة المطورين العقاريين</h1>", unsafe_allow_html=True)
+    st.title("🏛️ موسوعة المطورين العقاريين")
     
     if df is not None:
-        search = st.text_input("🔍 ابحث عن مطور، منطقة، أو ميزة فنية...")
+        # محرك البحث الذكي
+        search = st.text_input("🔍 ابحث عن مطور، منطقة، أو ميزة (مثلاً: تشطيب، ناطحة سحاب، قسط 10 سنين)")
         
-        # تصفية البيانات بناءً على البحث
+        # الفلاتر السريعة
+        c1, c2 = st.columns(2)
+        with c1: area_f = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].unique().tolist()))
+        with c2: type_f = st.selectbox("🏗️ نوع المشروع", ["الكل"] + sorted(df['Type'].unique().tolist()))
+
+        # تصفية البيانات
         filtered = df.copy()
         if search:
             filtered = filtered[
                 filtered['Developer'].str.contains(search, case=False, na=False) |
                 filtered['Detailed_Info'].str.contains(search, case=False, na=False)
             ]
+        if area_f != "الكل": filtered = filtered[filtered['Area'] == area_f]
+        if type_f != "الكل": filtered = filtered[filtered['Type'] == type_f]
 
-        # عرض الشركات في كروت
+        st.caption(f"تم العثور على {len(filtered)} مطور")
+
+        # عرض النتائج
         for i, row in filtered.iterrows():
             with st.container():
                 st.markdown(f"""
                 <div class="main-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div>
-                            <span style="color:#003366; font-size:1.3rem; font-weight:900;">{row['Developer']}</span><br>
-                            <span class="info-badge">📍 {row['Area']}</span>
-                            <span class="info-badge">💰 {row['Price']}</span>
+                            <span style="color:#003366; font-size:1.3rem; font-weight:900;">{row['Developer']}</span>
+                            <div style="margin-top:5px;">
+                                <span class="info-badge">📍 {row['Area']}</span>
+                                <span class="info-badge">⏳ {row['Installments']} سنين</span>
+                                <span class="info-badge">💰 {row['Price']}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # زر التفاصيل بنفس تنسيق ألوان الصفحة
-                if st.button(f"تفاصيل {row['Developer']}", key=f"btn_{i}"):
+                if st.button("فتح ملف الشركة الكامل", key=f"btn_{i}"):
                     st.session_state.selected_item = row.to_dict()
                     st.session_state.page = 'details'
                     st.rerun()
 
-# 2. صفحة التفاصيل (بعد إصلاح الخطأ وتوحيد الألوان)
+# --- صفحة التفاصيل الفنية ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
+    if st.button("🔙 عودة للموسوعة"): st.session_state.page = 'main'; st.rerun()
     
-    # زر العودة
-    if st.button("🔙 العودة للموسوعة"): 
-        st.session_state.page = 'main'
-        st.rerun()
+    st.header(f"🏢 {item['Developer']}")
     
-    # الهيدر الموحد
-    st.markdown(f"""
-        <div style="background-color: #003366; padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
-            <h1 style="color: white; margin: 0;">{item.get('Developer')}</h1>
-            <p style="color: #cbd5e1; margin-top: 10px;">{item.get('Projects')}</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # كروت البيانات الأربعة (نفس ستايل الرئيسية)
-    c1, c2, c3, c4 = st.columns(4)
-    with c1: st.markdown(f"<div class='main-card' style='text-align:center;'><b>المقدم</b><br><span style='color:#003366;'>{item.get('Down_Payment')}</span></div>", unsafe_allow_html=True)
-    with c2: st.markdown(f"<div class='main-card' style='text-align:center;'><b>القسط</b><br><span style='color:#003366;'>{item.get('Installments')} سنين</span></div>", unsafe_allow_html=True)
-    with c3: st.markdown(f"<div class='main-card' style='text-align:center;'><b>السعر</b><br><span style='color:#003366;'>{item.get('Price')}</span></div>", unsafe_allow_html=True)
-    with c4: st.markdown(f"<div class='main-card' style='text-align:center;'><b>الاستلام</b><br><span style='color:#003366;'>{item.get('Delivery')}</span></div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # المعلومات التفصيلية
-    col_r, col_l = st.columns([2, 1])
-    with col_r:
-        st.markdown("### 💡 المعلومات التفصيلية")
-        st.markdown(f"""
-            <div style="background-color: #f1f5f9; padding: 20px; border-radius: 10px; border-right: 5px solid #003366; color: #1e293b;">
-                {item.get('Detailed_Info', 'لا توجد معلومات إضافية')}
-            </div>
-        """, unsafe_allow_html=True)
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.subheader("💡 الزتونة الفنية (للبـروكـر)")
+        st.success(item.get('Detailed_Info', 'لا توجد معلومات إضافية'))
         
-        st.markdown("### 📝 وصف المطور")
-        st.write(item.get('Description'))
-
-    with col_l:
-        st.markdown("### 🏢 بيانات المطور")
-        st.markdown(f"""
-            <div style="background-color: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                <p><b>👤 المالك:</b> {item.get('Owner')}</p>
-                <p><b>📍 المنطقة:</b> {item.get('Area')}</p>
-                <p><b>🏗️ النوع:</b> {item.get('Type')}</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.subheader("📝 الوصف")
+        st.info(item.get('Description'))
+        
+        st.subheader("📑 بيانات المشروع")
+        st.write(f"**المشاريع:** {item.get('Projects')}")
+        st.write(f"**المالك:** {item.get('Owner')}")
+    
+    with col2:
+        st.subheader("📊 أرقام تهمك")
+        st.write(f"**المقدم:** {item.get('Down_Payment')}")
+        st.write(f"**الاستلام:** {item.get('Delivery')}")
+        st.write(f"**سنين القسط:** {item.get('Installments')}")
+        st.write(f"**أقل قيمة:** {item.get('Min_Val')}")
