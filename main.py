@@ -11,10 +11,7 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
     
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-    }
+    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; }
 
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; 
@@ -23,22 +20,12 @@ st.markdown("""
     }
 
     .header-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: white;
-        padding: 15px 30px;
-        border-radius: 15px;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        background: white; padding: 15px 30px; border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
     }
 
-    .right-side {
-        color: #003366;
-        font-weight: 900;
-        font-size: 1.8rem;
-        margin: 0;
-    }
+    .right-side { color: #003366; font-weight: 900; font-size: 1.8rem; margin: 0; }
 
     .small-grid-card {
         background: white; border-radius: 12px; padding: 15px;
@@ -47,23 +34,14 @@ st.markdown("""
         border-right: 5px solid #003366; margin-bottom: 8px;
     }
 
-    .sidebar-section {
-        background: white; padding: 20px; border-radius: 15px;
-        border: 1px solid #e2e8f0;
-    }
+    .sidebar-section { background: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
+    .sidebar-title { color: #003366; font-weight: 900; font-size: 1.2rem; border-bottom: 3px solid #D4AF37; padding-bottom: 8px; margin-bottom: 15px; }
 
-    .sidebar-title {
-        color: #003366; font-weight: 900; font-size: 1.2rem;
-        border-bottom: 3px solid #D4AF37; padding-bottom: 8px; margin-bottom: 15px;
-    }
-
-    div.stButton > button {
-        border-radius: 8px !important; font-family: 'Cairo', sans-serif !important;
-        font-weight: bold !important;
-    }
+    div.stButton > button { border-radius: 8px !important; font-family: 'Cairo', sans-serif !important; font-weight: bold !important; }
     
-    .pagination-info {
-        text-align: center; color: #64748b; font-weight: bold; margin-top: 10px;
+    /* ستايل الأزرار الكبيرة في صفحة التفاصيل */
+    .detail-nav-btn div.stButton > button {
+        height: 50px !important; font-size: 1.1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -80,15 +58,15 @@ def load_data():
 
 df = load_data()
 
-# 4. إدارة الحالة (State)
+# 4. إدارة الحالة
 if 'page' not in st.session_state: st.session_state.page = 'main'
 if 'search_query' not in st.session_state: st.session_state.search_query = ""
 if 'current_page' not in st.session_state: st.session_state.current_page = 1
+if 'detail_view' not in st.session_state: st.session_state.detail_view = 'bio' # bio or projects
 
-def reset_page():
-    st.session_state.current_page = 1
+def reset_page(): st.session_state.current_page = 1
 
-# --- الهيدر ---
+# --- الهيدر الثابت ---
 st.markdown('<div class="header-wrapper"><div class="right-side">منصة معلوماتى العقارية</div><div></div></div>', unsafe_allow_html=True)
 
 h_col1, h_col2, h_col3 = st.columns([1, 1, 4])
@@ -96,15 +74,13 @@ with h_col1:
     if st.button("🏠 الرئيسية"):
         st.session_state.page = 'main'; st.session_state.search_query = ""; reset_page(); st.rerun()
 with h_col2:
-    if st.button("👤 دخول"):
-        st.toast("قريباً")
+    if st.button("👤 دخول"): st.toast("قريباً")
 
-# --- محتوى الصفحة ---
+# --- محتوى الصفحة الرئيسية ---
 if st.session_state.page == 'main' and df is not None:
     col_main, col_side = st.columns([2, 1])
 
     with col_main:
-        # البحث
         search_q = st.text_input("🔍 ابحث عن المطور...", value=st.session_state.search_query, on_change=reset_page)
         st.session_state.search_query = search_q
 
@@ -112,60 +88,87 @@ if st.session_state.page == 'main' and df is not None:
         if st.session_state.search_query:
             f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
 
-        # --- تعديل عدد الصفوف ليكون 3 (يعني 6 شركات في الصفحة) ---
-        items_per_page = 6  # 3 صفوف × 2 عمود
-        total_items = len(f_df)
-        total_pages = math.ceil(total_items / items_per_page)
-        
-        if st.session_state.current_page > total_pages: st.session_state.current_page = 1
-        
+        items_per_page = 6 # 3 صفوف
+        total_pages = math.ceil(len(f_df) / items_per_page)
         start_idx = (st.session_state.current_page - 1) * items_per_page
-        end_idx = start_idx + items_per_page
-        page_items = f_df.iloc[start_idx:end_idx]
+        page_items = f_df.iloc[start_idx:start_idx+items_per_page]
 
-        # عرض الكروت في صفوف
         grid = st.columns(2)
         for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
             with grid[idx % 2]:
-                st.markdown(f"""
-                    <div class="small-grid-card">
+                st.markdown(f"""<div class="small-grid-card">
                         <div style="color:#003366; font-weight:900; font-size:1.1rem;">{row.get('Developer')}</div>
                         <div style="color:#64748b; font-size:0.85rem;">📍 {row.get('Area')}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                    </div>""", unsafe_allow_html=True)
                 if st.button("التفاصيل", key=f"btn_{i}", use_container_width=True):
-                    st.session_state.selected_item = row.to_dict(); st.session_state.page = 'details'; st.rerun()
+                    st.session_state.selected_item = row.to_dict()
+                    st.session_state.page = 'details'
+                    st.session_state.detail_view = 'bio' # القيمة الافتراضية عند الفتح
+                    st.rerun()
 
-        # أزرار التنقل
+        # التنقل
         if total_pages > 1:
             st.write("---")
-            pag_col1, pag_col2, pag_col3 = st.columns([1, 2, 1])
-            with pag_col3:
-                if st.button("الصفحة التالية ⬅️") and st.session_state.current_page < total_pages:
-                    st.session_state.current_page += 1; st.rerun()
-            with pag_col2:
-                st.markdown(f'<div class="pagination-info">صفحة {st.session_state.current_page} من {total_pages}</div>', unsafe_allow_html=True)
-            with pag_col1:
-                if st.button("➡️ الصفحة السابقة") and st.session_state.current_page > 1:
-                    st.session_state.current_page -= 1; st.rerun()
+            p1, p2, p3 = st.columns([1, 2, 1])
+            if p3.button("التالي ⬅️") and st.session_state.current_page < total_pages:
+                st.session_state.current_page += 1; st.rerun()
+            p2.markdown(f'<p style="text-align:center;">صفحة {st.session_state.current_page} من {total_pages}</p>', unsafe_allow_html=True)
+            if p1.button("➡️ السابق") and st.session_state.current_page > 1:
+                st.session_state.current_page -= 1; st.rerun()
 
     with col_side:
-        st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-title">🏆 أقوى المطورين</div>', unsafe_allow_html=True)
-        top_list = ["Mountain View", "SODIC", "Emaar", "TMG", "Palm Hills", "Ora Developers", "Hassan Allam"]
-        for comp in top_list:
+        st.markdown('<div class="sidebar-section"><div class="sidebar-title">🏆 أقوى المطورين</div>', unsafe_allow_html=True)
+        for comp in ["Mountain View", "SODIC", "Emaar", "TMG", "Palm Hills"]:
             if st.button(f"🏢 {comp}", key=f"side_{comp}", use_container_width=True):
                 st.session_state.search_query = comp; reset_page(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# صفحة التفاصيل
+# --- صفحة التفاصيل (التعديل المطلوب هنا) ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
+    
+    # عنوان المطور
     st.markdown(f"""
-        <div style="background:white; padding:30px; border-radius:20px; border:1px solid #e2e8f0; text-align:right;">
-            <h1 style="color:#003366; border-right:8px solid #D4AF37; padding-right:15px;">{item.get('Developer')}</h1>
-            <p style="color:#64748b; font-weight:bold;">📍 المنطقة: {item.get('Area')}</p>
-            <hr>
-            <p style="font-size:1.2rem; line-height:1.8;">{item.get('Detailed_Info', 'المعلومات ستتوفر قريباً.')}</p>
+        <div style="background:white; padding:20px; border-radius:15px; border-right:10px solid #003366; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h1 style="color:#003366; margin:0;">{item.get('Developer')}</h1>
         </div>
     """, unsafe_allow_html=True)
+
+    # أزرار التنقل الداخلية
+    st.markdown('<div class="detail-nav-btn">', unsafe_allow_html=True)
+    d_col1, d_col2 = st.columns(2)
+    with d_col1:
+        if st.button("📝 نبذة عن المطور", use_container_width=True):
+            st.session_state.detail_view = 'bio'; st.rerun()
+    with d_col2:
+        if st.button("🏗️ مشاريع المطور", use_container_width=True):
+            st.session_state.detail_view = 'projects'; st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # عرض المحتوى بناءً على الزر المضغوط
+    st.markdown('<div style="background:white; padding:30px; border-radius:15px; border:1px solid #e2e8f0; margin-top:10px;">', unsafe_allow_html=True)
+    
+    if st.session_state.detail_view == 'bio':
+        st.subheader("الزتونة الفنية")
+        st.write(item.get('Detailed_Info', 'لا توجد بيانات متاحة حالياً.'))
+        
+    elif st.session_state.detail_view == 'projects':
+        st.subheader(f"مشاريع شركة {item.get('Developer')}")
+        # فلترة البيانات لعرض مشاريع هذا المطور فقط
+        developer_projects = df[df['Developer'] == item.get('Developer')]
+        
+        if not developer_projects.empty:
+            for _, proj in developer_projects.iterrows():
+                st.markdown(f"""
+                    <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                        <span style="font-weight:bold; color:#003366;">🏗️ مشروع في منطقة:</span>
+                        <span style="color:#D4AF37; font-weight:bold;">{proj.get('Area')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("لا توجد مشاريع مسجلة لهذا المطور في قاعدة البيانات.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    if st.button("🔙 العودة للقائمة"):
+        st.session_state.page = 'main'; st.rerun()
