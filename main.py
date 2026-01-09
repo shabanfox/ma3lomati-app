@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة والتصميم
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
 st.markdown("""
@@ -11,108 +11,105 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8fafc; 
     }
-    .header-box { background: #003366; color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; }
     .project-card {
         background: white; border-radius: 12px; padding: 20px;
         border-right: 8px solid #003366; margin-bottom: 15px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    .price-txt { color: #16a34a; font-weight: 900; font-size: 1.2rem; }
-    .stTabs [data-baseweb="tab"] { font-weight: bold; font-size: 1.1rem; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. جلب البيانات من رابط الـ CSV المباشر الخاص بك
+# 2. جلب البيانات وتحويل الرابط
 @st.cache_data
 def load_data():
-    # تم تحويل الرابط تلقائياً من pubhtml إلى csv ليعمل الكود
+    # الرابط الخاص بك (تم التأكد من تحويله لـ CSV)
     csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
         df = pd.read_csv(csv_url)
-        # تنظيف أسماء الأعمدة من أي رموز أو مسافات خفية
-        df.columns = [c.strip().replace('#', '').replace(' ', '_') for c in df.columns]
+        # مسح المسافات من أسماء الأعمدة
+        df.columns = [c.strip() for c in df.columns]
         return df
     except Exception as e:
-        st.error(f"يرجى التأكد من نشر الشيت كـ CSV. الخطأ: {e}")
+        st.error(f"خطأ في الاتصال بالشيت: {e}")
         return None
 
 df = load_data()
 
-# إدارة التنقل
-if 'page' not in st.session_state: st.session_state.page = 'main'
+if df is not None:
+    # لتجنب KeyError، سنقوم بتعريف المتغيرات بناءً على ترتيب الأعمدة في الشيت بتاعك
+    # الترتيب في شيت حضرتك: 0:Developer, 1:Owner, 2:Project, 3:Area, 4:Price, 5:Min_Val, 6:Description... إلخ
+    cols = df.columns.tolist()
 
-# --- الصفحة الرئيسية ---
-if st.session_state.page == 'main' and df is not None:
-    st.markdown('<div class="header-box"><h1>منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
-    
-    # الفلاتر
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        s_area = st.selectbox("📍 اختار المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()))
-    with col2:
-        s_dev = st.text_input("🏢 ابحث باسم المطور")
-    with col3:
-        s_type = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()))
+    # إدارة التنقل
+    if 'page' not in st.session_state: st.session_state.page = 'main'
 
-    # تصفية البيانات
-    f_df = df.copy()
-    if s_area != "الكل": f_df = f_df[f_df['Area'] == s_area]
-    if s_type != "الكل": f_df = f_df[f_df['Type'] == s_type]
-    if s_dev: f_df = f_df[f_df['Developer'].str.contains(s_dev, na=False, case=False)]
-
-    # العرض
-    grid = st.columns(2)
-    for idx, (i, row) in enumerate(f_df.iterrows()):
-        with grid[idx % 2]:
-            st.markdown(f"""
-                <div class="project-card">
-                    <h3 style="margin:0; color:#003366;">{row['Project']}</h3>
-                    <p style="color:#64748b; margin-bottom:10px;"><b>المطور:</b> {row['Developer']}</p>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span class="price-txt">{row['Price']}</span>
-                        <span>📍 {row['Area']}</span>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"عرض التفاصيل والزتونة لـ {row['Project']}", key=f"btn_{i}", use_container_width=True):
-                st.session_state.selected_item = row.to_dict()
-                st.session_state.page = 'details'
-                st.rerun()
-
-# --- صفحة التفاصيل ---
-elif st.session_state.page == 'details':
-    item = st.session_state.selected_item
-    if st.button("🔙 عودة للقائمة الرئيسية"):
-        st.session_state.page = 'main'
-        st.rerun()
-
-    st.markdown(f"""
-        <div style="background:white; padding:30px; border-radius:15px; border-right:12px solid #003366; margin-top:20px;">
-            <h1 style="color:#003366; margin:0;">{item['Project']}</h1>
-            <p style="font-size:1.3rem;">المطور: <b>{item['Developer']}</b> | المالك: <b>{item['Owner']}</b></p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    tab1, tab2 = st.tabs(["📝 معلومات المطور والزتونة", "🏗️ مشاريع الشركة الأخرى"])
-
-    with tab1:
-        c1, c2 = st.columns(2)
+    # --- الصفحة الرئيسية ---
+    if st.session_state.page == 'main':
+        st.markdown("<h1 style='text-align:center; color:#003366;'>منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
+        
+        # فلاتر البحث
+        c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown("### 📊 بيانات الاستثمار")
-            st.success(f"**السعر الإجمالي:** {item['Price']}")
-            st.info(f"**أقل مقدم (Min Val):** {item['Min_Val']}")
-            st.info(f"**نظام السداد:** مقدم {item['Down_Payment']} / تقسيط {item['Installments']} سنوات")
-            st.warning(f"**تاريخ الاستلام:** {item['Delivery']}")
+            s_area = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()))
         with c2:
-            st.markdown("### 💡 الزتونة الفنية")
-            st.write(f"**عن المطور:** {item['Detailed_Info']}")
-            st.markdown("---")
-            st.write(f"**وصف المشروع:** {item['Description']}")
-            st.write(f"**تصنيف المشروع:** {item['Type']}")
+            s_dev = st.text_input("🏢 اسم المطور")
+        with c3:
+            s_type = st.selectbox("🏠 النوع", ["الكل"] + sorted(df.iloc[:, 7].dropna().unique().tolist()))
 
-    with tab2:
-        st.subheader(f"مشاريع أخرى لشركة {item['Developer']}")
-        others = df[df['Developer'] == item['Developer']]
-        for _, p in others.iterrows():
-            if p['Project'] != item['Project']:
-                st.markdown(f"- **{p['Project']}** في {p['Area']} (السعر: {p['Price']})")
+        # تطبيق الفلترة
+        f_df = df.copy()
+        if s_area != "الكل": f_df = f_df[f_df.iloc[:, 3] == s_area]
+        if s_type != "الكل": f_df = f_df[f_df.iloc[:, 7] == s_type]
+        if s_dev: f_df = f_df[f_df.iloc[:, 0].str.contains(s_dev, na=False, case=False)]
+
+        # عرض النتائج
+        grid = st.columns(2)
+        for idx, (i, row) in enumerate(f_df.iterrows()):
+            with grid[idx % 2]:
+                # هنا بنستخدم رقم العمود بدل اسمه عشان نتفادى الـ KeyError
+                p_name = row[2]  # عمود Project
+                d_name = row[0]  # عمود Developer
+                price = row[4]   # عمود Price
+                area = row[3]    # عمود Area
+                
+                st.markdown(f"""
+                    <div class="project-card">
+                        <h3 style="margin:0; color:#003366;">{p_name}</h3>
+                        <p style="color:#64748b; margin-bottom:10px;">المطور: {d_name}</p>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#16a34a; font-weight:bold;">{price}</span>
+                            <span>📍 {area}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"التفاصيل والزتونة لـ {p_name}", key=f"btn_{i}", use_container_width=True):
+                    st.session_state.selected_item = row.to_list() # حفظ كقائمة
+                    st.session_state.page = 'details'
+                    st.rerun()
+
+    # --- صفحة التفاصيل ---
+    elif st.session_state.page == 'details':
+        item = st.session_state.selected_item
+        if st.button("🔙 عودة"):
+            st.session_state.page = 'main'
+            st.rerun()
+
+        # عرض البيانات بناءً على ترتيبها في القائمة
+        st.markdown(f"""
+            <div style="background:white; padding:25px; border-radius:15px; border-right:10px solid #003366;">
+                <h1 style="color:#003366;">{item[2]}</h1> <h3>المطور: {item[0]} | المالك: {item[1]}</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        t1, t2 = st.tabs(["💡 الزتونة والمعلومات", "🏗️ مشاريع المطور"])
+        with t1:
+            st.info(f"**الزتونة الفنية:** {item[11]}") # Detailed_Info
+            st.success(f"**السعر:** {item[4]} | **المقدم:** {item[10]} | **التقسيط:** {item[9]} سنوات")
+            st.write(f"**الوصف:** {item[6]}")
+            st.warning(f"**الاستلام:** {item[8]}")
+            
+        with t2:
+            st.subheader(f"مشاريع أخرى لـ {item[0]}")
+            others = df[df.iloc[:, 0] == item[0]]
+            for _, p in others.iterrows():
+                st.write(f"- {p[2]} ({p[3]})")
