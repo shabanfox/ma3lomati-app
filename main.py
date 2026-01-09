@@ -16,39 +16,33 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f0f2f5; 
     }
 
-    /* خانة البحث البارزة */
+    /* خانة البحث */
     .stTextInput input {
         border: 3px solid #001a33 !important;
         border-radius: 10px !important;
-        font-size: 1.2rem !important;
         font-weight: 900 !important;
-        color: #000000 !important;
     }
 
-    /* الكروت الرئيسية - 3 في الصف */
+    /* الكروت الرئيسية للمطورين */
     .main-card {
         background: #ffffff; border-radius: 15px; padding: 20px;
-        border-right: 12px solid #001a33; margin-bottom: 15px;
+        border-right: 12px solid #001a33; margin-bottom: 10px;
         box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        min-height: 230px; display: flex; flex-direction: column; justify-content: space-between;
+        min-height: 200px; display: flex; flex-direction: column; justify-content: center;
     }
-    .main-title { color: #000000 !important; font-size: 1.4rem; font-weight: 900; }
-    .main-price { color: #059669 !important; font-size: 1.5rem; font-weight: 900; margin: 10px 0; }
-    .main-details { color: #000000 !important; font-size: 1.1rem; font-weight: 700; }
+    .dev-name { color: #000000 !important; font-size: 1.6rem; font-weight: 900; text-align: center; }
+    .project-count { color: #059669 !important; font-size: 1.1rem; font-weight: 700; text-align: center; margin-top: 10px; }
 
-    /* كروت الفرص ميكرو - يسار */
+    /* كروت الفرص ميكرو */
     .micro-card {
         background: #ffffff; border-radius: 8px; padding: 6px;
         border-right: 5px solid #d97706; margin-bottom: 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .micro-title { color: #000000 !important; font-size: 0.85rem; font-weight: 900; }
 
     /* الأزرار */
     .stButton>button { 
         background-color: #001a33 !important; color: #ffffff !important;
-        width: 100%; font-family: 'Cairo' !important; font-weight: 900 !important;
-        border-radius: 10px; height: 45px;
+        width: 100%; font-weight: 900 !important; border-radius: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -76,26 +70,22 @@ if df is not None:
     if 'current_page' not in st.session_state: st.session_state.current_page = 0
 
     if st.session_state.page == 'main':
-        st.markdown("<h1 style='text-align:center; color:#001a33; font-weight:900;'>🏠 منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align:center; color:#001a33; font-weight:900;'>🏠 دليل المطورين العقاريين</h1>", unsafe_allow_html=True)
         
-        search_term = st.text_input("🔍 ابحث عن مشروع أو مطور:", placeholder="اكتب هنا...")
+        # البحث والفلاتر
+        search_term = st.text_input("🔍 ابحث عن اسم المطور:", placeholder="اكتب اسم الشركة هنا...")
         
-        col1, col2, col3, col4 = st.columns(4)
-        with col1: s_area = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df.iloc[:, 3].unique().tolist()))
-        with col2: s_type = st.selectbox("🏠 النوع", ["الكل"] + sorted(df.iloc[:, 7].unique().tolist()))
-        with col3: m_price = st.number_input("💰 أقصى سعر", value=0)
-        with col4: m_down = st.number_input("💵 أقصى مقدم", value=0)
-
-        f_df = df.copy()
+        # تجميع البيانات حسب اسم المطور
+        # سنأخذ أول ظهور لكل مطور لعرضه في الكارت
+        dev_group = df.groupby(df.iloc[:, 0]).first().reset_index()
+        # إضافة عدد المشاريع لكل مطور
+        dev_counts = df.iloc[:, 0].value_counts().to_dict()
+        
+        f_df = dev_group.copy()
         if search_term:
-            f_df = f_df[f_df.iloc[:, 0].str.contains(search_term, na=False, case=False) | f_df.iloc[:, 2].str.contains(search_term, na=False, case=False)]
-        if s_area != "الكل": f_df = f_df[f_df.iloc[:, 3] == s_area]
-        if s_type != "الكل": f_df = f_df[f_df.iloc[:, 7] == s_type]
-        if m_price > 0: f_df = f_df[f_df['price_val'] <= m_price]
-        if m_down > 0: f_df = f_df[f_df['down_val'] <= m_down]
+            f_df = f_df[f_df.iloc[:, 0].str.contains(search_term, na=False, case=False)]
 
         st.markdown("---")
-
         main_col, side_col = st.columns([3.2, 0.8])
 
         with main_col:
@@ -104,57 +94,62 @@ if df is not None:
             start_idx = st.session_state.current_page * items_per_page
             current_items = f_df.iloc[start_idx : start_idx + items_per_page]
 
-            # عرض 3 كروت في كل صف
             for i in range(0, len(current_items), 3):
                 row_cols = st.columns(3)
                 for j in range(3):
                     if i + j < len(current_items):
                         row = current_items.iloc[i + j]
+                        dev_name = row[0]
                         with row_cols[j]:
                             st.markdown(f"""
                                 <div class="main-card">
-                                    <div class="main-title">{row[2]}</div>
-                                    <div class="main-details">🏢 {row[0]}</div>
-                                    <div class="main-details">📍 {row[3]}</div>
-                                    <div class="main-price">{row[4]}</div>
-                                    <div style="background:#001a33; color:white; padding:5px; border-radius:8px; text-align:center; font-weight:900;">
-                                        مقدم {row[10]} | {row[9]}س
-                                    </div>
+                                    <div class="dev-name">🏢 {dev_name}</div>
+                                    <div class="project-count">عدد المشاريع المتاحة: {dev_counts.get(dev_name, 0)}</div>
                                 </div>
                             """, unsafe_allow_html=True)
-                            if st.button(f"تفاصيل {row[2][:8]}", key=f"m_{i+j}"):
-                                st.session_state.selected_item = row.to_list()
+                            if st.button(f"مشاريع {dev_name[:10]}", key=f"dev_{i+j}"):
+                                st.session_state.selected_dev = dev_name
                                 st.session_state.page = 'details'
                                 st.rerun()
 
-            # أزرار التالي والسابق (عادت من جديد)
+            # التنقل بين الصفحات
             st.markdown("---")
             nav1, nav2, nav3 = st.columns([1, 2, 1])
             with nav1:
                 if st.session_state.current_page > 0:
-                    if st.button("⬅️ السابق"):
-                        st.session_state.current_page -= 1
-                        st.rerun()
-            with nav2:
-                st.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.current_page+1} من {total_pages}</p>", unsafe_allow_html=True)
+                    if st.button("⬅️ السابق"): st.session_state.current_page -= 1; st.rerun()
+            with nav2: st.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.current_page+1} من {total_pages}</p>", unsafe_allow_html=True)
             with nav3:
                 if st.session_state.current_page < total_pages - 1:
-                    if st.button("التالي ➡️"):
-                        st.session_state.current_page += 1
-                        st.rerun()
+                    if st.button("التالي ➡️"): st.session_state.current_page += 1; st.rerun()
 
         with side_col:
-            st.markdown("<h5 style='text-align:center; color:#ffffff; background:#d97706; padding:8px; border-radius:10px; font-weight:900;'>🔥 أقوى 10 فرص</h5>", unsafe_allow_html=True)
+            st.markdown("<h5 style='text-align:center; color:#ffffff; background:#d97706; padding:8px; border-radius:10px; font-weight:900;'>🔥 أهم 10 مشاريع</h5>", unsafe_allow_html=True)
             for idx, row in df.head(10).iterrows():
-                st.markdown(f"""
-                    <div class="micro-card">
-                        <div class="micro-title">#{idx+1} {row[2]}</div>
-                        <div style="color:#059669; font-size:0.8rem; font-weight:700;">{row[4]}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<div class="micro-card">
+                    <div style="font-weight:900; font-size:0.85rem;">{row[2]}</div>
+                    <div style="color:#059669; font-size:0.8rem; font-weight:700;">{row[4]}</div>
+                </div>""", unsafe_allow_html=True)
 
     elif st.session_state.page == 'details':
-        item = st.session_state.selected_item
-        if st.button("⬅️ عودة للقائمة"): st.session_state.page = 'main'; st.rerun()
-        st.markdown(f"<h1 style='color:#001a33; font-weight:900;'>{item[2]}</h1>", unsafe_allow_html=True)
-        st.error(f"### 💡 الزتونة الفنية:\n\n**{item[11]}**")
+        dev_name = st.session_state.selected_dev
+        dev_projects = df[df.iloc[:, 0] == dev_name]
+        
+        if st.button("⬅️ عودة للقائمة الرئيسية"): st.session_state.page = 'main'; st.rerun()
+        
+        st.markdown(f"<h1 style='color:#001a33; font-weight:900;'>🏢 {dev_name}</h1>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        st.subheader(f"🏗️ مشاريع شركة {dev_name}:")
+        
+        # عرض كل مشروع من مشاريع المطور في "انفو" منفصل مع الزتونة الفنية بتاعته
+        for idx, row in dev_projects.iterrows():
+            with st.expander(f"📍 مشروع: {row[2]} - السعر: {row[4]}"):
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.write(f"**الموقع:** {row[3]}")
+                    st.write(f"**النوع:** {row[7]}")
+                with col_b:
+                    st.write(f"**المقدم:** {row[10]}")
+                    st.write(f"**التقسيط:** {row[9]} سنوات")
+                st.error(f"**💡 الزتونة الفنية للمشروع:** {row[11]}")
