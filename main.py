@@ -6,7 +6,7 @@ import re
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. تصميم CSS المتكامل والواضح جداً
+# 2. تصميم CSS المتكامل والواضح جداً (تباين عالي)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -15,7 +15,6 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f1f5f9; 
     }
     
-    /* الهيدرات النحيفة لتوفير المساحة */
     .compact-hero { background: #001a33; padding: 12px; border-radius: 10px; color: white; text-align: center; margin-bottom:10px; }
     .hero-tools { background: #f59e0b; color: #000; }
     .hero-roi { background: #15803d; color: white; }
@@ -33,7 +32,6 @@ st.markdown("""
     .res-val { font-size: 1.8rem; font-weight: 900; color: #000; display: block; line-height: 1.2; }
     .res-lbl { font-size: 0.9rem; font-weight: 700; color: #444; }
 
-    /* تحسين المدخلات */
     .stNumberInput label { font-weight: 900 !important; color: #000 !important; }
     div.stButton > button { background: #001a33 !important; color: white !important; font-weight: 900 !important; border-radius: 8px !important; }
     </style>
@@ -57,7 +55,7 @@ def load_data():
 
 df = load_data()
 
-# 4. إدارة الصفحات والتنقل
+# 4. إدارة الصفحات
 if 'view' not in st.session_state: st.session_state.view = 'main'
 if 'page_idx' not in st.session_state: st.session_state.page_idx = 0
 
@@ -67,22 +65,21 @@ if df is not None:
         st.markdown("<h1 style='text-align:center; color:#001a33; margin:40px 0; font-weight:900;'>🏠 منصة معلوماتى العقارية</h1>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown('<div style="background:white; padding:20px; border-radius:15px; border-top:10px solid #001a33; text-align:center;"><h2>🏢 قسم الشركات</h2><p>دليل المطورين والمشاريع</p></div>', unsafe_allow_html=True)
+            st.markdown('<div style="background:white; padding:20px; border-radius:15px; border-top:10px solid #001a33; text-align:center;"><h2>🏢 قسم الشركات</h2></div>', unsafe_allow_html=True)
             if st.button("دخول قسم الشركات", use_container_width=True):
                 st.session_state.view = 'comp'; st.rerun()
         with c2:
-            st.markdown('<div style="background:white; padding:20px; border-radius:15px; border-top:10px solid #f59e0b; text-align:center;"><h2>🛠️ أدوات البروكر</h2><p>الحاسبات وأدوات الاستثمار</p></div>', unsafe_allow_html=True)
+            st.markdown('<div style="background:white; padding:20px; border-radius:15px; border-top:10px solid #f59e0b; text-align:center;"><h2>🛠️ أدوات البروكر</h2></div>', unsafe_allow_html=True)
             if st.button("دخول أدوات البروكر", use_container_width=True):
                 st.session_state.view = 'tools'; st.rerun()
 
-    # --- ب. قسم الشركات (الـ 9 كروت + الفلاتر) ---
+    # --- ب. قسم الشركات ---
     elif st.session_state.view == 'comp':
         st.markdown('<div class="compact-hero"><h2>🔍 دليل المطورين والمشاريع</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
         
-        # الفلاتر
         f1, f2, f3 = st.columns([2,1,1])
-        with f1: q = st.text_input("بحث بالاسم", placeholder="اكتب هنا...", label_visibility="collapsed")
+        with f1: q = st.text_input("بحث...", placeholder="اسم المطور أو المشروع", label_visibility="collapsed")
         with f2: loc = st.selectbox("المنطقة", ["الكل"] + sorted(df.iloc[:,3].dropna().unique().tolist()))
         with f3: pr = st.number_input("أقصى سعر", value=0)
 
@@ -91,7 +88,6 @@ if df is not None:
         if loc != "الكل": f_df = f_df[f_df.iloc[:,3] == loc]
         if pr > 0: f_df = f_df[f_df['p_val'] <= pr]
 
-        # نظام الـ 9 كروت
         itms = 9
         start = st.session_state.page_idx * itms
         batch = f_df.iloc[start : start + itms]
@@ -103,11 +99,11 @@ if df is not None:
                     r = batch.iloc[i+j]
                     with cols[j]:
                         st.markdown(f'<div class="nano-card"><div class="c-dev">{r[0]}</div><div style="color:#1d4ed8; font-weight:700;">{r[2]}</div><div class="c-price">{r[4]}</div><div style="font-size:0.8rem; color:#444;">📍 {r[3]}</div></div>', unsafe_allow_html=True)
-                        if st.button("التفاصيل الفنية", key=f"det_{i+j}"):
+                        if st.button("التفاصيل", key=f"det_{i+j}"):
                             st.session_state.selected_dev = r[0]
                             st.session_state.view = 'details'; st.rerun()
 
-    # --- ج. قسم أدوات البروكر (حاسبة الأقساط + حاسبة ROI) ---
+    # --- ج. أدوات البروكر (تم إصلاح الخطأ البرمجي هنا) ---
     elif st.session_state.view == 'tools':
         st.markdown('<div class="compact-hero hero-tools"><h2>🛠️ أدوات ومساعد البروكر</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
@@ -115,11 +111,10 @@ if df is not None:
         t1, t2 = st.tabs(["🧮 حاسبة الأقساط", "📈 حاسبة أرباح الاستثمار (ROI)"])
 
         with t1:
-            st.markdown("<h4 style='color:#000;'>أدخل أرقام الوحدة:</h4>", unsafe_allow_html=True)
             in1, in2, in3 = st.columns(3)
-            with in1: up = st.number_input("سعر الوحدة", value=2000000, step=100000)
+            with in1: up = st.number_input("سعر الوحدة", value=2000000)
             with in2: dp_p = st.number_input("المقدم %", value=10)
-            with yrs_col := in3: yrs = st.number_input("سنين التقسيط", value=8)
+            with in3: yrs = st.number_input("سنين التقسيط", value=8)
             
             val_dp = up * (dp_p/100)
             val_mo = (up - val_dp) / (yrs * 12) if yrs > 0 else 0
@@ -137,11 +132,11 @@ if df is not None:
             """, unsafe_allow_html=True)
 
         with t2:
-            st.markdown('<div class="compact-hero hero-roi" style="margin-top:10px;"><h4>حاسبة العائد الاستثماري ROI</h4></div>', unsafe_allow_html=True)
+            st.markdown('<div class="compact-hero hero-roi"><h4>حاسبة العائد الاستثماري ROI</h4></div>', unsafe_allow_html=True)
             r1, r2, r3 = st.columns(3)
-            with r1: b_p = st.number_input("سعر الشراء", value=2000000, key="buy")
-            with r2: s_p = st.number_input("سعر البيع المتوقع", value=3000000, key="sell")
-            with r3: rent = st.number_input("الإيجار المتوقع/شهر", value=15000, key="rent")
+            with r1: b_p = st.number_input("سعر الشراء", value=2000000, key="b1")
+            with r2: s_p = st.number_input("سعر البيع المتوقع", value=3000000, key="s1")
+            with r3: rent = st.number_input("الإيجار المتوقع/شهر", value=15000, key="r1")
             
             prof = s_p - b_p
             roi = (prof/b_p)*100 if b_p>0 else 0
@@ -158,7 +153,7 @@ if df is not None:
                 </div>
             """, unsafe_allow_html=True)
 
-    # --- د. صفحة التفاصيل (الزتونة) ---
+    # --- د. التفاصيل ---
     elif st.session_state.view == 'details':
         if st.button("🔙 عودة للشركات"): st.session_state.view = 'comp'; st.rerun()
         dev_n = st.session_state.selected_dev
@@ -166,5 +161,5 @@ if df is not None:
         st.markdown(f"<div class='compact-hero'><h3>🏢 {dev_n}</h3></div>", unsafe_allow_html=True)
         for _, r in projs.iterrows():
             with st.expander(f"📌 {r[2]} - {r[4]}", expanded=True):
-                st.write(f"📍 **الموقع:** {r[3]} | 💳 **المقدم:** {r[10]}")
-                st.error(f"💡 **الزتونة الفنية:**\n\n{r[11]}")
+                st.write(f"📍 الموقع: {r[3]} | 💳 المقدم: {r[10]}")
+                st.error(f"💡 الزتونة الفنية:\n\n{r[11]}")
