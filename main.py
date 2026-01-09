@@ -50,11 +50,9 @@ def load_data():
     try:
         df = pd.read_csv(csv_url)
         df.columns = [str(c).strip() for c in df.columns]
-        
-        # ترتيب أبجدي حسب اسم المطور
+        # الترتيب الأبجدي (يدعم العربي والإنجليزي)
         if 'Developer' in df.columns:
             df = df.sort_values(by='Developer', ascending=True)
-        
         return df
     except: return None
 
@@ -70,34 +68,35 @@ if st.session_state.page == 'main':
     st.markdown('<div class="title-text">منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
 
     if df is not None:
-        # مربع الفلتر المطور (يدعم البحث بالعربي والإنجليزي)
+        # مربع الفلتر المطور (بحث عربي/إنجليزي)
         st.markdown('<div class="filter-card">', unsafe_allow_html=True)
         c1, c2 = st.columns([2, 1])
         with c1:
-            search_query = st.text_input("ابحث باسم المطور (عربي أو English) أو الميزة الفنية...", placeholder="اكتب للبحث...")
+            # هنا البحث بيدعم العربي بكل سهولة
+            search_query = st.text_input("🔍 ابحث بالعربي أو English (اسم المطور أو الزتونة الفنية)...", placeholder="اكتب مثلاً: ماونتن فيو أو Mountain View")
         with c2:
             areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
             s_area = st.selectbox("تصفية بالمنطقة", areas)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # منطق الفلترة (دعم اللغتين)
+        # منطق الفلترة (تحسين محرك البحث ليكون مرناً)
         f_df = df.copy()
         if s_area != "الكل":
             f_df = f_df[f_df['Area'] == s_area]
+            
         if search_query:
-            # البحث بذكاء في المطور، المنطقة، والزتونة الفنية
+            # البحث بذكاء: يبحث في اسم المطور والمنطقة والتفاصيل
             f_df = f_df[
                 f_df['Developer'].astype(str).str.contains(search_query, case=False, na=False) |
-                f_df.get('Area', '').astype(str).str.contains(search_query, case=False, na=False) |
-                f_df.get('Detailed_Info', '').astype(str).str.contains(search_query, case=False, na=False)
+                f_df.get('Detailed_Info', '').astype(str).str.contains(search_query, case=False, na=False) |
+                f_df.get('Area', '').astype(str).str.contains(search_query, case=False, na=False)
             ]
 
-        # --- منطق تقسيم الصفحات (Pagination) ---
+        # --- تقسيم الصفحات ---
         items_per_page = 9
         total_items = len(f_df)
         total_pages = math.ceil(total_items / items_per_page)
         
-        # تصفير الصفحة عند البحث الجديد
         if 'last_search' not in st.session_state or st.session_state.last_search != search_query:
             st.session_state.current_page_num = 1
             st.session_state.last_search = search_query
@@ -106,37 +105,40 @@ if st.session_state.page == 'main':
         end_idx = start_idx + items_per_page
         page_items = f_df.iloc[start_idx:end_idx]
 
-        # عرض الشبكة
+        # عرض الكروت
         grid_cols = st.columns(3)
-        for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
-            with grid_cols[idx % 3]:
-                st.markdown(f"""
-                    <div class="grid-card">
-                        <div style="color:#003366; font-weight:900; font-size:1.1rem; margin-bottom:5px;">{row.get('Developer')}</div>
-                        <div style="color:#64748b; font-size:0.85rem;">{row.get('Area', '-')}</div>
-                        <div style="color:#D4AF37; font-weight:bold; font-size:0.9rem; margin-top:8px;">{row.get('Price', '-')}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                b1, b2 = st.columns(2)
-                with b1:
-                    if st.button("التفاصيل", key=f"d_{i}"):
-                        st.session_state.selected_item = row.to_dict()
-                        st.session_state.page = 'details'; st.rerun()
-                with b2:
-                    name = str(row['Developer'])
-                    is_in = name in st.session_state.compare_list
-                    if st.button("مقارنة" if not is_in else "إزالة", key=f"c_{i}"):
-                        if not is_in: st.session_state.compare_list.append(name)
-                        else: st.session_state.compare_list.remove(name)
-                        st.rerun()
-                st.markdown("<br>", unsafe_allow_html=True)
+        if not page_items.empty:
+            for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
+                with grid_cols[idx % 3]:
+                    st.markdown(f"""
+                        <div class="grid-card">
+                            <div style="color:#003366; font-weight:900; font-size:1.1rem; margin-bottom:5px;">{row.get('Developer')}</div>
+                            <div style="color:#64748b; font-size:0.85rem;">{row.get('Area', '-')}</div>
+                            <div style="color:#D4AF37; font-weight:bold; font-size:0.9rem; margin-top:8px;">{row.get('Price', '-')}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button("التفاصيل", key=f"d_{i}"):
+                            st.session_state.selected_item = row.to_dict()
+                            st.session_state.page = 'details'; st.rerun()
+                    with b2:
+                        name = str(row['Developer'])
+                        is_in = name in st.session_state.compare_list
+                        if st.button("مقارنة" if not is_in else "إزالة", key=f"c_{i}"):
+                            if not is_in: st.session_state.compare_list.append(name)
+                            else: st.session_state.compare_list.remove(name)
+                            st.rerun()
+                    st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.warning("عفواً، لا توجد نتائج مطابقة لبحثك.")
 
         # أزرار التنقل
         if total_pages > 1:
             st.write("---")
-            col_p1, col_p2, col_p3 = st.columns([1, 1, 1])
-            with col_p2:
+            cp1, cp2, cp3 = st.columns([1, 1, 1])
+            with cp2:
                 st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.current_page_num} من {total_pages}</p>", unsafe_allow_html=True)
                 c_prev, c_next = st.columns(2)
                 with c_prev:
