@@ -34,7 +34,7 @@ st.markdown("""
         transition: 0.3s;
     }
     .project-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); }
-    .card-img { width: 280px; background-size: cover; background-position: center; }
+    .card-img { width: 280px; background-size: cover; background-position: center; border-left: 1px solid #eee; }
     .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
     .price-tag { color: #003366; font-weight: 900; font-size: 1.4rem; }
     .dev-name { font-weight: 700; font-size: 1.3rem; color: #1e293b; }
@@ -42,54 +42,56 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظيفة جلب البيانات من رابط Google Sheets
-@st.cache_data(ttl=600) # التحديث كل 10 دقائق
+# 3. وظيفة جلب البيانات - الرابط المباشر الصحيح
+@st.cache_data(ttl=300) 
 def load_data_from_gsheets():
-    # تحويل رابط HTML لرابط CSV ليقرأه pandas بسهولة
-    sheet_id = "1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+    # الرابط المباشر لملف الـ CSV من جوجل شيت
+    csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
-        df = pd.read_csv(url)
+        df = pd.read_csv(csv_url)
+        # مسح أي مسافات زيادة في أسماء الأعمدة
+        df.columns = df.columns.str.strip()
         return df
     except Exception as e:
-        st.error(f"خطأ في تحميل البيانات: {e}")
-        return pd.DataFrame()
+        return None
 
 df = load_data_from_gsheets()
 
-# 4. الهيدر والصورة الرئيسية
+# 4. واجهة الموقع
 st.markdown('<div class="header-nav"><div style="color:#003366; font-weight:900; font-size:1.8rem;">معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-bg"><h1>عقاراتك العالمية.. برؤية مصرية</h1><p>دليل المطورين والمشاريع المحدث لحظياً</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-bg"><h1>عقاراتك العالمية.. برؤية مصرية</h1><p>دليل المطورين والمشاريع المحدث لحظياً من جوجل شيت</p></div>', unsafe_allow_html=True)
 
-# 5. الفلاتر (تعتمد على بيانات الشيت)
-if not df.empty:
+if df is not None:
+    # 5. الفلاتر
     st.markdown('<div class="filter-box">', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1: search_dev = st.text_input("🔍 اسم المطور")
-    with c2: search_area = st.selectbox("📍 المنطقة", ["كل المناطق"] + sorted(list(df['Area'].unique())))
-    with c3: search_price = st.selectbox("💰 الفئة السعرية", ["الكل", "أقل من 5 مليون", "5 - 10 مليون", "أكثر من 10 مليون"])
+    with c2: 
+        areas = ["كل المناطق"] + sorted(list(df['Area'].dropna().unique()))
+        search_area = st.selectbox("📍 المنطقة", areas)
+    with c3: 
+        search_price = st.selectbox("💰 الفئة السعرية", ["الكل", "أقل من 5 مليون", "5 - 10 مليون", "أكثر من 10 مليون"])
     st.markdown('</div>', unsafe_allow_html=True)
 
     # 6. منطق الفلترة
-    filtered_df = df.copy()
+    f_df = df.copy()
     if search_dev:
-        filtered_df = filtered_df[filtered_df['Developer'].str.contains(search_dev, case=False, na=False)]
+        f_df = f_df[f_df['Developer'].str.contains(search_dev, case=False, na=False)]
     if search_area != "كل المناطق":
-        filtered_df = filtered_df[filtered_df['Area'] == search_area]
+        f_df = f_df[f_df['Area'] == search_area]
     
-    # فلترة السعر بناءً على عمود Min_Val
+    # فلترة السعر
     if search_price == "أقل من 5 مليون":
-        filtered_df = filtered_df[filtered_df['Min_Val'] < 5]
+        f_df = f_df[f_df['Min_Val'] < 5]
     elif search_price == "5 - 10 مليون":
-        filtered_df = filtered_df[(filtered_df['Min_Val'] >= 5) & (filtered_df['Min_Val'] < 10)]
+        f_df = f_df[(f_df['Min_Val'] >= 5) & (f_df['Min_Val'] < 10)]
     elif search_price == "أكثر من 10 مليون":
-        filtered_df = filtered_df[filtered_df['Min_Val'] >= 10]
+        f_df = f_df[f_df['Min_Val'] >= 10]
 
-    # 7. عرض الكروت
-    st.markdown(f'<div style="padding: 0 10%; margin-bottom:10px;"><p style="color:#64748b;">تم العثور على ({len(filtered_df)}) نتائج</p></div>', unsafe_allow_html=True)
+    # 7. عرض النتائج
+    st.markdown(f'<div style="padding: 0 10%; margin-bottom:10px;"><p style="color:#64748b;">تم العثور على ({len(f_df)}) نتائج</p></div>', unsafe_allow_html=True)
     
-    for _, row in filtered_df.iterrows():
-        # استخدام صورة افتراضية لو الرابط فاضي
+    for _, row in f_df.iterrows():
         img = row['Image_URL'] if pd.notnull(row['Image_URL']) else "https://via.placeholder.com/400"
         st.markdown(f'''
             <div class="project-card">
@@ -97,9 +99,9 @@ if not df.empty:
                 <div class="card-body">
                     <div class="price-tag">يبدأ من {row['Price']} ج.م</div>
                     <div class="dev-name">{row['Developer']}</div>
-                    <div style="color:#D4AF37; font-weight:700; font-size:0.9rem;">المالك: {row['Owner']}</div>
-                    <div style="color:#1e293b; font-size:0.95rem; margin-top:5px;"><b>أهم المشاريع:</b> {row['Projects']}</div>
-                    <div style="color:#64748b; font-size:0.85rem; margin-top:3px;">📍 {row['Area']}</div>
+                    <div style="color:#D4AF37; font-weight:700;">المالك: {row['Owner']}</div>
+                    <div style="color:#1e293b; margin-top:5px;"><b>أهم المشاريع:</b> {row['Projects']}</div>
+                    <div style="color:#64748b; font-size:0.85rem;">📍 {row['Area']}</div>
                 </div>
                 <div style="display:flex; align-items:center; padding-left:30px;">
                     <button class="btn-view">التفاصيل</button>
@@ -107,4 +109,4 @@ if not df.empty:
             </div>
         ''', unsafe_allow_html=True)
 else:
-    st.warning("جاري مزامنة البيانات من جوجل شيت... تأكد من صحة الأعمدة في ملفك.")
+    st.error("مشكلة في الوصول لرابط الشيت. تأكد من عمل Publish to Web بصيغة CSV")
