@@ -1,69 +1,84 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="منصة معلوماتى", layout="wide")
+# 1. إعدادات الصفحة (تحسين العرض على الموبايل والكمبيوتر)
+st.set_page_config(page_title="منصة معلوماتى", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS (الأزرار العريضة الأنيقة والوضوح العالي)
+# 2. تصميم CSS (التباين المطلق، الأزرار الأفقية، والخطوط العريضة)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
+    /* إخفاء القوائم الافتراضية لستريمليت */
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
+    /* إعدادات الجسم العام */
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
+    .block-container { padding-top: 1.5rem !important; }
 
-    /* الهيدر */
-    .header-top { 
-        background: #000000; color: #ffffff; padding: 15px; border-radius: 12px; 
-        text-align: center; margin-bottom: 25px; border: 4px solid #000;
+    /* الهيدر العلوي */
+    .hero-header { 
+        background: #000000; color: #ffffff; padding: 25px; border-radius: 20px; 
+        text-align: center; margin-bottom: 35px; border-bottom: 8px solid #2563eb;
     }
-    .header-top h1 { color: #ffffff !important; font-weight: 900; margin: 0; font-size: 2rem; }
+    .hero-header h1 { color: #ffffff !important; font-weight: 900; margin: 0; font-size: 2.5rem; }
 
-    /* الأزرار العريضة والأنيقة (Slim & Wide) */
-    div.stButton > button {
+    /* تنسيق الأزرار (جنب بعض في صف واحد) */
+    .stButton > button {
         width: 100% !important;
-        height: 80px !important; /* ارتفاع أنيق ونحيف */
+        height: 140px !important; /* ارتفاع أنيق وعريض */
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 4px solid #000000 !important;
-        border-radius: 15px !important;
-        font-size: 1.6rem !important;
+        border: 6px solid #000000 !important;
+        border-radius: 25px !important;
+        font-size: 1.8rem !important;
         font-weight: 900 !important;
-        box-shadow: 0px 8px 0px 0px #000000 !important;
-        transition: all 0.1s ease;
-        margin-bottom: 15px;
+        box-shadow: 10px 10px 0px 0px #000000 !important;
+        transition: all 0.1s;
+        display: flex; align-items: center; justify-content: center;
     }
-    
+
+    /* تمييز الألوان للأزرار لكسر البهتان */
+    div[data-testid="column"]:nth-child(1) .stButton > button {
+        border-color: #2563eb !important; color: #2563eb !important;
+        box-shadow: 10px 10px 0px 0px #2563eb !important;
+    }
+    div[data-testid="column"]:nth-child(2) .stButton > button {
+        border-color: #e67e22 !important; color: #e67e22 !important;
+        box-shadow: 10px 10px 0px 0px #e67e22 !important;
+    }
+
     div.stButton > button:active {
-        transform: translateY(6px) !important;
-        box-shadow: 0px 2px 0px 0px #000000 !important;
+        transform: translate(6px, 6px) !important;
+        box-shadow: 0px 0px 0px 0px !important;
     }
 
+    /* صناديق النتائج (تباين أسود/أبيض) */
+    .res-card { 
+        background: #000000; color: #ffffff; padding: 25px; 
+        border-radius: 20px; text-align: center; border: 4px solid #000;
+        margin-top: 15px;
+    }
+    .res-val { font-size: 2.8rem; font-weight: 900; color: #ffffff !important; }
+    
     /* كروت المشاريع */
-    .card-res {
-        background: #ffffff; border: 3px solid #000000; border-radius: 12px;
-        padding: 15px; margin-bottom: 10px; color: #000000;
-        box-shadow: 5px 5px 0px 0px #000000;
+    .project-card {
+        background: #fff; border: 4px solid #000; padding: 20px; 
+        border-radius: 20px; margin-bottom: 12px; box-shadow: 7px 7px 0px #000;
     }
 
-    /* صناديق نتائج الحاسبات */
-    .res-box { 
-        background: #000000; color: #ffffff; padding: 20px; 
-        border-radius: 15px; text-align: center; border: 3px solid #000;
-        margin-top: 10px;
+    /* المدخلات (خط عريض وواضح) */
+    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.4rem !important; }
+    input { 
+        border: 4px solid #000000 !important; font-weight: 900 !important; 
+        font-size: 1.6rem !important; border-radius: 12px !important; color: #000 !important;
     }
-    .val-white { font-size: 2.2rem; font-weight: 900; color: #ffffff !important; display: block; }
-    .lbl-white { font-size: 1rem; font-weight: 700; color: #cccccc !important; }
-
-    /* المدخلات */
-    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.2rem !important; }
-    input { border: 3px solid #000000 !important; font-weight: 900 !important; font-size: 1.4rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. جلب البيانات
+# 3. دالة تحميل البيانات
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -76,70 +91,90 @@ df = load_data()
 
 if 'view' not in st.session_state: st.session_state.view = 'main'
 
-# --- العرض الرئيسي ---
+# --- منطق العرض الرئيسي ---
 if df is not None:
-    # أ. الشاشة الرئيسية (أزرار عريضة وأنيقة)
+    # أ. الشاشة الرئيسية (أزرار جنب بعض)
     if st.session_state.view == 'main':
-        st.markdown('<div class="header-top"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-header"><h1>🏠 منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
         
-        _, col_center, _ = st.columns([0.1, 0.8, 0.1])
-        with col_center:
-            if st.button("🏢 دليل المشاريع العقارية", key="btn_projects"):
-                st.session_state.view = 'comp'; st.rerun()
-            
-            if st.button("🛠️ أدوات وحاسبات البروكر", key="btn_tools"):
-                st.session_state.view = 'tools'; st.rerun()
+        st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
+        
+        # وضع الأزرار جنباً إلى جنب في منتصف الموقع
+        _, col_main, _ = st.columns([0.05, 0.9, 0.05])
+        with col_main:
+            c1, c2 = st.columns(2, gap="large")
+            with c1:
+                if st.button("🏢\nدليل المشاريع", key="main_p"):
+                    st.session_state.view = 'comp'; st.rerun()
+            with c2:
+                if st.button("🛠️\nأدوات البروكر", key="main_t"):
+                    st.session_state.view = 'tools'; st.rerun()
 
-    # ب. صفحة الشركات
+    # ب. صفحة الشركات والمشاريع
     elif st.session_state.view == 'comp':
-        st.markdown('<div class="header-top"><h2>🔍 دليل المشاريع</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+        st.markdown('<div class="hero-header"><h2>🔍 دليل المشاريع العقارية</h2></div>', unsafe_allow_html=True)
+        if st.button("🔙 عودة للرئيسية", key="back_p"): st.session_state.view = 'main'; st.rerun()
         
-        q = st.text_input("بحث...", placeholder="اكتب اسم المشروع أو المطور")
-        for _, r in df.head(10).iterrows():
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+        q = st.text_input("بحث سريع عن مشروع أو مطور...", key="search_field")
+        
+        # عرض البيانات بشكل كروت
+        for _, r in df.head(15).iterrows():
             st.markdown(f"""
-            <div class="card-res">
-                <div style="font-weight:900; font-size:1.5rem;">{r[0]}</div>
-                <div style="color:#1d4ed8; font-weight:900;">🏢 {r[2]}</div>
-                <div style="font-weight:900; font-size:1.6rem; background:#FFEB3B; display:inline-block; padding:2px 10px;">{r[4]}</div>
+            <div class="project-card">
+                <div style="font-weight:900; font-size:1.8rem; color:#000;">{r[0]}</div>
+                <div style="color:#2563eb; font-weight:900; font-size:1.3rem;">🏢 المطور: {r[2]}</div>
+                <div style="font-weight:900; font-size:1.7rem; background:#FFEB3B; display:inline-block; padding:5px 15px; margin-top:10px; border-radius:10px; border:2px solid #000;">{r[4]}</div>
+                <div style="margin-top:10px; font-weight:700;">📍 الموقع: {r[3]}</div>
             </div>
             """, unsafe_allow_html=True)
 
-    # ج. صفحة الأدوات (الأداتين مع بعض)
+    # ج. صفحة الأدوات (الحاسبتين معاً)
     elif st.session_state.view == 'tools':
-        st.markdown('<div class="header-top"><h2>🛠️ أدوات الحاسبة الذكية</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+        st.markdown('<div class="hero-header"><h2>🛠️ الحاسبات الذكية</h2></div>', unsafe_allow_html=True)
+        if st.button("🔙 عودة للرئيسية", key="back_t"): st.session_state.view = 'main'; st.rerun()
 
-        # الأداة الأولى: الأقساط
-        st.markdown("<h3 style='text-align:right; font-weight:900; border-right:5px solid #000; padding-right:10px;'>💰 أولاً: حاسبة الأقساط</h3>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        with c1: price = st.number_input("سعر الوحدة", value=2000000, key="p1")
-        with c2: down = st.number_input("المقدم %", value=10, key="p2")
-        with c3: years = st.number_input("السنين", value=8, key="p3")
+        # 1. حاسبة الأقساط
+        st.markdown("<h2 style='border-right:10px solid #2563eb; padding-right:15px; font-weight:900; margin-top:20px;'>💰 حاسبة القسط والمقدم</h2>", unsafe_allow_html=True)
+        a, b, c = st.columns(3)
+        with a: u_price = st.number_input("سعر الوحدة", value=2000000, key="calc1")
+        with b: u_down = st.number_input("المقدم %", value=10, key="calc2")
+        with c: u_years = st.number_input("عدد السنين", value=8, key="calc3")
         
-        dv = price * (down/100)
-        mv = (price - dv) / (years * 12) if years > 0 else 0
+        dv = u_price * (u_down/100)
+        mv = (u_price - dv) / (u_years * 12) if u_years > 0 else 0
         
         st.markdown(f"""
-            <div class="res-box">
-                <span class="lbl-white">كاش المقدم: <b style="color:white; font-size:1.5rem;">{dv:,.0f}</b> | القسط الشهري: <b style="color:#22c55e; font-size:1.8rem;">{mv:,.0f}</b></span>
+            <div class="res-card">
+                <span style="color:#aaa; font-size:1.3rem;">كاش المقدم المطلوب:</span><br>
+                <span class="res-val">{dv:,.0f} ج.م</span>
+                <hr style="border:1px solid #333">
+                <span style="color:#aaa; font-size:1.3rem;">القسط الشهري:</span><br>
+                <span class="res-val" style="color:#22c55e !important;">{mv:,.0f} ج.م</span>
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("<hr style='border:2px solid #000;'>", unsafe_allow_html=True)
+        st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True)
 
-        # الأداة الثانية: ROI
-        st.markdown("<h3 style='text-align:right; font-weight:900; border-right:5px solid #22c55e; padding-right:10px;'>📈 ثانياً: حاسبة الربح (ROI)</h3>", unsafe_allow_html=True)
-        r1, r2, r3 = st.columns(3)
-        with r1: b_p = st.number_input("سعر الشراء", value=2000000, key="r1")
-        with r2: s_p = st.number_input("سعر البيع المتوقع", value=3500000, key="r2")
-        with r3: rent = st.number_input("الإيجار شهرياً", value=15000, key="r3")
+        # 2. حاسبة ROI
+        st.markdown("<h2 style='border-right:10px solid #e67e22; padding-right:15px; font-weight:900;'>📈 حاسبة الربح ROI</h2>", unsafe_allow_html=True)
+        x, y, z = st.columns(3)
+        with x: b_price = st.number_input("سعر الشراء", value=2000000, key="roi1")
+        with y: s_price = st.number_input("سعر البيع المتوقع", value=3500000, key="roi2")
+        with z: rent_val = st.number_input("الإيجار المتوقع/شهر", value=15000, key="roi3")
         
-        prof = s_p - b_p
-        roi = (prof/b_p)*100 if b_p > 0 else 0
+        profit = s_price - b_price
+        roi_perc = (profit/b_price)*100 if b_price > 0 else 0
         
         st.markdown(f"""
-            <div class="res-box" style="border-color:#22c55e;">
-                <span class="lbl-white">صافي الربح: <b style="color:#22c55e; font-size:1.8rem;">{prof:,.0f}</b> | نسبة العائد: <b style="color:#FFEB3B; font-size:1.8rem;">%{roi:.1f}</b></span>
+            <div class="res-card" style="border-color:#e67e22;">
+                <span style="color:#aaa; font-size:1.3rem;">صافي أرباح البيع:</span><br>
+                <span class="res-val" style="color:#e67e22 !important;">{profit:,.0f} ج.م</span>
+                <hr style="border:1px solid #333">
+                <span style="color:#aaa; font-size:1.3rem;">نسبة العائد الإجمالية:</span><br>
+                <span class="res-val" style="color:#FFEB3B !important;">%{roi_perc:.1f}</span>
             </div>
         """, unsafe_allow_html=True)
+
+else:
+    st.error("فشل تحميل البيانات، تأكد من رابط Google Sheets")
