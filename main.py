@@ -12,44 +12,50 @@ st.markdown("""
     
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
+    /* خلفية بيضاء صافية */
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f0f4f8; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* الكارت الأزرق الميكرو */
+    /* كروت ميكرو - عرض نحيف وطول صغير */
     .micro-card {
-        background: #3b82f6; /* أزرق فاتح */
-        border-radius: 10px; padding: 10px;
-        margin-bottom: 8px; min-height: 130px;
-        display: flex; flex-direction: column; justify-content: space-between;
-        box-shadow: 0 3px 6px rgba(59, 130, 246, 0.2);
-        color: white; /* خط أبيض على الأزرق */
+        background: #ffffff; 
+        border: 1px solid #e2e8f0; 
+        border-right: 5px solid #001a33; 
+        border-radius: 6px; 
+        padding: 8px;
+        margin-bottom: 5px; 
+        min-height: 110px; /* تقليل الطول لأقصى درجة */
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    /* تبادل الألوان للبيانات */
-    .white-box {
-        background: white; color: #1e40af; /* خط أزرق على الأبيض */
-        padding: 2px 8px; border-radius: 5px;
-        font-size: 0.85rem; font-weight: 900;
-        margin-top: 5px; text-align: center;
+    /* نصوص كحلية وسوداء واضحة جداً */
+    .txt-dev { color: #000000 !important; font-size: 0.95rem; font-weight: 900; line-height: 1; }
+    .txt-proj { color: #1e40af !important; font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
+    .txt-price { color: #166534 !important; font-size: 1rem; font-weight: 900; margin: 2px 0; }
+    
+    /* صندوق بيانات صغير */
+    .info-box {
+        background: #f8fafc; color: #334155; 
+        font-size: 0.75rem; font-weight: 600;
+        padding: 2px 5px; border-radius: 3px;
+        border: 1px solid #f1f5f9; margin-top: 3px;
     }
 
-    .txt-dev { font-size: 1.05rem; font-weight: 900; line-height: 1.1; color: white; }
-    .txt-proj { font-size: 0.85rem; font-weight: 700; color: #dbeafe; }
-    .txt-price { font-size: 1.1rem; font-weight: 900; color: #ffffff; margin: 3px 0; }
-
-    /* أزرار صغيرة جداً بيضاء */
+    /* زر التفاصيل - نحيف وصغير */
     div.stButton > button {
-        background-color: white !important; color: #3b82f6 !important;
-        font-size: 0.75rem !important; height: 26px !important;
-        border-radius: 4px !important; width: 100%; border: none !important;
-        font-weight: 900 !important;
+        background-color: #001a33 !important; color: white !important;
+        font-size: 0.7rem !important; height: 24px !important;
+        border-radius: 3px !important; width: 100%; border: none !important;
+        font-weight: 700 !important; line-height: 1 !important;
     }
-    div.stButton > button:hover { background-color: #dbeafe !important; }
 
-    /* تقليل الفراغات */
-    .stMainBlockContainer { padding: 1rem 2rem !important; }
-    [data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
+    /* تقليل مساحة الحواف في الصفحة */
+    .stMainBlockContainer { padding: 0.5rem 1rem !important; }
+    [data-testid="stVerticalBlock"] { gap: 0.1rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -74,9 +80,9 @@ if df is not None:
     if 'curr' not in st.session_state: st.session_state.curr = 0
 
     if st.session_state.page == 'main':
-        st.markdown("<h3 style='text-align:center; font-weight:900; color:#1e40af;'>🏠 منصة معلوماتى العقارية</h3>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align:center; font-weight:900; color:#001a33; margin:0;'>🏠 منصة معلوماتى العقارية</h4>", unsafe_allow_html=True)
         
-        # سطر البحث والفلاتر
+        # سطر فلاتر نحيف جداً
         f1, f2, f3 = st.columns([2, 1, 1])
         with f1: sq = st.text_input("بحث", placeholder="المطور/المشروع", label_visibility="collapsed")
         with f2: sa = st.selectbox("المنطقة", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()), label_visibility="collapsed")
@@ -87,14 +93,16 @@ if df is not None:
         if sa != "الكل": f_df = f_df[f_df.iloc[:, 3] == sa]
         if sp > 0: f_df = f_df[f_df['p_val'] <= sp]
 
-        m_col, s_col = st.columns([3.5, 0.5])
+        # استخدام مساحة العرض بالكامل للكروت
+        main_col, side_col = st.columns([3.6, 0.4])
 
-        with m_col:
-            items = 12
+        with main_col:
+            items = 15 # زيادة العدد في الصفحة لأن الحجم صغر
             total = math.ceil(len(f_df) / items)
             start = st.session_state.curr * items
             curr_items = f_df.iloc[start : start + items]
 
+            # شبكة 3 أعمدة
             for i in range(0, len(curr_items), 3):
                 cols = st.columns(3)
                 for j in range(3):
@@ -105,11 +113,11 @@ if df is not None:
                                 <div class="micro-card">
                                     <div>
                                         <div class="txt-dev">{row[0]}</div>
-                                        <div class="txt-proj">🏢 {row[2]}</div>
+                                        <div class="txt-proj">{row[2]}</div>
                                     </div>
                                     <div>
                                         <div class="txt-price">{row[4]}</div>
-                                        <div class="white-box">📍 {row[3]} | 💳 {row[10]}</div>
+                                        <div class="info-box">📍 {row[3]} | 💳 {row[10]}</div>
                                     </div>
                                 </div>
                             """, unsafe_allow_html=True)
@@ -118,24 +126,21 @@ if df is not None:
                                 st.session_state.page = 'details'
                                 st.rerun()
 
-            # أزرار تنقل صغيرة
+            # أزرار تنقل
             n1, n2, n3 = st.columns([1,1,1])
             with n1: 
                 if st.session_state.curr > 0:
                     if st.button("السابق"): st.session_state.curr -= 1; st.rerun()
-            with n2: st.markdown(f"<p style='text-align:center; font-size:0.8rem;'>{st.session_state.curr+1}/{total}</p>", unsafe_allow_html=True)
+            with n2: st.markdown(f"<p style='text-align:center; font-size:0.7rem;'>{st.session_state.curr+1}/{total}</p>", unsafe_allow_html=True)
             with n3:
                 if st.session_state.curr < total - 1:
                     if st.button("التالي"): st.session_state.curr += 1; st.rerun()
-
-        with s_col:
-            st.markdown("<div style='font-size:0.7rem; border-right:2px solid #3b82f6; padding-right:5px;'>إضافات</div>", unsafe_allow_html=True)
 
     elif st.session_state.page == 'details':
         dev = st.session_state.selected_dev
         projs = df[df.iloc[:, 0] == dev]
         if st.button("🔙 عودة"): st.session_state.page = 'main'; st.rerun()
-        st.markdown(f"<h2 style='color:#1e40af;'>🏢 {dev}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color:#001a33;'>🏢 {dev}</h3>", unsafe_allow_html=True)
         for _, r in projs.iterrows():
             with st.expander(f"📍 {r[2]} - {r[4]}"):
                 st.info(f"**الزتونة:** {r[11]}")
