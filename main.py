@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) المطور للفلاتر والكروت
+# 2. كود التصميم (CSS) - تركيز على المربعات النظيفة بدون أيقونات
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -13,38 +13,58 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; 
         font-family: 'Cairo', sans-serif; 
-        background-color: #f8fafc; 
+        background-color: #f4f7f9; 
     }
 
-    .search-section {
-        background: linear-gradient(135deg, #003366 0%, #001a33 100%);
-        padding: 30px; border-radius: 20px; margin-bottom: 20px;
-        color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        text-align: center;
+    /* مربع الفلتر المطور */
+    .filter-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 30px;
     }
 
-    /* ستايل أزرار الفلاتر السريعة */
-    .stButton > button {
-        border-radius: 20px !important;
-        font-family: 'Cairo', sans-serif !important;
-        transition: all 0.3s ease !important;
-    }
-
-    /* الكارت المربع المطور */
+    /* الكارت المربع للشركة */
     .grid-card {
-        background: white; border-radius: 15px; padding: 20px;
-        margin-bottom: 10px; border-bottom: 4px solid #D4AF37;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        height: 150px; display: flex; flex-direction: column;
-        justify-content: center; transition: all 0.3s ease;
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        border-bottom: 4px solid #003366;
+        transition: all 0.2s ease;
     }
-    .grid-card:hover { transform: translateY(-5px); border-bottom-color: #003366; }
+    .grid-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
 
-    /* تنسيق أزرار الأكشن تحت الكارت */
-    .action-btn > div > button {
-        background-color: #f1f5f9 !important; color: #003366 !important;
-        border: 1px solid #e2e8f0 !important; font-size: 0.85rem !important;
-        height: 35px !important;
+    /* تنسيق الأزرار تحت الكارت */
+    div.stButton > button {
+        background-color: white !important;
+        color: #003366 !important;
+        border: 1px solid #003366 !important;
+        border-radius: 6px !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: bold !important;
+        height: 35px;
+        font-size: 0.9rem !important;
+    }
+    div.stButton > button:hover {
+        background-color: #003366 !important;
+        color: white !important;
+    }
+
+    .title-text {
+        color: #003366;
+        font-weight: 900;
+        font-size: 2rem;
+        margin-bottom: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -61,101 +81,81 @@ def load_data():
 
 df = load_data()
 
-# إدارة الحالة (State)
+# إدارة الحالة
 if 'page' not in st.session_state: st.session_state.page = 'main'
 if 'compare_list' not in st.session_state: st.session_state.compare_list = []
-if 'filter_area' not in st.session_state: st.session_state.filter_area = "الكل"
 
 # --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
-    st.markdown("""
-        <div class="search-section">
-            <h1 style="margin:0; font-size: 2.2rem;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></h1>
-            <p style="opacity: 0.8;">نظام البحث والفلاتر الذكي للمستشار العقاري</p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="title-text">منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
 
     if df is not None:
-        # 1. أزرار المناطق السريعة (Quick Filters)
-        st.write("📍 **مناطق البحث السريع:**")
-        quick_areas = ["الكل", "التجمع", "الشيخ زايد", "العاصمة الإدارية", "الساحل الشمالي", "أكتوبر"]
-        q_cols = st.columns(len(quick_areas))
-        
-        for idx, area in enumerate(quick_areas):
-            with q_cols[idx]:
-                if st.button(area, key=f"q_{area}"):
-                    st.session_state.filter_area = area
-
-        # 2. شريط البحث المطور
-        st.write("---")
-        c1, c2 = st.columns([3, 1])
+        # مربع الفلتر النظيف
+        st.markdown('<div class="filter-card">', unsafe_allow_html=True)
+        c1, c2 = st.columns([2, 1])
         with c1:
-            search_query = st.text_input("🔍 ابحث باسم المطور أو ميزة فنية (مثلاً: تشطيب، أقساط، لاجون)...", placeholder="اكتب هنا للبحث الذكي...")
+            search_query = st.text_input("ابحث عن مطور أو ميزة فنية (مثلاً: تشطيب كامل، تقسيط 10 سنين)", placeholder="اكتب للبحث...")
         with c2:
-            # فلتر المنطقة (يتأثر بالأزرار السريعة)
-            all_areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
-            current_index = all_areas.index(st.session_state.filter_area) if st.session_state.filter_area in all_areas else 0
-            s_area = st.selectbox("📍 تصفية بالمنطقة", all_areas, index=current_index)
-            st.session_state.filter_area = s_area
+            areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
+            s_area = st.selectbox("تصفية بالمنطقة", areas)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # منطق الفلترة (Search Engine Logic)
+        # منطق الفلترة
         f_df = df.copy()
-        if st.session_state.filter_area != "الكل":
-            f_df = f_df[f_df['Area'] == st.session_state.filter_area]
+        if s_area != "الكل":
+            f_df = f_df[f_df['Area'] == s_area]
         if search_query:
             f_df = f_df[
                 f_df['Developer'].astype(str).str.contains(search_query, case=False, na=False) |
                 f_df['Detailed_Info'].astype(str).str.contains(search_query, case=False, na=False)
             ]
 
-        # عرض النتائج (Grid 3x3)
-        st.markdown(f"<h5>النتائج المتاحة: {len(f_df)}</h5>", unsafe_allow_html=True)
-        
+        # عرض الشبكة
         grid_cols = st.columns(3)
         for idx, (i, row) in enumerate(f_df.reset_index().iterrows()):
             with grid_cols[idx % 3]:
                 st.markdown(f"""
                     <div class="grid-card">
-                        <div style="color: #003366; font-weight: 900; font-size: 1.1rem;">{row.get('Developer')}</div>
-                        <div style="color: #64748b; font-size: 0.8rem; margin-top:5px;">📍 {row.get('Area')}</div>
-                        <div style="color: #D4AF37; font-weight: bold; font-size: 0.9rem; margin-top:8px;">💰 {row.get('Price')}</div>
+                        <div style="color:#003366; font-weight:900; font-size:1.1rem; margin-bottom:5px;">{row.get('Developer')}</div>
+                        <div style="color:#64748b; font-size:0.85rem;">{row.get('Area')}</div>
+                        <div style="color:#D4AF37; font-weight:bold; font-size:0.9rem; margin-top:8px;">{row.get('Price')}</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # أزرار الأكشن بتنسيقaction-btn
-                b_col1, b_col2 = st.columns(2)
-                with b_col1:
-                    if st.button("👁️ تفاصيل", key=f"det_{i}"):
+                # أزرار الأكشن
+                b1, b2 = st.columns(2)
+                with b1:
+                    if st.button("التفاصيل", key=f"d_{idx}"):
                         st.session_state.selected_item = row.to_dict()
                         st.session_state.page = 'details'; st.rerun()
-                with b_col2:
+                with b2:
                     name = str(row['Developer'])
                     is_in = name in st.session_state.compare_list
-                    if st.button("➕ مقارنة" if not is_in else "❌ إزالة", key=f"comp_{i}"):
+                    if st.button("مقارنة" if not is_in else "إزالة", key=f"c_{idx}"):
                         if not is_in: st.session_state.compare_list.append(name)
                         else: st.session_state.compare_list.remove(name)
                         st.rerun()
-                st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
 
-# --- صفحة التفاصيل ---
+# --- صفحة التفاصيل (نفس الاستايل المربع النظيف) ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
-    if st.button("🔙 عودة للقائمة"): st.session_state.page = 'main'; st.rerun()
+    if st.button("عودة"): st.session_state.page = 'main'; st.rerun()
     
     st.markdown(f"""
-        <div style="background-color: #003366; padding: 25px; border-radius: 15px; color: white; text-align: center; margin-bottom: 20px;">
+        <div style="background-color: #003366; padding: 30px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
             <h2 style="margin:0;">{item.get('Developer')}</h2>
-            <p style="opacity:0.8;">📍 {item.get('Area')}</p>
+            <p style="opacity: 0.8; margin-top:10px;">{item.get('Area')}</p>
         </div>
-        <div style="background: white; padding: 20px; border-radius: 15px; border-right: 8px solid #003366; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-            <h3 style="color:#003366;">💡 الزتونة الفنية</h3>
-            <p style="font-size:1.1rem; line-height:1.7;">{item.get('Detailed_Info', 'لا توجد بيانات.')}</p>
-            <hr>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <p><b>👤 المالك:</b> {item.get('Owner', '-')}</p>
-                <p><b>💰 السعر:</b> {item.get('Price', '-')}</p>
-                <p><b>⏳ التقسيط:</b> {item.get('Installments', '-')}</p>
-                <p><b>🕒 الاستلام:</b> {item.get('Delivery', '-')}</p>
+        <div class="filter-card" style="border-right: 8px solid #003366;">
+            <h3 style="color:#003366; margin-bottom:15px;">الزتونة الفنية</h3>
+            <p style="font-size:1.1rem; line-height:1.7; color:#1e293b;">{item.get('Detailed_Info', 'لا توجد بيانات.')}</p>
+            <hr style="border:0; border-top: 1px solid #eee; margin:20px 0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <p><b>المالك:</b> {item.get('Owner', '-')}</p>
+                <p><b>السعر:</b> {item.get('Price', '-')}</p>
+                <p><b>التقسيط:</b> {item.get('Installments', '-')}</p>
+                <p><b>الاستلام:</b> {item.get('Delivery', '-')}</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
