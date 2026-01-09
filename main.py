@@ -4,63 +4,60 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (التباين المطلق والوضوح الفائق)
+# 2. تصميم CSS (التباين المطلق - تركيز على الصفحة الرئيسية)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
-    /* الأساسيات */
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #FFFFFF; 
     }
-    .block-container { padding: 1rem !important; }
-
-    /* الهيدر: أبيض على أسود */
-    .black-header { 
-        background: #000000; color: #FFFFFF; padding: 15px; border-radius: 10px; 
-        text-align: center; margin-bottom: 15px; border: 2px solid #000;
-    }
-    .black-header h2 { color: #FFFFFF !important; font-weight: 900; margin: 0; }
-
-    /* الكروت: أسود على أبيض */
-    .white-card {
-        background: #FFFFFF; border: 4px solid #000000; border-radius: 10px;
-        padding: 12px; margin-bottom: 10px; color: #000000;
-    }
-    .t-black { color: #000000 !important; font-weight: 900; line-height: 1.2; }
     
-    /* صناديق النتائج: تباين عالي جداً */
-    .res-container {
-        background: #000000; color: #FFFFFF; padding: 15px; border-radius: 12px;
-        text-align: center; margin-top: 10px; border: 3px solid #000;
-    }
-    .res-item { margin-bottom: 10px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
-    .res-item:last-child { border-bottom: none; }
-    .v-white { font-size: 2rem; font-weight: 900; color: #FFFFFF !important; display: block; }
-    .l-white { font-size: 1rem; font-weight: 700; color: #CCCCCC !important; }
-
-    /* المدخلات: أسود على أبيض وخط عريض */
-    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.1rem !important; }
-    input { 
-        border: 3px solid #000000 !important; font-weight: 900 !important; 
-        color: #000000 !important; font-size: 1.3rem !important;
+    /* جعل المحتوى في المنتصف */
+    .main-center {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
 
-    /* الأزرار: أبيض على أسود */
+    /* الهيدر الرئيسي */
+    .main-title { 
+        background: #000000; color: #FFFFFF; padding: 20px; border-radius: 15px; 
+        text-align: center; width: 100%; margin-bottom: 30px; border: 4px solid #000;
+    }
+    .main-title h1 { color: #FFFFFF !important; font-weight: 900; margin: 0; font-size: 2.5rem; }
+
+    /* الكروت الضخمة في المنتصف */
+    .big-gate-card {
+        background: #FFFFFF; border: 6px solid #000000; border-radius: 20px;
+        padding: 30px; text-align: center; margin-bottom: 20px;
+        box-shadow: 10px 10px 0px 0px #000000;
+    }
+    .gate-label { color: #000000 !important; font-size: 2rem; font-weight: 900; margin-top: 15px; }
+    .gate-icon { font-size: 5rem; }
+
+    /* أزرار ضخمة */
     div.stButton > button { 
         width: 100%; background: #000000 !important; color: #FFFFFF !important; 
-        font-weight: 900 !important; border-radius: 8px !important; font-size: 1.2rem !important;
-        height: 50px; border: 2px solid #000;
+        font-weight: 900 !important; border-radius: 12px !important; font-size: 1.5rem !important;
+        height: 65px; border: 3px solid #FFFFFF; margin-top: 10px;
     }
     
-    /* التبويبات Tabs */
-    .stTabs [data-baseweb="tab"] { font-weight: 900 !important; color: #000 !important; }
-    .stTabs [aria-selected="true"] { border-bottom: 4px solid #000 !important; }
+    /* تحسين القوائم والحاسبات */
+    .white-card {
+        background: #FFFFFF; border: 4px solid #000000; border-radius: 10px;
+        padding: 15px; margin-bottom: 10px; color: #000000;
+    }
+    .t-black { color: #000000 !important; font-weight: 900; }
+    .res-container { background: #000000; color: #FFFFFF; padding: 20px; border-radius: 15px; text-align: center; }
+    .v-white { font-size: 2.2rem; font-weight: 900; color: #FFFFFF !important; }
+    
+    /* المدخلات */
+    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.2rem !important; }
+    input { border: 3px solid #000000 !important; font-weight: 900 !important; font-size: 1.4rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. جلب البيانات
+# 3. وظيفة جلب البيانات
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -74,89 +71,78 @@ df = load_data()
 
 if 'view' not in st.session_state: st.session_state.view = 'main'
 
-# --- التنقل والمحتوى ---
+# --- منطق العرض ---
 if df is not None:
-    # أ. الشاشة الرئيسية
+    # أ. الشاشة الرئيسية (التركيز على الكرتين في المنتصف)
     if st.session_state.view == 'main':
-        st.markdown('<div class="black-header"><h2>🏠 معلوماتى العقارية</h2></div>', unsafe_allow_html=True)
-        if st.button("🏢 دليل الشركات"): st.session_state.view = 'comp'; st.rerun()
-        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-        if st.button("🛠️ أدوات البروكر"): st.session_state.view = 'tools'; st.rerun()
+        st.markdown('<div class="main-title"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+        
+        # استخدام أعمدة فارغة لتوسيط الكروت
+        empty_l, center_col, empty_r = st.columns([1, 4, 1])
+        
+        with center_col:
+            # كرت الشركات
+            st.markdown('<div class="big-gate-card"><div class="gate-icon">🏢</div><div class="gate-label">دليل المشاريع</div></div>', unsafe_allow_html=True)
+            if st.button("دخول قسم الشركات والمشاريع"):
+                st.session_state.view = 'comp'; st.rerun()
+            
+            st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
+            
+            # كرت الأدوات
+            st.markdown('<div class="big-gate-card" style="border-color:#E67E22;"><div class="gate-icon">🛠️</div><div class="gate-label" style="color:#E67E22 !important;">أدوات وحاسبات</div></div>', unsafe_allow_html=True)
+            if st.button("دخول أدوات وحاسبات البروكر"):
+                st.session_state.view = 'tools'; st.rerun()
 
     # ب. صفحة الشركات
     elif st.session_state.view == 'comp':
-        st.markdown('<div class="black-header"><h2>🔍 دليل الشركات</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة"): st.session_state.view = 'main'; st.rerun()
+        st.markdown('<div class="main-title"><h2>🔍 دليل المشاريع</h2></div>', unsafe_allow_html=True)
+        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
         
-        q = st.text_input("ابحث عن مطور أو مشروع...", key="s_field")
-        
-        # عرض الكروت بنظام الموبايل (رأسي وواضح)
-        f_df = df.head(15) # عرض كمية مناسبة
+        q = st.text_input("ابحث عن مطور أو مشروع...", key="comp_search")
+        f_df = df.head(20)
         for _, r in f_df.iterrows():
             st.markdown(f"""
             <div class="white-card">
-                <div class="t-black" style="font-size:1.3rem;">{r[0]}</div>
+                <div class="t-black" style="font-size:1.4rem;">{r[0]}</div>
                 <div style="color:#1d4ed8; font-weight:900;">🏢 {r[2]}</div>
-                <div class="t-black" style="font-size:1.4rem; background:#FFEB3B; display:inline-block; padding:2px 8px; margin:5px 0;">{r[4]}</div>
-                <div class="t-black" style="font-size:1rem;">📍 {r[3]}</div>
+                <div class="t-black" style="font-size:1.5rem; background:#FFEB3B; display:inline-block; padding:2px 10px;">{r[4]}</div>
+                <div class="t-black" style="font-size:1.1rem;">📍 {r[3]}</div>
             </div>
             """, unsafe_allow_html=True)
 
-    # ج. صفحة الأدوات (الحاسبات)
+    # ج. صفحة الأدوات
     elif st.session_state.view == 'tools':
-        st.markdown('<div class="black-header"><h2>🛠️ حاسبات ذكية</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة"): st.session_state.view = 'main'; st.rerun()
+        st.markdown('<div class="main-title"><h2>🛠️ الحاسبة الذكية</h2></div>', unsafe_allow_html=True)
+        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
 
-        tab1, tab2 = st.tabs(["💰 القسط والمقدم", "📈 أرباح الاستثمار ROI"])
-
-        with tab1:
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            u_p = st.number_input("سعر الوحدة (كتابة)", value=2000000, step=100000)
-            d_p = st.number_input("المقدم % (كتابة)", value=10)
-            yrs = st.number_input("السنين (كتابة)", value=8)
+        t1, t2 = st.tabs(["💰 حاسبة القسط", "📈 حاسبة الربح ROI"])
+        
+        with t1:
+            u_p = st.number_input("سعر الوحدة الإجمالي", value=2000000, step=100000)
+            d_p = st.number_input("المقدم %", value=10)
+            yrs = st.number_input("عدد السنين", value=8)
             
             dv = u_p * (d_p/100)
             mv = (u_p - dv) / (yrs * 12) if yrs > 0 else 0
             
             st.markdown(f"""
                 <div class="res-container">
-                    <div class="res-item">
-                        <span class="l-white">كاش المقدم</span>
-                        <span class="v-white">{dv:,.0f} ج.م</span>
-                    </div>
-                    <div class="res-item">
-                        <span class="l-white">القسط الشهري</span>
-                        <span class="v-white">{mv:,.0f} ج.م</span>
-                    </div>
-                    <div class="res-item">
-                        <span class="l-white">الربع سنوي</span>
-                        <span class="v-white">{mv*3:,.0f} ج.م</span>
-                    </div>
+                    <div style="margin-bottom:15px;"><span style="color:#CCC;">كاش المقدم المطلوب</span><br><span class="v-white">{dv:,.0f} ج.م</span></div>
+                    <div style="margin-bottom:15px;"><span style="color:#CCC;">القسط الشهري</span><br><span class="v-white" style="color:#4CAF50 !important;">{mv:,.0f} ج.م</span></div>
+                    <div><span style="color:#CCC;">القسط الربع سنوي</span><br><span class="v-white">{mv*3:,.0f} ج.م</span></div>
                 </div>
             """, unsafe_allow_html=True)
 
-        with tab2:
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            b_i = st.number_input("سعر الشراء", value=2000000, key="b_i")
-            s_i = st.number_input("سعر البيع المتوقع", value=3500000, key="s_i")
-            r_i = st.number_input("الإيجار المتوقع/شهر", value=15000, key="r_i")
+        with t2:
+            buy = st.number_input("سعر الشراء", value=2000000, key="b_tool")
+            sell = st.number_input("سعر البيع المتوقع", value=3500000, key="s_tool")
+            rent = st.number_input("الإيجار الشهري", value=15000, key="r_tool")
             
-            prof = s_i - b_i
-            roi = (prof/b_i)*100 if b_i > 0 else 0
-            
+            prof = sell - buy
             st.markdown(f"""
                 <div class="res-container" style="background:#111;">
-                    <div class="res-item">
-                        <span class="l-white">صافي الربح</span>
-                        <span class="v-white" style="color:#4CAF50 !important;">{prof:,.0f} ج.م</span>
-                    </div>
-                    <div class="res-item">
-                        <span class="l-white">نسبة العائد (ROI)</span>
-                        <span class="v-white" style="color:#FFC107 !important;">%{roi:.1f}</span>
-                    </div>
-                    <div class="res-item">
-                        <span class="l-white">عائد الإيجار السنوي</span>
-                        <span class="v-white">%{((r_i*12)/b_i)*100 if b_i>0 else 0:.1f}</span>
-                    </div>
+                    <div style="margin-bottom:15px;"><span style="color:#CCC;">صافي أرباح البيع</span><br><span class="v-white" style="color:#4CAF50 !important;">{prof:,.0f} ج.م</span></div>
+                    <div style="margin-bottom:15px;"><span style="color:#CCC;">نسبة العائد ROI</span><br><span class="v-white" style="color:#FFC107 !important;">%{ (prof/buy)*100 if buy>0 else 0:.1f}</span></div>
+                    <div><span style="color:#CCC;">عائد الإيجار السنوي</span><br><span class="v-white">%{ ((rent*12)/buy)*100 if buy>0 else 0:.1f}</span></div>
                 </div>
             """, unsafe_allow_html=True)
