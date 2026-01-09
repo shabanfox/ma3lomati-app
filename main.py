@@ -16,41 +16,44 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* ضغط الحاويات الرئيسية */
-    .stMainBlockContainer { padding: 0.2rem 0.5rem !important; }
-    [data-testid="stVerticalBlock"] { gap: 0rem !important; }
-    [data-testid="stHorizontalBlock"] { gap: 0.2rem !important; }
+    /* الهيدر الرئيسي */
+    .main-header {
+        text-align: center; color: #001a33; font-weight: 900; 
+        font-size: 1.8rem; margin-bottom: 10px; padding: 10px;
+        border-bottom: 2px solid #f1f5f9;
+    }
 
-    /* كروت نانو - نحيفة جداً وقريبة من بعضها */
+    /* كروت نانو - نحيفة وقريبة */
     .nano-card {
         background: #ffffff; 
         border: 1px solid #eeeeee; 
-        border-right: 3px solid #001a33; 
+        border-right: 4px solid #001a33; 
         border-radius: 4px; 
-        padding: 5px 8px;
-        margin-bottom: 2px; 
-        min-height: 95px; 
+        padding: 6px 10px;
+        margin-bottom: 4px; 
+        min-height: 100px; 
         display: flex; 
         flex-direction: column; 
         justify-content: center;
         box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
 
-    .t-dev { color: #000000 !important; font-size: 0.85rem; font-weight: 900; line-height: 1; }
-    .t-proj { color: #1e40af !important; font-size: 0.75rem; font-weight: 700; margin: 1px 0; }
-    .t-price { color: #166534 !important; font-size: 0.9rem; font-weight: 900; }
-    .t-info { color: #555555; font-size: 0.7rem; font-weight: 600; margin-top: 1px; }
+    .t-dev { color: #000000 !important; font-size: 0.9rem; font-weight: 900; line-height: 1.1; }
+    .t-proj { color: #1e40af !important; font-size: 0.8rem; font-weight: 700; margin: 2px 0; }
+    .t-price { color: #166534 !important; font-size: 1rem; font-weight: 900; }
+    .t-info { color: #555555; font-size: 0.75rem; font-weight: 600; }
 
-    /* زر التفاصيل - أصغر حجم ممكن */
+    /* أزرار التفاصيل */
     div.stButton > button {
         background-color: #001a33 !important; color: white !important;
-        font-size: 0.65rem !important; height: 20px !important;
-        border-radius: 2px !important; width: 100%; border: none !important;
-        font-weight: 700 !important; padding: 0 !important; margin-top: 2px !important;
+        font-size: 0.7rem !important; height: 24px !important;
+        border-radius: 3px !important; width: 100%; border: none !important;
+        font-weight: 700 !important; margin-top: 4px !important;
     }
 
-    /* تصغير الفلاتر */
-    .stTextInput input, .stSelectbox div { height: 28px !important; font-size: 0.8rem !important; }
+    /* تقليل المسافات */
+    .stMainBlockContainer { padding: 1rem 2rem !important; }
+    [data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -75,58 +78,71 @@ if df is not None:
     if 'curr' not in st.session_state: st.session_state.curr = 0
 
     if st.session_state.page == 'main':
-        # سطر فلاتر مدمج جداً
-        c1, c2, c3, c4 = st.columns([1.5, 1, 1, 0.5])
-        with c1: sq = st.text_input("بحث", placeholder="المطور/المشروع", label_visibility="collapsed")
-        with c2: sa = st.selectbox("المنطقة", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()), label_visibility="collapsed")
-        with c3: sp = st.number_input("السعر", value=0, label_visibility="collapsed")
-        with c4: st.markdown(f"<p style='font-size:0.7rem; margin-top:5px;'>{len(df)} عقار</p>", unsafe_allow_html=True)
+        # الهيدر الذي طلبته
+        st.markdown('<div class="main-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
+        
+        # سطر فلاتر مدمج
+        f1, f2, f3 = st.columns([2, 1, 1])
+        with f1: sq = st.text_input("بحث بالاسم أو المطور", placeholder="اكتب هنا...", label_visibility="collapsed")
+        with f2: sa = st.selectbox("المنطقة", ["الكل"] + sorted(df.iloc[:, 3].dropna().unique().tolist()), label_visibility="collapsed")
+        with f3: sp = st.number_input("أقصى سعر", value=0, label_visibility="collapsed")
 
         f_df = df.copy()
         if sq: f_df = f_df[f_df.iloc[:, 0].str.contains(sq, na=False, case=False) | f_df.iloc[:, 2].str.contains(sq, na=False, case=False)]
         if sa != "الكل": f_df = f_df[f_df.iloc[:, 3] == sa]
         if sp > 0: f_df = f_df[f_df['p_val'] <= sp]
 
-        items = 18 # عرض 18 كارت في الصفحة الواحدة
-        total = math.ceil(len(f_df) / items)
-        start = st.session_state.curr * items
-        curr_items = f_df.iloc[start : start + items]
+        # تقسيم الصفحة: 3 أعمدة للكروت (جهة اليمين) وعمود للإضافات (جهة اليسار)
+        main_area, side_area = st.columns([3.3, 0.7])
 
-        # شبكة الكروت
-        for i in range(0, len(curr_items), 3):
-            cols = st.columns(3)
-            for j in range(3):
-                if i + j < len(curr_items):
-                    row = curr_items.iloc[i + j]
-                    with cols[j]:
-                        st.markdown(f"""
-                            <div class="nano-card">
-                                <div class="t-dev">{row[0]}</div>
-                                <div class="t-proj">{row[2]}</div>
-                                <div class="t-price">{row[4]}</div>
-                                <div class="t-info">📍 {row[3]} | 💳 {row[10]}</div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        if st.button("تفاصيل", key=f"b_{start+i+j}"):
-                            st.session_state.selected_dev = row[0]
-                            st.session_state.page = 'details'
-                            st.rerun()
+        with main_area:
+            items = 9  # عرض 9 كروت فقط كما طلبت
+            total = math.ceil(len(f_df) / items)
+            start = st.session_state.curr * items
+            curr_items = f_df.iloc[start : start + items]
 
-        # أزرار تنقل
-        n1, n2, n3 = st.columns([1,1,1])
-        with n1: 
-            if st.session_state.curr > 0:
-                if st.button("السابق"): st.session_state.curr -= 1; st.rerun()
-        with n2: st.markdown(f"<p style='text-align:center; font-size:0.6rem; margin:0;'>{st.session_state.curr+1}/{total}</p>", unsafe_allow_html=True)
-        with n3:
-            if st.session_state.curr < total - 1:
-                if st.button("التالي"): st.session_state.curr += 1; st.rerun()
+            # شبكة الكروت (3 أعمدة)
+            for i in range(0, len(curr_items), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    if i + j < len(curr_items):
+                        row = curr_items.iloc[i + j]
+                        with cols[j]:
+                            st.markdown(f"""
+                                <div class="nano-card">
+                                    <div class="t-dev">{row[0]}</div>
+                                    <div class="t-proj">{row[2]}</div>
+                                    <div class="t-price">{row[4]}</div>
+                                    <div class="t-info">📍 {row[3]} | 💳 {row[10]}</div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            if st.button("التفاصيل", key=f"b_{start+i+j}"):
+                                st.session_state.selected_dev = row[0]
+                                st.session_state.page = 'details'
+                                st.rerun()
+
+            # أزرار تنقل
+            st.markdown("<br>", unsafe_allow_html=True)
+            n1, n2, n3 = st.columns([1,1,1])
+            with n1: 
+                if st.session_state.curr > 0:
+                    if st.button("السابق"): st.session_state.curr -= 1; st.rerun()
+            with n2: st.markdown(f"<p style='text-align:center; font-size:0.8rem;'>{st.session_state.curr+1} / {total}</p>", unsafe_allow_html=True)
+            with n3:
+                if st.session_state.curr < total - 1:
+                    if st.button("التالي"): st.session_state.curr += 1; st.rerun()
+
+        with side_area:
+            st.markdown("<div style='border-right:2px solid #001a33; padding:10px; background:#f8fafc; border-radius:5px;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-weight:900; font-size:0.9rem; color:#001a33;'>⭐ إضافات</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.8rem;'>يمكنك هنا وضع روابط سريعة، نصائح عقارية، أو تحديثات السوق.</p>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     elif st.session_state.page == 'details':
         dev = st.session_state.selected_dev
         projs = df[df.iloc[:, 0] == dev]
-        if st.button("🔙 عودة"): st.session_state.page = 'main'; st.rerun()
-        st.markdown(f"<h6>🏢 {dev}</h6>", unsafe_allow_html=True)
+        if st.button("🔙 عودة للقائمة"): st.session_state.page = 'main'; st.rerun()
+        st.markdown(f"<h2 style='color:#001a33;'>🏢 {dev}</h2>", unsafe_allow_html=True)
         for _, r in projs.iterrows():
             with st.expander(f"📍 {r[2]} - {r[4]}"):
-                st.info(f"{r[11]}")
+                st.error(f"**💡 الزتونة:** {r[11]}")
