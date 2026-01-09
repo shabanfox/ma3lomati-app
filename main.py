@@ -5,7 +5,7 @@ import math
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - وضع الأزرار داخل الهيدر على اليسار
+# 2. كود التصميم (CSS) - التعديلات الجديدة لليمين واللون الأزرق
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -13,7 +13,7 @@ st.markdown("""
     [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
     
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 0rem !important;
         padding-left: 5% !important;
         padding-right: 5% !important;
@@ -27,56 +27,53 @@ st.markdown("""
 
     /* الهيدر بصورة عقارات احترافية */
     .hero-header {
-        background-image: linear-gradient(to left, rgba(0, 26, 51, 0.9), rgba(0, 68, 255, 0.3)), 
+        background-image: linear-gradient(to left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2)), 
         url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
         background-size: cover;
         background-position: center;
-        height: 150px;
+        height: 140px;
         border-radius: 0 0 20px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0 40px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         margin-bottom: 25px;
         position: relative;
     }
 
+    /* اسم المنصة في أقصى اليمين باللون الأزرق */
     .platform-name {
-        color: white;
-        font-size: 1.8rem;
+        color: #0044ff !important; /* اللون الأزرق المطلوب */
+        font-size: 2.2rem;
         font-weight: 900;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        text-align: right;
+        flex-grow: 1;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
     }
 
-    /* تنسيق حاوية الأزرار لتكون فوق الهيدر على اليسار */
-    .nav-buttons {
-        position: absolute;
-        left: 40px;
-        top: 50%;
-        transform: translateY(-50%);
+    /* حاوية الأزرار في اليسار */
+    .nav-buttons-left {
         display: flex;
-        gap: 12px;
-        z-index: 1000;
+        gap: 10px;
+        justify-content: flex-end;
     }
 
-    /* جعل أزرار الـ Streamlit شفافة وأنيقة لتناسب الهيدر */
+    /* ستايل الأزرار */
     div.stButton > button {
-        background-color: rgba(255, 255, 255, 0.15) !important;
+        background-color: #001a33 !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
         border-radius: 8px !important;
         font-family: 'Cairo', sans-serif !important;
         font-weight: bold !important;
         padding: 5px 20px !important;
+        border: none !important;
         transition: 0.3s !important;
-        backdrop-filter: blur(5px);
     }
 
     div.stButton > button:hover {
-        background-color: white !important;
-        color: #001a33 !important;
-        border-color: white !important;
+        background-color: #0044ff !important;
+        box-shadow: 0 4px 12px rgba(0,68,255,0.3);
     }
 
     /* كروت الشركات */
@@ -87,7 +84,7 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         border-right: 5px solid #0044ff;
         margin-bottom: 10px;
-        height: 110px;
+        height: 100px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -107,16 +104,16 @@ def load_data():
 
 df = load_data()
 
-# 4. بناء الهيدر مع الأزرار في اليسار والاسم في اليمين
-# نستخدم حاوية واحدة للهيدر
+# 4. بناء الهيدر الاحترافي
+# الحاوية الأساسية للهيدر
 st.markdown('<div class="hero-header"><div class="platform-name">منصة معلوماتى العقارية</div></div>', unsafe_allow_html=True)
 
-# وضع الأزرار في اليسار فوق الهيدر باستخدام Columns مع Offset
-header_overlay = st.columns([1, 1, 4]) 
-with header_overlay[0]: # العمود الأول من اليسار
+# وضع الأزرار في جهة اليسار فوق الهيدر
+header_overlay = st.columns([1.2, 1.2, 5]) 
+with header_overlay[0]:
     if st.button("🏠 الرئيسية"):
         st.session_state.page = 'main'; st.session_state.search_query = ""; st.rerun()
-with header_overlay[1]: # العمود الثاني من اليسار
+with header_overlay[1]:
     if st.button("👤 دخول"):
         st.toast("قريباً")
 
@@ -124,19 +121,19 @@ with header_overlay[1]: # العمود الثاني من اليسار
 if 'page' not in st.session_state: st.session_state.page = 'main'
 if 'search_query' not in st.session_state: st.session_state.search_query = ""
 
-# --- الصفحة الرئيسية ---
+# --- المحتوى الرئيسي ---
 if st.session_state.page == 'main' and df is not None:
-    col_main, col_side = st.columns([2, 1])
+    col_main, col_side = st.columns([2.2, 1])
 
     with col_main:
-        # شريط البحث
-        st.session_state.search_query = st.text_input("🔍 ابحث عن مطورك العقاري...", value=st.session_state.search_query)
+        # البحث
+        st.session_state.search_query = st.text_input("🔍 ابحث عن مطور عقاري...", value=st.session_state.search_query)
         
         f_df = df.copy()
         if st.session_state.search_query:
             f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
 
-        # عرض الشركات
+        # عرض الشركات (2 في كل صف)
         grid = st.columns(2)
         for idx, (i, row) in enumerate(f_df.head(6).reset_index().iterrows()):
             with grid[idx % 2]:
@@ -146,13 +143,13 @@ if st.session_state.page == 'main' and df is not None:
                         <div style="color: #64748b; font-size: 0.85rem;">📍 {row['Area']}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                if st.button("التفاصيل", key=f"btn_{i}"):
+                if st.button("عرض التفاصيل", key=f"btn_{i}"):
                     st.session_state.selected_item = row.to_dict(); st.session_state.page = 'details'; st.rerun()
 
     with col_side:
-        st.markdown('<div style="background:white; padding:15px; border-radius:15px; border:1px solid #e2e8f0;">', unsafe_allow_html=True)
-        st.markdown('<p style="font-weight:900; color:#001a33; border-bottom:1px solid #eee; padding-bottom:5px;">🏆 قائمة الكبار</p>', unsafe_allow_html=True)
-        top_companies = ["Mountain View", "SODIC", "Emaar", "TMG", "Palm Hills", "Hassan Allam"]
+        st.markdown('<div style="background:white; padding:15px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">', unsafe_allow_html=True)
+        st.markdown('<p style="font-weight:900; color:#0044ff; border-bottom:2px solid #f1f5f9; padding-bottom:10px; font-size:1.1rem;">🏆 قائمة الكبار</p>', unsafe_allow_html=True)
+        top_companies = ["Mountain View", "SODIC", "Emaar", "TMG", "Palm Hills", "Ora Developers", "Hassan Allam"]
         for comp in top_companies:
             if st.button(f"🏢 {comp}", key=f"side_{comp}"):
                 st.session_state.search_query = comp; st.rerun()
@@ -162,10 +159,10 @@ if st.session_state.page == 'main' and df is not None:
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
     st.markdown(f"""
-        <div style="background:white; padding:30px; border-radius:20px; border:1px solid #e2e8f0; text-align:right;">
-            <h1 style="color:#001a33; border-right:8px solid #0044ff; padding-right:15px;">{item['Developer']}</h1>
-            <p style="color:#64748b; font-weight:bold;">📍 المنطقة: {item['Area']}</p>
-            <hr>
-            <p style="font-size:1.2rem; line-height:1.8;">{item.get('Company_Bio', 'المعلومات الفنية ستتوفر قريباً.')}</p>
+        <div style="background:white; padding:30px; border-radius:20px; border:1px solid #e2e8f0; text-align:right; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+            <h1 style="color:#0044ff; border-right:10px solid #001a33; padding-right:20px;">{item['Developer']}</h1>
+            <p style="color:#64748b; font-size:1.1rem; margin-top:10px;">📍 الموقع: <b>{item['Area']}</b></p>
+            <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+            <p style="font-size:1.25rem; line-height:1.9; color:#1e293b;">{item.get('Company_Bio', 'المعلومات الفنية ستتوفر قريباً لهذه الشركة.')}</p>
         </div>
     """, unsafe_allow_html=True)
