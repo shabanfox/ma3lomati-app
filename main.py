@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (التباين المطلق - تركيز على الصفحة الرئيسية)
+# 2. تصميم CSS (التباين المطلق وكروت قابلة للضغط)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -14,11 +14,6 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #FFFFFF; 
     }
     
-    /* جعل المحتوى في المنتصف */
-    .main-center {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-
     /* الهيدر الرئيسي */
     .main-title { 
         background: #000000; color: #FFFFFF; padding: 20px; border-radius: 15px; 
@@ -26,22 +21,37 @@ st.markdown("""
     }
     .main-title h1 { color: #FFFFFF !important; font-weight: 900; margin: 0; font-size: 2.5rem; }
 
-    /* الكروت الضخمة في المنتصف */
-    .big-gate-card {
-        background: #FFFFFF; border: 6px solid #000000; border-radius: 20px;
-        padding: 30px; text-align: center; margin-bottom: 20px;
+    /* تصميم الكرت القابل للضغط */
+    .clickable-card {
+        background: #FFFFFF; 
+        border: 6px solid #000000; 
+        border-radius: 20px;
+        padding: 40px 20px; 
+        text-align: center; 
+        margin-bottom: 20px;
         box-shadow: 10px 10px 0px 0px #000000;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
-    .gate-label { color: #000000 !important; font-size: 2rem; font-weight: 900; margin-top: 15px; }
-    .gate-icon { font-size: 5rem; }
+    .clickable-card:hover {
+        transform: translate(-5px, -5px);
+        box-shadow: 15px 15px 0px 0px #000000;
+        background-color: #F8F9FA;
+    }
+    .gate-label { color: #000000 !important; font-size: 2.2rem; font-weight: 900; margin-top: 15px; }
+    .gate-icon { font-size: 6rem; }
 
-    /* أزرار ضخمة */
-    div.stButton > button { 
-        width: 100%; background: #000000 !important; color: #FFFFFF !important; 
-        font-weight: 900 !important; border-radius: 12px !important; font-size: 1.5rem !important;
-        height: 65px; border: 3px solid #FFFFFF; margin-top: 10px;
+    /* إخفاء أزرار Streamlit الافتراضية وجعلها غير مرئية فوق الكرت */
+    .stButton > button {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 250px;
+        background: transparent !important;
+        color: transparent !important;
+        border: none !important;
+        z-index: 10;
+        cursor: pointer;
     }
-    
+
     /* تحسين القوائم والحاسبات */
     .white-card {
         background: #FFFFFF; border: 4px solid #000000; border-radius: 10px;
@@ -73,24 +83,38 @@ if 'view' not in st.session_state: st.session_state.view = 'main'
 
 # --- منطق العرض ---
 if df is not None:
-    # أ. الشاشة الرئيسية (التركيز على الكرتين في المنتصف)
+    # أ. الشاشة الرئيسية
     if st.session_state.view == 'main':
         st.markdown('<div class="main-title"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
         
-        # استخدام أعمدة فارغة لتوسيط الكروت
+        # حاوية الكروت المركزية
         empty_l, center_col, empty_r = st.columns([1, 4, 1])
         
         with center_col:
-            # كرت الشركات
-            st.markdown('<div class="big-gate-card"><div class="gate-icon">🏢</div><div class="gate-label">دليل المشاريع</div></div>', unsafe_allow_html=True)
-            if st.button("دخول قسم الشركات والمشاريع"):
+            # كرت الشركات (المنطقة بالكامل قابلة للضغط)
+            st.markdown("""
+                <div style="position: relative;">
+                    <div class="clickable-card">
+                        <div class="gate-icon">🏢</div>
+                        <div class="gate-label">دليل المشاريع</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("open_comp", key="btn_comp"):
                 st.session_state.view = 'comp'; st.rerun()
             
-            st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
             
-            # كرت الأدوات
-            st.markdown('<div class="big-gate-card" style="border-color:#E67E22;"><div class="gate-icon">🛠️</div><div class="gate-label" style="color:#E67E22 !important;">أدوات وحاسبات</div></div>', unsafe_allow_html=True)
-            if st.button("دخول أدوات وحاسبات البروكر"):
+            # كرت الأدوات (المنطقة بالكامل قابلة للضغط)
+            st.markdown("""
+                <div style="position: relative;">
+                    <div class="clickable-card" style="border-color:#E67E22;">
+                        <div class="gate-icon">🛠️</div>
+                        <div class="gate-label" style="color:#E67E22 !important;">أدوات وحاسبات</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("open_tools", key="btn_tools"):
                 st.session_state.view = 'tools'; st.rerun()
 
     # ب. صفحة الشركات
@@ -99,7 +123,7 @@ if df is not None:
         if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
         
         q = st.text_input("ابحث عن مطور أو مشروع...", key="comp_search")
-        f_df = df.head(20)
+        f_df = df.head(15)
         for _, r in f_df.iterrows():
             st.markdown(f"""
             <div class="white-card">
@@ -115,9 +139,9 @@ if df is not None:
         st.markdown('<div class="main-title"><h2>🛠️ الحاسبة الذكية</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
 
-        t1, t2 = st.tabs(["💰 حاسبة القسط", "📈 حاسبة الربح ROI"])
+        tab1, tab2 = st.tabs(["💰 حاسبة القسط", "📈 حاسبة الربح ROI"])
         
-        with t1:
+        with tab1:
             u_p = st.number_input("سعر الوحدة الإجمالي", value=2000000, step=100000)
             d_p = st.number_input("المقدم %", value=10)
             yrs = st.number_input("عدد السنين", value=8)
@@ -133,7 +157,7 @@ if df is not None:
                 </div>
             """, unsafe_allow_html=True)
 
-        with t2:
+        with tab2:
             buy = st.number_input("سعر الشراء", value=2000000, key="b_tool")
             sell = st.number_input("سعر البيع المتوقع", value=3500000, key="s_tool")
             rent = st.number_input("الإيجار الشهري", value=15000, key="r_tool")
