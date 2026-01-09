@@ -1,168 +1,167 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
+# 1. إعدادات الصفحة والاتصال بالبيانات
+st.set_page_config(page_title="منصة معلوماتى", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS احترافي (تثبيت الألوان والخطوط والأزرار العريضة)
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
-    /* إخفاء القوائم الافتراضية */
-    #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
-    
-    /* التنسيق العام للجسم */
-    html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
-    }
-    .block-container { padding-top: 2rem !important; }
-
-    /* الهيدر الملكي */
-    .hero-section { 
-        background: #000000; color: #FFD700; padding: 30px; border-radius: 20px; 
-        text-align: center; margin-bottom: 50px; border: 5px solid #FFD700;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-    .hero-section h1 { color: #FFD700 !important; font-weight: 900; margin: 0; font-size: 3rem; }
-
-    /* تنسيق الأزرار (جنب بعض في صف واحد عريض) */
-    div.stButton > button {
-        width: 100% !important;
-        height: 150px !important; /* ارتفاع فخم وعريض */
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 6px solid #000000 !important;
-        border-radius: 25px !important;
-        font-size: 2.2rem !important;
-        font-weight: 900 !important;
-        box-shadow: 12px 12px 0px 0px #000000 !important; /* ظل حاد وواضح */
-        transition: all 0.1s ease-in-out;
-        display: flex; align-items: center; justify-content: center;
-    }
-    
-    /* تأثير الضغط على الزر */
-    div.stButton > button:active {
-        transform: translate(8px, 8px) !important;
-        box-shadow: 0px 0px 0px 0px !important;
-    }
-
-    /* كروت النتائج (تباين أسود/ذهبي) */
-    .result-container { 
-        background: #000000; color: #ffffff; padding: 30px; 
-        border-radius: 25px; text-align: center; border: 4px solid #FFD700;
-        margin-top: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-    }
-    .result-value { font-size: 3rem; font-weight: 900; color: #FFD700 !important; display: block; }
-    .result-label { font-size: 1.2rem; color: #cccccc; font-weight: 700; }
-
-    /* كروت دليل المشاريع */
-    .data-item {
-        background: #ffffff; border: 4px solid #000000; padding: 25px; 
-        border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
-    }
-
-    /* تحسين شكل المدخلات الرقمية */
-    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.5rem !important; }
-    input { 
-        border: 4px solid #000000 !important; font-weight: 900 !important; 
-        font-size: 1.8rem !important; border-radius: 15px !important; text-align: center !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 3. جلب البيانات من Google Sheets
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
-        df = pd.read_csv(url); df.columns = [c.strip() for c in df.columns]
+        df = pd.read_csv(url)
+        df.columns = [c.strip() for c in df.columns]
         return df
-    except: return None
+    except:
+        return None
+
+# 2. تصميم CSS الاحترافي (ثبات الهوية البصرية)
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
+    /* إخفاء إعدادات ستريمليت الافتراضية */
+    #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
+    
+    /* التنسيق العام */
+    html, body, [data-testid="stAppViewContainer"] { 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #FFFFFF; 
+    }
+    .block-container { padding-top: 1.5rem !important; }
+
+    /* الهيدر الرئيسي (أسود وذهبي) */
+    .hero-banner { 
+        background: #000000; color: #FFD700; padding: 25px; border-radius: 20px; 
+        text-align: center; margin-bottom: 40px; border-bottom: 6px solid #FFD700;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .hero-banner h1 { color: #FFD700 !important; font-weight: 900; margin: 0; font-size: 2.4rem; }
+
+    /* الأزرار الرئيسية (جنب بعض، عريضة، أنيقة) */
+    div.stButton > button {
+        width: 100% !important;
+        height: 100px !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 5px solid #000000 !important;
+        border-radius: 18px !important;
+        font-size: 1.7rem !important;
+        font-weight: 900 !important;
+        box-shadow: 8px 8px 0px 0px #000000 !important;
+        transition: 0.1s ease;
+    }
+    div.stButton > button:active {
+        transform: translate(5px, 5px) !important;
+        box-shadow: 0px 0px 0px 0px !important;
+    }
+
+    /* تصميم كروت المشاريع (النيومورفيزم الاحترافي) */
+    .project-card {
+        background: #FFFFFF; border: 4px solid #000000; padding: 22px; 
+        border-radius: 22px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
+    }
+    .project-title { font-size: 1.9rem; font-weight: 900; color: #000000; margin-bottom: 8px; }
+    .dev-name { color: #1e40af; font-weight: 900; font-size: 1.3rem; }
+    .gold-tag { 
+        font-weight: 900; font-size: 1.6rem; background: #FFD700; 
+        display: inline-block; padding: 6px 18px; margin-top: 12px; border: 3px solid #000;
+        border-radius: 10px;
+    }
+
+    /* صناديق نتائج الحاسبة */
+    .res-box { 
+        background: #000000; color: #FFFFFF; padding: 25px; 
+        border-radius: 25px; text-align: center; border: 4px solid #FFD700;
+    }
+    .res-value { font-size: 2.6rem; font-weight: 900; color: #FFD700 !important; }
+    
+    /* المدخلات */
+    label { font-weight: 900 !important; color: #000000 !important; font-size: 1.3rem !important; }
+    input { border: 4px solid #000000 !important; font-weight: 900 !important; font-size: 1.5rem !important; border-radius: 12px !important; }
+    </style>
+""", unsafe_allow_html=True)
 
 df = load_data()
 
-# إدارة التنقل بين الصفحات
+# إدارة التنقل
 if 'view' not in st.session_state: st.session_state.view = 'main'
 
-# --- المحتوى الرئيسي ---
 if df is not None:
-    # أ. الشاشة الرئيسية (أزرار عريضة جنب بعض في المنتصف)
+    # --- الشاشة الرئيسية ---
     if st.session_state.view == 'main':
-        st.markdown('<div class="hero-section"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
         
-        # توزيع الأزرار في صف واحد (توسيط بنسبة 90% من الشاشة)
-        _, col_main, _ = st.columns([0.05, 0.9, 0.05])
-        with col_main:
-            c1, c2 = st.columns(2, gap="large")
+        # وضع الأزرار جنباً إلى جنب (توسيط 90%)
+        _, col_body, _ = st.columns([0.05, 0.9, 0.05])
+        with col_body:
+            c1, c2 = st.columns(2, gap="medium")
             with c1:
-                if st.button("🏢\nدليل المشاريع", key="btn_proj"):
+                if st.button("🏢\nدليل المشاريع", key="nav_proj"):
                     st.session_state.view = 'comp'; st.rerun()
             with c2:
-                if st.button("🛠️\nأدوات البروكر", key="btn_tool"):
+                if st.button("🛠️\nأدوات البروكر", key="nav_tool"):
                     st.session_state.view = 'tools'; st.rerun()
 
-    # ب. صفحة المشاريع
+    # --- صفحة المشاريع ---
     elif st.session_state.view == 'comp':
-        st.markdown('<div class="hero-section"><h2>🔍 دليل المشاريع العقارية</h2></div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-banner"><h2>🔍 دليل المشاريع العقارية</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
         
-        q = st.text_input("بحث سريع...", placeholder="اكتب اسم المشروع")
-        for _, r in df.head(10).iterrows():
+        search_q = st.text_input("بحث سريع عن مشروع أو مطور...", placeholder="اكتب هنا...")
+        
+        # فلترة البيانات
+        disp_df = df[df.apply(lambda r: search_q.lower() in r.astype(str).str.lower().values, axis=1)] if search_q else df.head(15)
+        
+        for _, row in disp_df.iterrows():
             st.markdown(f"""
-            <div class="data-item">
-                <div style="font-weight:900; font-size:2rem; color:#000;">{r[0]}</div>
-                <div style="color:#2563eb; font-weight:900; font-size:1.4rem;">🏢 المطور: {r[2]}</div>
-                <div style="font-weight:900; font-size:1.8rem; background:#FFD700; display:inline-block; padding:5px 20px; margin-top:10px; border:3px solid #000;">{r[4]}</div>
+            <div class="project-card">
+                <div class="project-title">{row[0]}</div>
+                <div class="dev-name">🏢 المطور: {row[2]}</div>
+                <div class="gold-tag">{row[4]}</div>
+                <div style="margin-top:10px; font-weight:700;">📍 الموقع: {row[3]}</div>
             </div>
             """, unsafe_allow_html=True)
 
-    # ج. صفحة الأدوات (الحاسبتين معاً بوضوح تدرجي)
+    # --- صفحة الأدوات (الحاسبتين) ---
     elif st.session_state.view == 'tools':
-        st.markdown('<div class="hero-section"><h2>🛠️ أدوات الحاسبة الذكية</h2></div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-banner"><h2>🛠️ الأدوات والحاسبات</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
 
-        # 💰 حاسبة الأقساط
-        st.markdown("<h2 style='border-right:12px solid #000; padding-right:15px; font-weight:900;'>💰 حاسبة القسط والمقدم</h2>", unsafe_allow_html=True)
-        a, b, c = st.columns(3)
-        with a: price = st.number_input("سعر الوحدة", value=2000000, step=50000, key="c1")
-        with b: down = st.number_input("المقدم %", value=10, key="c2")
-        with c: years = st.number_input("السنين", value=8, key="c3")
+        # 1. حاسبة الأقساط
+        st.markdown("<h3 style='border-right:8px solid #000; padding-right:12px; font-weight:900;'>💰 حاسبة القسط والمقدم</h3>", unsafe_allow_html=True)
+        col_a, col_b, col_c = st.columns(3)
+        with col_a: u_p = st.number_input("سعر الوحدة", value=2000000, key="calc_p")
+        with col_b: u_d = st.number_input("المقدم %", value=10, key="calc_d")
+        with col_c: u_y = st.number_input("سنين التقسيط", value=8, key="calc_y")
         
-        dv = price * (down/100)
-        mv = (price - dv) / (years * 12) if years > 0 else 0
+        calc_dv = u_p * (u_d/100)
+        calc_mv = (u_p - calc_dv) / (u_y * 12) if u_y > 0 else 0
         
         st.markdown(f"""
-            <div class="result-container">
-                <span class="result-label">كاش المقدم المطلوب:</span>
-                <span class="result-value">{dv:,.0f} ج.م</span>
-                <hr style="border:1px solid #333; margin: 20px 0;">
-                <span class="result-label">القسط الشهري:</span>
-                <span class="result-value" style="color:#22c55e !important;">{mv:,.0f} ج.م</span>
+            <div class="res-box">
+                <span style="color:#bbb;">كاش المقدم:</span><br><span class="res-value">{calc_dv:,.0f} ج.م</span>
+                <hr style="border-color:#333">
+                <span style="color:#bbb;">القسط الشهري:</span><br><span class="res-value" style="color:#22c55e !important;">{calc_mv:,.0f} ج.م</span>
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("<div style='height:60px;'></div>", unsafe_allow_html=True)
+        st.markdown("<br><hr style='border:2px solid #000;'><br>", unsafe_allow_html=True)
 
-        # 📈 حاسبة الربح ROI
-        st.markdown("<h2 style='border-right:12px solid #FFD700; padding-right:15px; font-weight:900;'>📈 حاسبة الاستثمار (ROI)</h2>", unsafe_allow_html=True)
-        r1, r2, r3 = st.columns(3)
-        with r1: b_p = st.number_input("سعر الشراء", value=2000000, key="r1")
-        with r2: s_p = st.number_input("سعر البيع المتوقع", value=3500000, key="r2")
-        with r3: rent = st.number_input("الإيجار الشهري", value=15000, key="r3")
+        # 2. حاسبة الربح ROI
+        st.markdown("<h3 style='border-right:8px solid #FFD700; padding-right:12px; font-weight:900;'>📈 حاسبة الاستثمار ROI</h3>", unsafe_allow_html=True)
+        col_r1, col_r2, col_r3 = st.columns(3)
+        with col_r1: b_v = st.number_input("سعر الشراء", value=2000000, key="roi_b")
+        with col_r2: s_v = st.number_input("سعر البيع", value=3500000, key="roi_s")
+        with col_r3: r_v = st.number_input("إيجار شهري", value=15000, key="roi_r")
         
-        prof = s_p - b_p
-        roi = (prof/b_p)*100 if b_p > 0 else 0
+        roi_prof = s_v - b_v
+        roi_perc = (roi_prof/b_v)*100 if b_v > 0 else 0
         
         st.markdown(f"""
-            <div class="result-container" style="border-color:#ffffff;">
-                <span class="result-label">صافي أرباح إعادة البيع:</span>
-                <span class="result-value" style="color:#FFD700 !important;">{prof:,.0f} ج.م</span>
-                <hr style="border:1px solid #333; margin: 20px 0;">
-                <span class="result-label">نسبة العائد الإجمالية ROI:</span>
-                <span class="result-value">%{roi:.1f}</span>
+            <div class="res-box" style="border-color:#FFFFFF;">
+                <span style="color:#bbb;">صافي الربح:</span><br><span class="res-value" style="color:#FFD700 !important;">{roi_prof:,.0f} ج.م</span>
+                <hr style="border-color:#333">
+                <span style="color:#bbb;">نسبة العائد الإجمالية:</span><br><span class="res-value">%{roi_perc:.1f}</span>
             </div>
         """, unsafe_allow_html=True)
-
 else:
-    st.error("تأكد من اتصالك بالإنترنت وصحة رابط Google Sheets")
+    st.error("يرجى التأكد من رابط البيانات والاتصال بالإنترنت")
