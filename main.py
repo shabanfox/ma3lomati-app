@@ -16,31 +16,24 @@ st.markdown("""
         background-color: #f1f5f9; 
     }
 
-    /* كروت المقارنة */
-    .comp-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        border: 2px solid #e2e8f0;
-        text-align: center;
-        height: 100%;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    }
-    .comp-header { color: #003366; font-weight: 900; font-size: 1.4rem; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-    .comp-price { color: #D4AF37; font-weight: 800; font-size: 1.2rem; margin: 10px 0; }
-    .comp-label { color: #64748b; font-size: 0.85rem; }
-    .comp-value { color: #003366; font-weight: 700; display: block; margin-bottom: 10px; }
-
     /* الكروت الرمادية الأساسية */
     .project-card-container { 
         background-color: #edf2f7; border-radius: 10px; 
         margin-bottom: 8px !important; display: flex;
         align-items: center; border: 1px solid #e2e8f0; overflow: hidden;
     }
+
+    /* كروت المقارنة */
+    .comp-card {
+        background: white; border-radius: 15px; padding: 20px;
+        border: 2px solid #e2e8f0; text-align: center; height: 100%;
+    }
+    .comp-header { color: #003366; font-weight: 900; font-size: 1.4rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
     
     div.stButton > button {
         background-color: #003366 !important; color: white !important;
-        border-radius: 6px !important; padding: 4px 15px !important;
+        border-radius: 6px !important; padding: 4px 12px !important;
+        font-size: 0.8rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -57,25 +50,26 @@ def load_data():
 
 df = load_data()
 
-# إدارة الجلسة
+# إدارة التنقل والحالة
 if 'compare_list' not in st.session_state: st.session_state.compare_list = []
 if 'page' not in st.session_state: st.session_state.page = 'main'
+if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
 # --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
     st.markdown('<div style="text-align:right;"><div style="color:#003366; font-weight:900; font-size:1.8rem;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
 
     if df is not None:
-        # شريط المقارنة
+        # شريط المقارنة العلوي
         if st.session_state.compare_list:
             c_top1, c_top2 = st.columns([4, 1])
-            with c_top1: st.info(f"📋 المطورين المختارين: {', '.join(st.session_state.compare_list)}")
+            with c_top1: st.info(f"📋 المطورين في قائمة المقارنة: {', '.join(st.session_state.compare_list)}")
             with c_top2:
-                if st.button("📊 ابدأ المقارنة"):
+                if st.button("📊 فتح المقارنة"):
                     st.session_state.page = 'compare'
                     st.rerun()
 
-        # الفلتر
+        # الفلتر البسيط
         s_dev = st.text_input("🔍 ابحث عن مطور...")
         
         f_df = df.copy()
@@ -85,15 +79,21 @@ if st.session_state.page == 'main':
             st.markdown('<div class="project-card-container">', unsafe_allow_html=True)
             col_content, col_img = st.columns([4, 1])
             with col_content:
-                txt_c, btn_c = st.columns([3, 1])
+                txt_c, btn_c1, btn_c2 = st.columns([2.5, 0.7, 0.8])
                 with txt_c:
                     st.markdown(f"""
                         <div style="text-align: right; padding: 15px;">
-                            <div style="color: #003366; font-weight: 900; font-size: 1.3rem;">{row.get('Developer')}</div>
+                            <div style="color: #003366; font-weight: 900; font-size: 1.2rem;">{row.get('Developer')}</div>
                             <div style="color: #64748b; font-size: 0.85rem;">📍 {row.get('Area')} | {row.get('Price')}</div>
                         </div>
                     """, unsafe_allow_html=True)
-                with btn_c:
+                with btn_c1:
+                    st.write("")
+                    if st.button("التفاصيل", key=f"det_{i}"):
+                        st.session_state.selected_item = row.to_dict()
+                        st.session_state.page = 'details'
+                        st.rerun()
+                with btn_c2:
                     st.write("")
                     dev_name = str(row['Developer'])
                     is_in = dev_name in st.session_state.compare_list
@@ -106,28 +106,33 @@ if st.session_state.page == 'main':
                 st.markdown(f'<div style="height: 100px; background-image: url(\'{img_url}\'); background-size: cover; background-position: center;"></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
+# --- صفحة التفاصيل (رجعت تانى) ---
+elif st.session_state.page == 'details':
+    item = st.session_state.selected_item
+    st.markdown('<div style="background:white; padding:30px; border-radius:15px; border: 1px solid #e2e8f0;">', unsafe_allow_html=True)
+    if st.button("⬅️ عودة للقائمة"):
+        st.session_state.page = 'main'; st.rerun()
+    
+    st.markdown(f"<h2 style='color:#003366;'>{item.get('Developer')}</h2>", unsafe_allow_html=True)
+    st.markdown(f"**المنطقة:** {item.get('Area')} | **السعر:** {item.get('Price')}")
+    st.write(item.get('Description', 'لا يوجد وصف متاح حالياً.'))
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # --- صفحة المقارنة ---
 elif st.session_state.page == 'compare':
-    st.markdown("<h2 style='text-align:center; color:#003366;'>📊 لوحة المقارنة</h2>", unsafe_allow_html=True)
-    if st.button("⬅️ عودة"):
+    st.markdown("<h2 style='text-align:center; color:#003366;'>📊 مقارنة المطورين</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ عودة للبحث"):
         st.session_state.page = 'main'; st.rerun()
     
     compare_df = df[df['Developer'].isin(st.session_state.compare_list)]
-    
-    # توزيع المطورين في أعمدة
     cols = st.columns(len(compare_df) if len(compare_df) > 0 else 1)
-    
     for idx, (i, row) in enumerate(compare_df.iterrows()):
         with cols[idx]:
             st.markdown(f"""
                 <div class="comp-card">
                     <div class="comp-header">{row.get('Developer')}</div>
-                    <div class="comp-price">{row.get('Price')}</div>
-                    <span class="comp-label">📍 المنطقة</span>
-                    <span class="comp-value">{row.get('Area')}</span>
-                    <span class="comp-label">⏳ سنوات القسط</span>
-                    <span class="comp-value">{row.get('Installments', '-')} سنوات</span>
-                    <span class="comp-label">🏢 المالك</span>
-                    <span class="comp-value">{row.get('Owner', '-')}</span>
+                    <div style="color:#D4AF37; font-weight:800; padding:10px;">{row.get('Price')}</div>
+                    <p><small>📍 المنطقة:</small><br><b>{row.get('Area')}</b></p>
+                    <p><small>⏳ القسط:</small><br><b>{row.get('Installments', '-')} سنوات</b></p>
                 </div>
             """, unsafe_allow_html=True)
