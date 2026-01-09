@@ -62,7 +62,6 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* تنسيق أزرار التنقل بين الصفحات */
     .pagination-info {
         text-align: center; color: #64748b; font-weight: bold; margin-top: 10px;
     }
@@ -113,19 +112,18 @@ if st.session_state.page == 'main' and df is not None:
         if st.session_state.search_query:
             f_df = f_df[f_df['Developer'].astype(str).str.contains(st.session_state.search_query, case=False, na=False)]
 
-        # --- إعدادات الصفحات ---
-        items_per_page = 8
+        # --- تعديل عدد الصفوف ليكون 3 (يعني 6 شركات في الصفحة) ---
+        items_per_page = 6  # 3 صفوف × 2 عمود
         total_items = len(f_df)
         total_pages = math.ceil(total_items / items_per_page)
         
-        # التأكد من أن الصفحة الحالية لا تتخطى الإجمالي بعد البحث
         if st.session_state.current_page > total_pages: st.session_state.current_page = 1
         
         start_idx = (st.session_state.current_page - 1) * items_per_page
         end_idx = start_idx + items_per_page
         page_items = f_df.iloc[start_idx:end_idx]
 
-        # عرض الكروت
+        # عرض الكروت في صفوف
         grid = st.columns(2)
         for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
             with grid[idx % 2]:
@@ -138,7 +136,7 @@ if st.session_state.page == 'main' and df is not None:
                 if st.button("التفاصيل", key=f"btn_{i}", use_container_width=True):
                     st.session_state.selected_item = row.to_dict(); st.session_state.page = 'details'; st.rerun()
 
-        # --- أزرار التنقل بين الصفحات ---
+        # أزرار التنقل
         if total_pages > 1:
             st.write("---")
             pag_col1, pag_col2, pag_col3 = st.columns([1, 2, 1])
