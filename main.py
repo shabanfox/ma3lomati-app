@@ -87,3 +87,42 @@ if st.session_state.page == 'main':
             for j in range(3):
                 if i + j < len(f_df):
                     row = f_df.iloc[i + j]
+                    with cols[j]:
+                        # 1. بنرسم الشكل الجمالي الأول
+                        st.markdown(f"""
+                        <div class="card-wrapper">
+                            <div class="card-visual">
+                                <div>
+                                    <div class="card-title">{row[2]}</div>
+                                    <div class="card-dev">🏢 {row[0]}</div>
+                                    <div style="color:#64748b;">📍 {row[3]}</div>
+                                </div>
+                                <div>
+                                    <div class="card-price">{row[4]}</div>
+                                    <div class="card-badge">مقدم {row[10]} | {row[9]}س</div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # 2. بنحط الزرار الشفاف فوقه تماماً (في نفس الـ wrapper)
+                        if st.button("", key=f"btn_{i+j}"):
+                            st.session_state.selected_item = row.to_list()
+                            st.session_state.page = 'details'
+                            st.rerun()
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+    with side_col:
+        st.markdown("<h5 style='text-align:center; color:white; background:#b45309; padding:8px; border-radius:10px;'>🔥 أهم الفرص</h5>", unsafe_allow_html=True)
+        for _, r in df.head(10).iterrows():
+            st.markdown(f"<div style='background:white; padding:8px; border-right:4px solid #b45309; margin-bottom:5px; border-radius:5px;'><b>{r[2]}</b><br><small style='color:green;'>{r[4]}</small></div>", unsafe_allow_html=True)
+
+elif st.session_state.page == 'details':
+    item = st.session_state.selected_item
+    if st.button("🔙 عودة"): st.session_state.page = 'main'; st.rerun()
+    st.markdown(f"<div style='background:#001a33; color:white; padding:30px; border-radius:15px;'><h1>🏢 {item[0]}</h1><p>نبذة عن المطور ومشاريع الشركة.</p></div>", unsafe_allow_html=True)
+    st.error(f"### 💡 الزتونة الفنية لـ {item[2]}:\n\n**{item[11]}**")
+    # عرض مشاريع المطور الأخرى
+    others = df[df.iloc[:, 0] == item[0]]
+    st.markdown(f"### 🏗️ مشاريع أخرى لشركة {item[0]}:")
+    for _, p in others.iterrows(): st.info(f"**{p[2]}** | {p[4]}")
