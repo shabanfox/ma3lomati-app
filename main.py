@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import re
 
-# 1. إعدادات الصفحة والستايل
+# 1. إعدادات الصفحة والستايل الجمالي
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
 st.markdown("""
@@ -16,7 +16,7 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8fafc; 
     }
 
-    /* تصميم الكارت الجمالي السابق */
+    /* تصميم الكارت الجمالي المحفوظ */
     .card-container {
         position: relative;
         background: white;
@@ -47,23 +47,22 @@ st.markdown("""
         border-radius: 8px; text-align: center; font-weight: 900; font-size: 1rem;
     }
 
-    /* جعل زرار Streamlit شفاف ويغطي الكارت بالكامل لمسح المساحة المهدرة */
-    .stButton button {
+    /* جعل زرار Streamlit يغطي الكارت بالكامل ويكون شفافاً تماماً */
+    div.stButton > button {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
         background: transparent !important;
         border: none !important;
         color: transparent !important;
-        z-index: 10; /* ليكون فوق التصميم ويستقبل الضغطة */
+        z-index: 10;
         cursor: pointer;
     }
-    
-    .stButton button:hover { background: transparent !important; border: none !important; }
+    div.stButton > button:hover { background: transparent !important; border: none !important; }
 
-    /* خانة البحث البارزة */
-    .stTextInput input { border: 3px solid #000000 !important; border-radius: 10px !important; font-weight: 900 !important; color: #000000 !important; }
+    /* خانة البحث والفلاتر */
+    .stTextInput input { border: 3px solid #000000 !important; border-radius: 10px !important; font-weight: 900 !important; }
     
-    /* كروت الفرص ميكرو */
+    /* كروت الفرص ميكرو - يسار */
     .micro-card {
         background: #ffffff; border-radius: 8px; padding: 10px;
         border-right: 6px solid #b45309; margin-bottom: 8px;
@@ -117,7 +116,7 @@ if df is not None:
                     if i + j < len(current_items):
                         row = current_items.iloc[i + j]
                         with row_cols[j]:
-                            # 1. التصميم الجمالي (HTML)
+                            # تصميم الكارت الجمالي
                             st.markdown(f"""
                                 <div class="card-container">
                                     <div>
@@ -127,29 +126,30 @@ if df is not None:
                                     </div>
                                     <div>
                                         <div class="card-price">{row[4]}</div>
-                                        <div class="card-badge">مقدم {row[10]} | {row[9]}س</div>
+                                        <div class="card-badge">مقدم {row[10]} | {row[9]} سنوات</div>
                                     </div>
                                 </div>
                             """, unsafe_allow_html=True)
-                            # 2. الزر الشفاف المدمج (للتنقل)
-                            if st.button("", key=f"overlay_{i+j}"):
+                            # الزر الشفاف الذي يجعل الكارت بالكامل قابلاً للضغط
+                            if st.button("", key=f"btn_{i+j}"):
                                 st.session_state.selected_item = row.to_list()
                                 st.session_state.page = 'details'
                                 st.rerun()
 
-            # أزرار التنقل
+            # أزرار التنقل (السابق والتالي)
             st.markdown("---")
             n1, n2, n3 = st.columns([1, 2, 1])
             with n1:
                 if st.session_state.current_page > 0:
                     if st.button("⬅️ السابق", key="prev"): st.session_state.current_page -= 1; st.rerun()
-            with n2: st.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.current_page+1}/{total_pages}</p>", unsafe_allow_html=True)
+            with n2:
+                st.markdown(f"<p style='text-align:center; font-weight:900; font-size:1.2rem;'>صفحة {st.session_state.current_page+1} من {total_pages}</p>", unsafe_allow_html=True)
             with n3:
                 if st.session_state.current_page < total_pages - 1:
                     if st.button("التالي ➡️", key="next"): st.session_state.current_page += 1; st.rerun()
 
         with side_col:
-            st.markdown("<h5 style='text-align:center; color:white; background:#b45309; padding:8px; border-radius:10px;'>🔥 أقوى 10 فرص</h5>", unsafe_allow_html=True)
+            st.markdown("<h5 style='text-align:center; color:white; background:#b45309; padding:8px; border-radius:10px; font-weight:900;'>🔥 أقوى 10 فرص</h5>", unsafe_allow_html=True)
             for idx, row in df.head(10).iterrows():
                 st.markdown(f"""<div class="micro-card">
                     <div style="font-weight:900; font-size:0.9rem;">{row[2]}</div>
@@ -159,13 +159,13 @@ if df is not None:
     elif st.session_state.page == 'details':
         item = st.session_state.selected_item
         dev_name = item[0]
-        if st.button("🔙 عودة للقائمة"): st.session_state.page = 'main'; st.rerun()
+        if st.button("🔙 العودة للقائمة الرئيسية"): st.session_state.page = 'main'; st.rerun()
 
-        # صفحة المطور الاحترافية
+        # صفحة المطور
         st.markdown(f"""
             <div style="background:#001a33; color:white; padding:30px; border-radius:15px; margin-bottom:20px;">
                 <h1 style="margin:0;">🏢 {dev_name}</h1>
-                <p style="font-size:1.2rem; margin-top:10px;">شركة {dev_name} هي واحدة من رواد السوق العقاري، وتتميز بمشاريعها ذات التصميم العالمي والالتزام التام بالتسليم.</p>
+                <p style="font-size:1.2rem; margin-top:10px;">شركة {dev_name} من المطورين الموثوقين بالسوق العقاري المصري، وتتميز بمشاريعها ذات العائد الاستثماري المرتفع والجودة العالية.</p>
             </div>
         """, unsafe_allow_html=True)
 
