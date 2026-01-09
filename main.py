@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="معلوماتى العقارية | أداة المقارنة", layout="wide")
+st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - تحسين شكل المقارنة
+# 2. كود التصميم (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -16,28 +16,25 @@ st.markdown("""
         background-color: #f1f5f9; 
     }
 
-    /* كارت المقارنة الرأسي */
+    /* كروت المقارنة */
     .comp-card {
         background: white;
         border-radius: 15px;
         padding: 20px;
         border: 2px solid #e2e8f0;
         text-align: center;
-        transition: 0.3s;
         height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
-    .comp-card:hover { border-color: #D4AF37; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-    
-    .comp-header { color: #003366; font-weight: 900; font-size: 1.4rem; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-    .comp-stat { margin-bottom: 15px; }
-    .comp-label { color: #64748b; font-size: 0.85rem; display: block; }
-    .comp-value { color: #003366; font-weight: 700; font-size: 1.1rem; }
-    .comp-price { color: #D4AF37; font-weight: 800; font-size: 1.2rem; }
+    .comp-header { color: #003366; font-weight: 900; font-size: 1.4rem; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+    .comp-price { color: #D4AF37; font-weight: 800; font-size: 1.2rem; margin: 10px 0; }
+    .comp-label { color: #64748b; font-size: 0.85rem; }
+    .comp-value { color: #003366; font-weight: 700; display: block; margin-bottom: 10px; }
 
-    /* التصميم القديم للكروت */
+    /* الكروت الرمادية الأساسية */
     .project-card-container { 
         background-color: #edf2f7; border-radius: 10px; 
-        margin-bottom: 5px !important; display: flex;
+        margin-bottom: 8px !important; display: flex;
         align-items: center; border: 1px solid #e2e8f0; overflow: hidden;
     }
     
@@ -60,23 +57,25 @@ def load_data():
 
 df = load_data()
 
+# إدارة الجلسة
 if 'compare_list' not in st.session_state: st.session_state.compare_list = []
 if 'page' not in st.session_state: st.session_state.page = 'main'
 
 # --- الصفحة الرئيسية ---
 if st.session_state.page == 'main':
-    st.markdown('<div style="text-align:right; padding:10px 0;"><div style="color:#003366; font-weight:900; font-size:1.8rem;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:right;"><div style="color:#003366; font-weight:900; font-size:1.8rem;">منصة معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
 
     if df is not None:
-        # شريط المقارنة العلوي
+        # شريط المقارنة
         if st.session_state.compare_list:
             c_top1, c_top2 = st.columns([4, 1])
-            with c_top1: st.info(f"📋 القائمة المختارة: {', '.join(st.session_state.compare_list)}")
+            with c_top1: st.info(f"📋 المطورين المختارين: {', '.join(st.session_state.compare_list)}")
             with c_top2:
-                if st.button("📊 ابدأ المقارنة", use_container_width=True):
-                    st.session_state.page = 'compare'; st.rerun()
+                if st.button("📊 ابدأ المقارنة"):
+                    st.session_state.page = 'compare'
+                    st.rerun()
 
-        # الفلاتر
+        # الفلتر
         s_dev = st.text_input("🔍 ابحث عن مطور...")
         
         f_df = df.copy()
@@ -96,25 +95,26 @@ if st.session_state.page == 'main':
                     """, unsafe_allow_html=True)
                 with btn_c:
                     st.write("")
-                    is_in = row['Developer'] in st.session_state.compare_list
+                    dev_name = str(row['Developer'])
+                    is_in = dev_name in st.session_state.compare_list
                     if st.button("➕ مقارنة" if not is_in else "❌ إزالة", key=f"comp_{i}"):
-                        if not is_in: st.session_state.compare_list.append(row['Developer'])
-                        else: st.session_state.compare_list.remove(row['Developer'])
+                        if not is_in: st.session_state.compare_list.append(dev_name)
+                        else: st.session_state.compare_list.remove(dev_name)
                         st.rerun()
             with col_img:
                 img_url = row.get('Image_URL', 'https://via.placeholder.com/400')
                 st.markdown(f'<div style="height: 100px; background-image: url(\'{img_url}\'); background-size: cover; background-position: center;"></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-# --- صفحة المقارنة الاحترافية ---
+# --- صفحة المقارنة ---
 elif st.session_state.page == 'compare':
-    st.markdown("<h2 style='text-align:center; color:#003366;'>📊 لوحة مقارنة المطورين</h2>", unsafe_allow_html=True)
-    if st.button("⬅️ عودة للبحث"):
+    st.markdown("<h2 style='text-align:center; color:#003366;'>📊 لوحة المقارنة</h2>", unsafe_allow_html=True)
+    if st.button("⬅️ عودة"):
         st.session_state.page = 'main'; st.rerun()
     
     compare_df = df[df['Developer'].isin(st.session_state.compare_list)]
     
-    # عرض المقارنة في أعمدة (Cards)
+    # توزيع المطورين في أعمدة
     cols = st.columns(len(compare_df) if len(compare_df) > 0 else 1)
     
     for idx, (i, row) in enumerate(compare_df.iterrows()):
@@ -122,30 +122,12 @@ elif st.session_state.page == 'compare':
             st.markdown(f"""
                 <div class="comp-card">
                     <div class="comp-header">{row.get('Developer')}</div>
-                    <div class="comp-stat">
-                        <span class="comp-label">📍 المنطقة</span>
-                        <span class="comp-value">{row.get('Area')}</span>
-                    </div>
-                    <div class="comp-stat">
-                        <span class="comp-label">💰 السعر يبدأ من</span>
-                        <span class="comp-price">{row.get('Price')}</span>
-                    </div>
-                    <div class="comp-stat">
-                        <span class="comp-label">⏳ سنوات القسط</span>
-                        <span class="comp-value">{row.get('Installments', '-')} سنوات</span>
-                    </div>
-                    <div class="comp-stat">
-                        <span class="comp-label">🏢 المالك</span>
-                        <span class="comp-value">{row.get('Owner', '-')}</span>
-                    </div>
+                    <div class="comp-price">{row.get('Price')}</div>
+                    <span class="comp-label">📍 المنطقة</span>
+                    <span class="comp-value">{row.get('Area')}</span>
+                    <span class="comp-label">⏳ سنوات القسط</span>
+                    <span class="comp-value">{row.get('Installments', '-')} سنوات</span>
+                    <span class="comp-label">🏢 المالك</span>
+                    <span class="comp-value">{row.get('Owner', '-')}</span>
                 </div>
             """, unsafe_allow_html=True)
-
-
-
-### ليه الشكل ده أفضل؟
-1.  **سهولة القراءة:** البيانات تحت بعضها بشكل منظم، العين تقدر تقارن السعر بالسعر في ثانية.
-2.  **شكل مودرن:** الكروت البيضاء على الخلفية الرمادية بتدي إحساس إن المنصة احترافية جداً.
-3.  **توفير مجهود:** البروكر يقدر يفتح الصفحة دي قدام العميل أو يصورها "سكرين شوت" والمقارنة جاهزة.
-
-**تحب نضيف ميزة "تحميل المقارنة كملف PDF" ولا كدة الشكل والسهولة تمام؟**
