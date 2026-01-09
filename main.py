@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
+import math
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - تركيز على المربعات النظيفة بدون أيقونات
+# 2. كود التصميم (CSS) - ستايل نظيف وراقي
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -16,56 +17,32 @@ st.markdown("""
         background-color: #f4f7f9; 
     }
 
-    /* مربع الفلتر المطور */
+    /* مربع الفلتر */
     .filter-card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
+        background: white; padding: 25px; border-radius: 15px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 30px;
+        border: 1px solid #e2e8f0; margin-bottom: 20px;
     }
 
-    /* الكارت المربع للشركة */
+    /* الكارت المربع */
     .grid-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        height: 140px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        border: 1px solid #e2e8f0;
-        border-bottom: 4px solid #003366;
-        transition: all 0.2s ease;
+        background: white; border-radius: 12px; padding: 20px;
+        height: 140px; display: flex; flex-direction: column;
+        justify-content: center; border: 1px solid #e2e8f0;
+        border-bottom: 4px solid #003366; transition: all 0.2s ease;
     }
-    .grid-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-    }
+    .grid-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
 
-    /* تنسيق الأزرار تحت الكارت */
+    /* تنسيق الأزرار */
     div.stButton > button {
-        background-color: white !important;
-        color: #003366 !important;
-        border: 1px solid #003366 !important;
-        border-radius: 6px !important;
-        font-family: 'Cairo', sans-serif !important;
-        font-weight: bold !important;
-        height: 35px;
-        font-size: 0.9rem !important;
+        background-color: white !important; color: #003366 !important;
+        border: 1px solid #003366 !important; border-radius: 6px !important;
+        font-family: 'Cairo', sans-serif !important; font-weight: bold !important;
+        height: 35px; font-size: 0.9rem !important; width: 100%;
     }
-    div.stButton > button:hover {
-        background-color: #003366 !important;
-        color: white !important;
-    }
+    div.stButton > button:hover { background-color: #003366 !important; color: white !important; }
 
-    .title-text {
-        color: #003366;
-        font-weight: 900;
-        font-size: 2rem;
-        margin-bottom: 20px;
-    }
+    .title-text { color: #003366; font-weight: 900; font-size: 2rem; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -81,8 +58,9 @@ def load_data():
 
 df = load_data()
 
-# إدارة الحالة
+# إدارة الحالة (State)
 if 'page' not in st.session_state: st.session_state.page = 'main'
+if 'current_page_num' not in st.session_state: st.session_state.current_page_num = 1
 if 'compare_list' not in st.session_state: st.session_state.compare_list = []
 
 # --- الصفحة الرئيسية ---
@@ -90,11 +68,11 @@ if st.session_state.page == 'main':
     st.markdown('<div class="title-text">منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
 
     if df is not None:
-        # مربع الفلتر النظيف
+        # مربع الفلتر
         st.markdown('<div class="filter-card">', unsafe_allow_html=True)
         c1, c2 = st.columns([2, 1])
         with c1:
-            search_query = st.text_input("ابحث عن مطور أو ميزة فنية (مثلاً: تشطيب كامل، تقسيط 10 سنين)", placeholder="اكتب للبحث...")
+            search_query = st.text_input("ابحث عن مطور أو ميزة فنية...", placeholder="اكتب للبحث...")
         with c2:
             areas = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
             s_area = st.selectbox("تصفية بالمنطقة", areas)
@@ -110,9 +88,22 @@ if st.session_state.page == 'main':
                 f_df['Detailed_Info'].astype(str).str.contains(search_query, case=False, na=False)
             ]
 
+        # --- منطق تقسيم الصفحات (Pagination) ---
+        items_per_page = 9  # 3 صفوف × 3 كروت
+        total_items = len(f_df)
+        total_pages = math.ceil(total_items / items_per_page)
+        
+        # التأكد من أن الصفحة الحالية لا تتعدى الإجمالي بعد الفلترة
+        if st.session_state.current_page_num > total_pages and total_pages > 0:
+            st.session_state.current_page_num = 1
+
+        start_idx = (st.session_state.current_page_num - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        page_items = f_df.iloc[start_idx:end_idx]
+
         # عرض الشبكة
         grid_cols = st.columns(3)
-        for idx, (i, row) in enumerate(f_df.reset_index().iterrows()):
+        for idx, (i, row) in enumerate(page_items.reset_index().iterrows()):
             with grid_cols[idx % 3]:
                 st.markdown(f"""
                     <div class="grid-card">
@@ -122,22 +113,38 @@ if st.session_state.page == 'main':
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # أزرار الأكشن
                 b1, b2 = st.columns(2)
                 with b1:
-                    if st.button("التفاصيل", key=f"d_{idx}"):
+                    if st.button("التفاصيل", key=f"d_{i}"):
                         st.session_state.selected_item = row.to_dict()
                         st.session_state.page = 'details'; st.rerun()
                 with b2:
                     name = str(row['Developer'])
                     is_in = name in st.session_state.compare_list
-                    if st.button("مقارنة" if not is_in else "إزالة", key=f"c_{idx}"):
+                    if st.button("مقارنة" if not is_in else "إزالة", key=f"c_{i}"):
                         if not is_in: st.session_state.compare_list.append(name)
                         else: st.session_state.compare_list.remove(name)
                         st.rerun()
                 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- صفحة التفاصيل (نفس الاستايل المربع النظيف) ---
+        # --- أزرار التنقل بين الصفحات ---
+        st.write("---")
+        p1, p2, p3 = st.columns([1, 2, 1])
+        with p2:
+            cols = st.columns(5) # عرض بسيط للأزرار
+            if total_pages > 1:
+                st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.current_page_num} من {total_pages}</p>", unsafe_allow_html=True)
+                c_prev, c_next = st.columns(2)
+                with c_prev:
+                    if st.button("السابق") and st.session_state.current_page_num > 1:
+                        st.session_state.current_page_num -= 1
+                        st.rerun()
+                with c_next:
+                    if st.button("التالي") and st.session_state.current_page_num < total_pages:
+                        st.session_state.current_page_num += 1
+                        st.rerun()
+
+# --- صفحة التفاصيل ---
 elif st.session_state.page == 'details':
     item = st.session_state.selected_item
     if st.button("عودة"): st.session_state.page = 'main'; st.rerun()
