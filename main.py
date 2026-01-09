@@ -1,165 +1,137 @@
 import streamlit as st
 import pandas as pd
-import re
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. تصميم CSS (أسود ملكي وتباين فائق)
+# 2. تصميم CSS (الفخامة والوضوح)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
-        background-color: #ffffff; /* خلفية بيضاء صريحة */
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
-    
-    /* الهيدر: فاتح على غامق (أبيض على أسود) */
-    .compact-hero { 
-        background: #000000; padding: 20px; border-radius: 0 0 20px 20px; 
-        color: #ffffff; text-align: center; margin-bottom:20px; border-bottom: 5px solid #f59e0b;
-    }
-    .compact-hero h1, .compact-hero h2, .compact-hero h3 { color: #ffffff !important; font-weight: 900; }
 
-    /* الكروت: غامق على فاتح (أسود على أبيض) */
-    .nano-card {
-        background: #ffffff; border: 3px solid #000000; 
-        border-radius: 15px; padding: 15px; margin-bottom: 10px;
-        box-shadow: 8px 8px 0px 0px #000000; /* ظل حاد للوضوح */
+    /* العنوان الرئيسي */
+    .header-box { 
+        background: #000; color: #f59e0b; padding: 20px; border-radius: 20px; 
+        text-align: center; margin-bottom: 30px; border-bottom: 8px solid #f59e0b;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
-    .c-dev { color: #000000 !important; font-size: 1.4rem; font-weight: 900; }
-    .c-price { color: #000000 !important; font-size: 1.5rem; font-weight: 900; background: #fef08a; display: inline-block; padding: 2px 10px; border-radius: 5px; }
 
-    /* صناديق الحسابات: تباين فائق */
-    .calc-box { 
-        background: #f8fafc; padding: 20px; border-radius: 15px; 
-        border: 4px solid #000000; margin-top: 10px; 
+    /* أزرار الصفحة الرئيسية - فخامة سوداء */
+    .stButton > button {
+        width: 100% !important; height: 110px !important;
+        background-color: #000 !important; color: #fff !important;
+        border: 2px solid #f59e0b !important; border-radius: 20px !important;
+        font-size: 1.6rem !important; font-weight: 900 !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+        transition: 0.3s all ease;
     }
-    .res-val { font-size: 2.5rem; font-weight: 900; color: #000000; display: block; }
-    .res-lbl { font-size: 1.2rem; font-weight: 900; color: #000000; border-bottom: 2px solid #000; display: inline-block; margin-bottom: 10px; }
+    .stButton > button:hover { transform: translateY(-5px); border-color: #fff !important; }
 
-    /* خانات الإدخال: نصوص سوداء واضحة */
-    .stNumberInput label { font-weight: 900 !important; color: #000000 !important; font-size: 1.3rem !important; }
-    input { color: #000000 !important; font-weight: 900 !important; font-size: 1.4rem !important; border: 3px solid #000 !important; }
-    
-    /* الأزرار: أبيض على أسود */
-    div.stButton > button { 
-        background: #000000 !important; color: #ffffff !important; 
-        font-weight: 900 !important; border-radius: 10px !important; 
-        font-size: 1.2rem !important; height: 50px !important; border: 2px solid #ffffff !important;
+    /* كروت المشاريع المجهرية (Micro-Cards) */
+    .micro-card {
+        background: #ffffff; border: 3px solid #000; padding: 12px; 
+        border-radius: 15px; margin-bottom: 10px; box-shadow: 6px 6px 0px #000;
+        height: 150px; display: flex; flex-direction: column; justify-content: space-between;
+        transition: 0.2s;
     }
-    /* Tabs: تعديل ألوان التبويبات للوضوح */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] { 
-        background-color: #e2e8f0; border-radius: 10px 10px 0 0; padding: 10px 20px; font-weight: 900; color: #000;
+    .micro-card:hover { transform: scale(1.02); box-shadow: 10px 10px 0px #f59e0b; border-color: #f59e0b; }
+    .m-title { font-size: 1.1rem; font-weight: 900; color: #000; line-height: 1.1; }
+    .m-dev { color: #f59e0b; font-weight: 700; font-size: 0.85rem; }
+    .m-tag { 
+        font-weight: 900; font-size: 0.85rem; background: #000; color: #fff;
+        padding: 4px; text-align: center; border-radius: 6px;
     }
-    .stTabs [aria-selected="true"] { background-color: #000 !important; color: #fff !important; }
+
+    /* لوحة الإضافة الجانبية */
+    .side-panel { background: #fdfdfd; border: 3px solid #000; padding: 15px; border-radius: 15px; }
+
+    /* الحاسبة الاحترافية */
+    .calc-card { background: #000; color: #fff; padding: 25px; border-radius: 25px; border: 4px solid #f59e0b; text-align: center; }
+    .val-huge { font-size: 2.8rem; font-weight: 900; color: #f59e0b !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظائف البيانات
+# 3. جلب البيانات
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
-        df = pd.read_csv(url)
-        df.columns = [c.strip() for c in df.columns]
+        df = pd.read_csv(url); df.columns = [c.strip() for c in df.columns]
         return df
-    except: return None
+    except: return pd.DataFrame(columns=['المشروع','نوعه','المطور','الموقع','السداد'])
 
-df = load_data()
-
-# 4. إدارة التنقل
+if 'data' not in st.session_state: st.session_state.data = load_data()
 if 'view' not in st.session_state: st.session_state.view = 'main'
 
-if df is not None:
-    # --- الصفحة الرئيسية ---
-    if st.session_state.view == 'main':
-        st.markdown("<h1 style='text-align:center; color:#000; margin:50px 0; font-weight:900; font-size:3.5rem;'>🏠 منصة معلوماتى</h1>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown('<div class="nano-card" style="text-align:center;"><div style="font-size:4rem;">🏢</div><div class="c-dev">دليل الشركات</div></div>', unsafe_allow_html=True)
-            if st.button("دخول قسم الشركات", use_container_width=True): st.session_state.view = 'comp'; st.rerun()
-        with c2:
-            st.markdown('<div class="nano-card" style="text-align:center;"><div style="font-size:4rem;">🛠️</div><div class="c-dev">أدوات البروكر</div></div>', unsafe_allow_html=True)
-            if st.button("دخول حاسبة الأدوات", use_container_width=True): st.session_state.view = 'tools'; st.rerun()
+# --- المحتوى ---
+if st.session_state.view == 'main':
+    st.markdown('<div class="header-box"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+    st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="large")
+    with c1:
+        if st.button("🏢 دليل المشاريع"): st.session_state.view = 'comp'; st.rerun()
+    with c2:
+        if st.button("🛠️ أدوات البروكر"): st.session_state.view = 'tools'; st.rerun()
 
-    # --- صفحة الشركات ---
-    elif st.session_state.view == 'comp':
-        st.markdown('<div class="compact-hero"><h1>🔍 دليل الشركات والمشاريع</h1></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+elif st.session_state.view == 'comp':
+    st.markdown('<div class="header-box"><h2>🔍 المشاريع والإدارة الذكية</h2></div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+
+    # توزيع الصفحة: 75% مشاريع ، 25% إضافة
+    col_grid, col_form = st.columns([0.75, 0.25], gap="medium")
+
+    with col_grid:
+        q = st.text_input("🔍 ابحث عن أي تفاصيل...", placeholder="المطور، الموقع، أو المشروع")
+        df_f = st.session_state.data
+        if q: df_f = df_f[df_f.apply(lambda r: q.lower() in r.astype(str).str.lower().values, axis=1)]
         
-        f1, f2, f3 = st.columns([2,1,1])
-        with f1: q = st.text_input("بحث بالاسم", placeholder="اكتب اسم المطور...")
-        with f2: loc = st.selectbox("المنطقة", ["الكل"] + sorted(df.iloc[:,3].dropna().unique().tolist()))
-        with f3: pr = st.number_input("أقصى سعر (كتابة)", value=0)
-
-        # عرض الكروت الـ 9
-        rows = df.head(9)
-        for i in range(0, len(rows), 3):
+        # شبكة المشاريع
+        for i in range(0, len(df_f.head(21)), 3):
             cols = st.columns(3)
             for j in range(3):
-                if i+j < len(rows):
-                    r = rows.iloc[i+j]
+                if i + j < len(df_f):
+                    row = df_f.iloc[i + j]
                     with cols[j]:
                         st.markdown(f"""
-                        <div class="nano-card">
-                            <div class="c-dev">{r[0]}</div>
-                            <div style="color:#000; font-weight:900; font-size:1.1rem; margin-bottom:5px;">🏢 {r[2]}</div>
-                            <div class="c-price">{r[4]}</div>
-                            <div style="font-size:1.1rem; color:#000; font-weight:900; margin-top:5px;">📍 {r[3]}</div>
+                        <div class="micro-card">
+                            <div>
+                                <div class="m-title">{row[0]}</div>
+                                <div class="m-dev">🏢 {row[2]}</div>
+                                <div style="font-size:0.7rem; color:#666; margin-top:3px;">📍 {row[3]}</div>
+                            </div>
+                            <div class="m-tag">{row[4]}</div>
                         </div>
                         """, unsafe_allow_html=True)
 
-    # --- صفحة الأدوات (إدخال يدوي + تباين عالي) ---
-    elif st.session_state.view == 'tools':
-        st.markdown('<div class="compact-hero"><h1>🛠️ حاسبات البروكر والمستثمر</h1></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+    with col_form:
+        st.markdown('<div class="side-panel">', unsafe_allow_html=True)
+        st.markdown("### ➕ إضافة سريعة")
+        with st.form("add_p", clear_on_submit=True):
+            n = st.text_input("اسم المشروع")
+            d = st.text_input("المطور")
+            l = st.text_input("الموقع")
+            p = st.text_input("نظام السداد")
+            if st.form_submit_button("إضافة للمجموعة"):
+                if n:
+                    new_r = pd.DataFrame([[n, "", d, l, p]], columns=st.session_state.data.columns)
+                    st.session_state.data = pd.concat([new_r, st.session_state.data], ignore_index=True)
+                    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        tab1, tab2 = st.tabs(["💰 حاسبة الأقساط", "📈 حاسبة أرباح الاستثمار ROI"])
-
-        with tab1:
-            st.markdown("### 📝 أدخل بيانات الوحدة (كتابة):")
-            i1, i2, i3 = st.columns(3)
-            with i1: up = st.number_input("سعر الوحدة الإجمالي", value=2000000, step=100000)
-            with i2: dp = st.number_input("نسبة المقدم %", value=10, step=5)
-            with i3: yr = st.number_input("عدد سنوات التقسيط", value=8, step=1)
-            
-            calc_dp = up * (dp/100)
-            calc_mo = (up - calc_dp)/(yr*12) if yr > 0 else 0
-
-            st.markdown(f"""
-                <div class="calc-box">
-                    <div style="display:flex; justify-content:space-around; text-align:center;">
-                        <div><span class="res-lbl">💳 المقدم المطلوب</span><span class="res-val">{calc_dp:,.0f} ج.م</span></div>
-                        <div style="width:4px; height:80px; background:#000;"></div>
-                        <div><span class="res-lbl">📅 القسط الشهري</span><span class="res-val">{calc_mo:,.0f} ج.م</span></div>
-                        <div style="width:4px; height:80px; background:#000;"></div>
-                        <div><span class="res-lbl">🗓️ الربع سنوي</span><span class="res-val">{calc_mo*3:,.0f} ج.م</span></div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        with tab2:
-            st.markdown("### 📊 حساب الجدوى الاستثمارية (كتابة):")
-            r1, r2, r3 = st.columns(3)
-            with r1: b = st.number_input("سعر الشراء الحالي", value=2000000, key="buy_input")
-            with r2: s = st.number_input("السعر المتوقع عند البيع", value=3500000, key="sell_input")
-            with r3: rt = st.number_input("الإيجار الشهري المتوقع", value=15000, key="rent_input")
-            
-            profit = s - b
-            roi_pct = (profit/b)*100 if b > 0 else 0
-            
-            st.markdown(f"""
-                <div class="calc-box" style="border-color:#000;">
-                    <div style="display:flex; justify-content:space-around; text-align:center;">
-                        <div><span class="res-lbl">💰 صافي أرباح البيع</span><span class="res-val">{profit:,.0f} ج.م</span></div>
-                        <div style="width:4px; height:80px; background:#000;"></div>
-                        <div><span class="res-lbl">📈 عائد الاستثمار</span><span class="res-val">%{roi_pct:.1f}</span></div>
-                        <div style="width:4px; height:80px; background:#000;"></div>
-                        <div><span class="res-lbl">🏠 العائد الإيجاري سنوي</span><span class="res-val">%{(rt*12/b)*100:.1f}</span></div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+elif st.session_state.view == 'tools':
+    st.markdown('<div class="header-box"><h2>🛠️ حاسبات الاستثمار العقاري</h2></div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+    
+    tab1, tab2 = st.tabs(["💰 حساب القسط", "📈 عائد ROI"])
+    with tab1:
+        c1, c2, c3 = st.columns(3)
+        with c1: price = st.number_input("السعر الإجمالي", value=2000000)
+        with c2: down = st.number_input("المقدم (%)", value=10)
+        with c3: years = st.number_input("السنوات", value=8)
+        dv = price * (down/100); mv = (price - dv) / (years * 12) if years > 0 else 0
+        st.markdown(f'<div class="calc-card"><span class="val-huge">{dv:,.0f} ج.م</span><br>المقدم المطلوب<hr><span class="val-huge" style="color:#22c55e !important;">{mv:,.0f} ج.م</span><br>القسط الشهري</div>', unsafe_allow_html=True)
