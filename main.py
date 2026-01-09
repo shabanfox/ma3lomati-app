@@ -4,80 +4,80 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="معلوماتى العقارية", layout="wide")
 
-# 2. كود التصميم (CSS) - ركزت هنا على الـ Container والـ Margins
+# 2. كود التصميم (CSS) - ضبط الخلفية والمساحات
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* إخفاء الزوائد */
     [data-testid="stHeader"], footer, .stDeployButton, #MainMenu {display: none !important;}
     
-    /* ضبط مسافات الصفحة الكلية */
+    /* جعل الخلفية صورة البرج الأيقوني ثابتة */
+    [data-testid="stAppViewContainer"] {
+        background-image: linear-gradient(rgba(0, 20, 40, 0.7), rgba(0, 20, 40, 0.7)), 
+                        url('http://googleusercontent.com/image_collection/image_retrieval/14882722463286650492_0');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        direction: RTL;
+        text-align: right;
+        font-family: 'Cairo', sans-serif;
+    }
+
     .block-container { 
-        padding-top: 0rem !important; 
-        padding-bottom: 0rem !important;
-        max-width: 1200px; /* تحديد أقصى عرض للكلام عشان ميسرحش على الشاشات الكبيرة */
-        margin: auto; /* توسيط المحتوى */
+        max-width: 1100px;
+        margin: auto;
+        padding-top: 2rem !important;
     }
 
-    html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; 
-        font-family: 'Cairo', sans-serif; 
-        background-color: #f8fafc; 
-    }
-
-    /* الهيدر مع مسافات جانبية داخلية */
+    /* الهيدر الشفاف */
     .header-nav { 
-        background: white; 
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
         height: 80px; 
         padding: 0 5%; 
         display: flex; 
         align-items: center; 
-        border-bottom: 2px solid #e2e8f0; 
-        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        margin-bottom: 30px;
     }
 
-    /* صورة الغلاف */
-    .hero-bg {
-        background-image: linear-gradient(rgba(0, 30, 60, 0.5), rgba(0, 30, 60, 0.5)), 
-                        url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070');
-        background-size: cover; 
-        background-position: center; 
-        height: 200px; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        color: white;
-        border-radius: 0 0 20px 20px; /* انحناء بسيط من تحت */
-        margin: 0 2%; /* ابعاد خفيفة عن الحواف */
-    }
-
-    /* صندوق الفلاتر */
+    /* صندوق الفلاتر الشفاف */
     .filter-box { 
-        background: white; 
-        margin: -30px 5% 30px 5%; 
+        background: rgba(255, 255, 255, 0.95);
         padding: 25px; 
-        border-radius: 15px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-        position: relative; 
-        z-index: 10; 
+        border-radius: 20px; 
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        margin-bottom: 30px;
     }
     
-    /* الكارت مع مسافات داخلية */
-    .project-card-container {
-        padding: 0 5%; /* دي اللي بتبعد الكروت عن حافة الشاشة */
+    /* الكروت بلون أبيض ناصع للتباين مع الخلفية */
+    .project-card { 
+        background: white; 
+        border-radius: 20px; 
+        margin-bottom: 20px; 
+        overflow: hidden; 
+        padding: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
 
-    /* زرار التفاصيل الأزرق */
+    /* زرار التفاصيل الأزرق الملكي */
     div.stButton > button {
         background-color: #003366 !important;
         color: white !important;
-        border-radius: 8px !important;
-        padding: 6px 20px !important;
+        border-radius: 10px !important;
+        padding: 8px 25px !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
         border: none !important;
+        transition: 0.3s !important;
     }
+    
+    div.stButton > button:hover {
+        background-color: #D4AF37 !important;
+        transform: scale(1.05);
+    }
+    
+    h1, h2, h3, p.hero-text { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -93,38 +93,14 @@ def load_data():
 
 df = load_data()
 
-# إدارة التنقل
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
     st.session_state.selected_item = None
 
-# --- صفحة التفاصيل (مع مسافات جانبية) ---
-if st.session_state.page == 'details':
-    st.markdown('<div style="padding: 20px 5%;">', unsafe_allow_html=True)
-    if st.button("⬅️ عودة"):
-        st.session_state.page = 'main'
-        st.rerun()
-    
-    item = st.session_state.selected_item
-    st.markdown(f"""
-        <div style="background:white; padding:40px; border-radius:20px; border-right: 10px solid #003366; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <h1 style="color:#003366; margin-bottom:10px;">{item.get('Developer')}</h1>
-            <p style="color:#D4AF37; font-size:1.2rem; font-weight:bold;">المالك: {item.get('Owner')}</p>
-            <hr>
-            <p style="font-size:1.1rem; line-height:1.8;">{item.get('Description', 'نبذة عن المطور قريباً...')}</p>
-            <p><b>المشاريع:</b> {item.get('Projects')}</p>
-            <p><b>المنطقة:</b> {item.get('Area')}</p>
-        </div>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # --- الصفحة الرئيسية ---
-else:
-    # الهيدر
-    st.markdown('<div class="header-nav"><div style="color:#003366; font-weight:900; font-size:1.8rem;">معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
-    
-    # الغلاف
-    st.markdown('<div class="hero-bg"><h1 style="font-weight:900;">دليلك العقاري في مصر</h1></div>', unsafe_allow_html=True)
+if st.session_state.page == 'main':
+    st.markdown('<div class="header-nav"><div style="color:white; font-weight:900; font-size:2rem;">معلوماتى <span style="color:#D4AF37;">العقارية</span></div></div>', unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align:center; margin-bottom:40px;">عقاراتك العالمية.. برؤية مصرية</h1>', unsafe_allow_html=True)
 
     if df is not None:
         # الفلاتر
@@ -135,41 +111,58 @@ else:
         with c3: search_price = st.selectbox("💰 السعر", ["الكل", "أقل من 5 مليون", "5 - 10 مليون", "أكثر من 10 مليون"])
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # عرض الكروت داخل حاوية بمسافات
-        st.markdown('<div class="project-card-container">', unsafe_allow_html=True)
-        
+        # عرض الكروت
         f_df = df.copy()
-        # منطق الفلترة... (نفس القديم)
+        if search_dev: f_df = f_df[f_df['Developer'].str.contains(search_dev, case=False, na=False)]
+        if search_area != "كل المناطق": f_df = f_df[f_df['Area'] == search_area]
 
         for _, row in f_df.iterrows():
-            # تصميم الصف: محتوى (كلام + زرار) وصورة
-            col_info, col_img = st.columns([3.5, 1])
-            
-            with col_info:
-                # تقسيم داخلي للكلام والزرار بجانبه
-                txt_c, btn_c = st.columns([2.5, 1])
-                with txt_c:
-                    st.markdown(f"""
-                        <div style="text-align: right; padding-right: 10px;">
-                            <div style="color: #003366; font-weight: 900; font-size: 1.4rem;">{row.get('Developer')}</div>
-                            <div style="color: #D4AF37; font-weight: 700;">المالك: {row.get('Owner')}</div>
-                            <div style="color: #64748b; font-size: 0.9rem;">📍 {row.get('Area')} | {row.get('Price')} ج.م</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with btn_c:
-                    st.write("") # موازنة
-                    st.write("")
-                    if st.button("التفاصيل", key=f"btn_{row.get('Developer')}"):
-                        st.session_state.selected_item = row.to_dict()
-                        st.session_state.page = 'details'
-                        st.rerun()
+            with st.container():
+                st.markdown('<div class="project-card">', unsafe_allow_html=True)
+                col_info, col_img = st.columns([3, 1])
+                
+                with col_info:
+                    txt_col, btn_col = st.columns([2.5, 1])
+                    with txt_col:
+                        st.markdown(f"""
+                            <div style="text-align: right;">
+                                <div style="color: #003366; font-weight: 900; font-size: 1.6rem;">{row.get('Developer')}</div>
+                                <div style="color: #D4AF37; font-weight: 700; font-size: 1.1rem; margin-bottom:5px;">المالك: {row.get('Owner')}</div>
+                                <div style="color: #64748b; font-size: 1rem;">📍 {row.get('Area')} | {row.get('Price')} ج.م</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    with btn_col:
+                        st.write("")
+                        st.write("")
+                        if st.button("التفاصيل", key=f"btn_{row.get('Developer')}"):
+                            st.session_state.selected_item = row.to_dict()
+                            st.session_state.page = 'details'
+                            st.rerun()
 
-            with col_img:
-                img_url = row.get('Image_URL', 'https://via.placeholder.com/400')
-                st.markdown(f"""
-                    <div style="height: 110px; border-radius: 15px; background-image: url('{img_url}'); background-size: cover; background-position: center;"></div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("<hr style='margin: 15px 0; opacity: 0.1;'>", unsafe_allow_html=True)
-            
-        st.markdown('</div>', unsafe_allow_html=True)
+                with col_img:
+                    img_url = row.get('Image_URL', 'https://via.placeholder.com/400')
+                    st.markdown(f"""
+                        <div style="height: 120px; border-radius: 15px; background-image: url('{img_url}'); background-size: cover; background-position: center;"></div>
+                    """, unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+# --- صفحة التفاصيل ---
+else:
+    item = st.session_state.selected_item
+    st.markdown('<div style="background:rgba(255,255,255,0.95); padding:40px; border-radius:30px; margin-top:20px;">', unsafe_allow_html=True)
+    if st.button("⬅️ عودة للقائمة"):
+        st.session_state.page = 'main'
+        st.rerun()
+    
+    st.markdown(f"""
+        <h1 style="color:#003366;">{item.get('Developer')}</h1>
+        <h3 style="color:#D4AF37;">بإدارة: {item.get('Owner')}</h3>
+        <hr>
+        <div style="font-size:1.2rem; line-height:1.8; color:#333;">
+            <p><b>عن الشركة:</b> {item.get('Description', 'جاري تحديث البيانات...')}</p>
+            <p><b>أهم المشاريع:</b> {item.get('Projects')}</p>
+            <p><b>المنطقة الأساسية:</b> {item.get('Area')}</p>
+            <h2 style="color:#003366;">نطاق الأسعار: {item.get('Price')} ج.م</h2>
+        </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
