@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS الموحد (تقليل الحجم بنسبة 10%)
+# 2. تصميم CSS الموحد (تصغير شامل بنسبة 20%)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -15,48 +15,53 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
+    /* هيدر مصغر */
     .hero-banner { 
-        background: #000000; color: #f59e0b; padding: 20px; border-radius: 20px; 
-        text-align: center; margin-bottom: 25px; border: 4px solid #f59e0b;
-        box-shadow: 8px 8px 0px #000;
+        background: #000000; color: #f59e0b; padding: 15px; border-radius: 15px; 
+        text-align: center; margin-bottom: 20px; border: 3px solid #f59e0b;
+        box-shadow: 6px 6px 0px #000;
     }
-    .hero-banner h1, .hero-banner h2 { font-weight: 900; color: #f59e0b !important; margin: 0; }
+    .hero-banner h1 { font-size: 1.8rem !important; font-weight: 900; margin: 0; }
+    .hero-banner h2 { font-size: 1.4rem !important; font-weight: 900; margin: 0; }
 
-    /* ستايل الكروت الموحد - تم تقليل الحجم ليكون 180px */
+    /* الكروت المصغرة - ارتفاع 145px (تقريباً 20% أقل من 180px) */
     .custom-card {
-        background: #ffffff; border: 4px solid #000; padding: 15px; 
-        border-radius: 18px; margin-bottom: 8px; box-shadow: 6px 6px 0px #000;
+        background: #ffffff; border: 3px solid #000; padding: 10px; 
+        border-radius: 15px; margin-bottom: 5px; box-shadow: 5px 5px 0px #000;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        text-align: center; height: 180px; /* الحجم الجديد المصغر بنسبة 10% */
+        text-align: center; height: 145px; 
     }
-    .card-title { font-size: 1.3rem; font-weight: 900; color: #000; margin-bottom: 5px; }
+    .card-title { font-size: 1.1rem; font-weight: 900; color: #000; margin-bottom: 5px; }
 
-    /* زر التفاصيل الصغير تحت الكارت */
+    /* زر التفاصيل مصغر */
     div.stButton > button[key^="details_"] {
         background-color: #000 !important; color: #f59e0b !important;
-        border: 2px solid #f59e0b !important; border-radius: 10px !important;
-        font-size: 0.85rem !important; padding: 4px 10px !important;
-        width: 100% !important; margin-bottom: 20px !important;
+        border: 2px solid #f59e0b !important; border-radius: 8px !important;
+        font-size: 0.75rem !important; padding: 3px 8px !important;
+        width: 100% !important; margin-bottom: 15px !important;
+        min-height: 30px !important;
     }
 
-    /* زر العودة نانو أزرق (صغير جداً) */
+    /* زر العودة نانو أزرق */
     div.stButton > button[key^="back_"] {
         background-color: #007bff !important; color: white !important;
-        font-size: 0.7rem !important; padding: 2px 8px !important;
-        min-height: 25px !important; width: auto !important;
-        border: none !important; border-radius: 5px !important;
+        font-size: 0.65rem !important; padding: 2px 6px !important;
+        min-height: 22px !important; width: auto !important;
+        border: none !important; border-radius: 4px !important;
         box-shadow: 2px 2px 0px #000 !important;
     }
 
-    /* أزرار التنقل الرئيسية في البداية */
+    /* أزرار الصفحة الرئيسية مصغرة */
     div.stButton > button:not([key^="details_"]):not([key^="back_"]) {
-        border: 3px solid #000 !important; border-radius: 15px !important;
-        box-shadow: 5px 5px 0px #000 !important; font-weight: 900 !important;
+        border: 3px solid #000 !important; border-radius: 12px !important;
+        box-shadow: 4px 4px 0px #000 !important; font-weight: 900 !important;
         background-color: #fff !important; color: #000 !important;
-        height: 150px !important; font-size: 1.5rem !important;
+        height: 120px !important; font-size: 1.2rem !important;
     }
     
-    input { border: 3px solid #000 !important; border-radius: 10px !important; }
+    /* تصغير حجم المدخلات */
+    .stNumberInput div div input { font-size: 0.9rem !important; padding: 5px !important; }
+    label { font-size: 0.9rem !important; font-weight: 900 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -82,10 +87,10 @@ proj_col = df.columns[0]
 # --- الصفحة الرئيسية ---
 if st.session_state.view == 'main':
     st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
-    st.write("<div style='height:40px;'></div>", unsafe_allow_html=True)
-    _, mid_col, _ = st.columns([0.1, 0.8, 0.1])
+    st.write("<div style='height:30px;'></div>", unsafe_allow_html=True)
+    _, mid_col, _ = st.columns([0.15, 0.7, 0.15])
     with mid_col:
-        c1, c2 = st.columns(2, gap="large")
+        c1, c2 = st.columns(2, gap="medium")
         if c1.button("🏢\nدليل المطورين", use_container_width=True): st.session_state.view = 'comp'; st.rerun()
         if c2.button("🛠️\nأدوات البروكر", use_container_width=True): st.session_state.view = 'tools'; st.rerun()
 
@@ -112,11 +117,11 @@ elif st.session_state.view == 'comp':
                     dev_name = current_devs[i+j]
                     with grid_cols[j]:
                         st.markdown(f'<div class="custom-card"><div class="card-title">{dev_name}</div></div>', unsafe_allow_html=True)
-                        if st.button("عرض التفاصيل", key=f"details_{dev_name}"):
+                        if st.button("التفاصيل", key=f"details_{dev_name}"):
                             st.session_state.selected_dev = dev_name
                             st.session_state.view = 'details'; st.rerun()
 
-        # أزرار التنقل
+        # أزرار التنقل مصغرة
         st.write("<br>", unsafe_allow_html=True)
         n1, n2 = st.columns(2)
         if n1.button("⬅️ السابق") and st.session_state.page > 0: st.session_state.page -= 1; st.rerun()
@@ -129,18 +134,19 @@ elif st.session_state.view == 'details':
     
     projs = df[df[target_col] == st.session_state.selected_dev][proj_col].unique()
     for p in projs:
-        st.markdown(f'<div class="custom-card" style="height:auto; min-height:50px; padding:10px; margin-bottom:8px;"><b>🔹 {p}</b></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="custom-card" style="height:auto; min-height:45px; padding:8px; margin-bottom:5px; font-size:0.9rem;"><b>🔹 {p}</b></div>', unsafe_allow_html=True)
 
 # --- صفحة الأدوات ---
 elif st.session_state.view == 'tools':
     st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر</h2></div>', unsafe_allow_html=True)
     if st.button("🔙 عودة نانو", key="back_main_tool"): st.session_state.view = 'main'; st.rerun()
     
-    t1, t2 = st.tabs(["💰 حاسبة الأقساط", "📈 حاسبة ROI"])
+    t1, t2 = st.tabs(["💰 القسط", "📈 ROI"])
     with t1:
-        price = st.number_input("سعر الوحدة", value=1000000)
-        down = st.number_input("المقدم %", value=10)
-        yrs = st.number_input("السنوات", value=8)
+        c1, c2, c3 = st.columns(3)
+        price = c1.number_input("السعر", value=1000000)
+        down = c2.number_input("المقدم %", value=10)
+        yrs = c3.number_input("السنوات", value=8)
         res_d = price * (down/100)
         res_m = (price - res_d) / (yrs * 12) if yrs > 0 else 0
-        st.markdown(f'<div class="custom-card" style="height:auto;"><h4>المقدم: {res_d:,.0f}</h4><h4 style="color:green">القسط: {res_m:,.0f}</h4></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="custom-card" style="height:auto;"><h5>المقدم: {res_d:,.0f}</h5><h5 style="color:green">القسط: {res_m:,.0f}</h5></div>', unsafe_allow_html=True)
