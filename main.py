@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS (تثبيت الأبعاد بدقة)
+# 2. تصميم CSS (هندسة الكروت الثابتة)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -14,31 +14,37 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* الهيدر */
+    /* الهيدر الملكي */
     .hero-banner { 
         background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
         box-shadow: 10px 10px 0px #000;
     }
 
-    /* الكروت: تثبيت الارتفاع والعرض لإجبارها على التساوي */
+    /* الكروت: إجبار المقاس الثابت (مربع 1:1 أو مستطيل محدد) */
     div.stButton > button[key^="dev_btn_"] {
-        min-height: 180px !important; /* إجبار الارتفاع الأدنى */
-        max-height: 180px !important; /* إجبار الارتفاع الأقصى */
-        height: 180px !important;     /* تأكيد الارتفاع */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        
+        /* المقاسات القسرية */
+        height: 180px !important; 
+        min-height: 180px !important;
+        max-height: 180px !important;
         width: 100% !important;
+        
         background-color: #ffffff !important;
         border: 5px solid #000000 !important;
         border-radius: 25px !important;
         box-shadow: 10px 10px 0px #000000 !important;
-        font-size: 1.5rem !important;
+        
+        font-size: 1.4rem !important;
         font-weight: 900 !important;
         color: #000000 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        white-space: normal !important; /* للسماح بالالتفاف داخل المربع الثابت */
+        overflow: hidden !important;
         transition: 0.2s;
-        padding: 10px !important;
+        padding: 15px !important;
     }
 
     div.stButton > button[key^="dev_btn_"]:hover {
@@ -47,11 +53,11 @@ st.markdown("""
         border-color: #f59e0b !important;
     }
 
-    /* كروت المشاريع الداخلية */
-    .project-card {
-        background: #ffffff; border: 3px solid #000; padding: 15px;
-        border-radius: 15px; margin-bottom: 12px; box-shadow: 6px 6px 0px #000;
-        font-weight: 900; font-size: 1.2rem;
+    /* تحسين شكل الشبكة لمنع الفراغات */
+    [data-testid="column"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -93,6 +99,7 @@ if st.session_state.view == 'main':
 elif st.session_state.view == 'comp':
     st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
     col_main, _ = st.columns([0.7, 0.3]) 
+    
     with col_main:
         if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
         search = st.text_input("🔍 ابحث عن المطور...")
@@ -104,19 +111,20 @@ elif st.session_state.view == 'comp':
         start_idx = st.session_state.page * items_per_page
         current_devs = unique_devs[start_idx : start_idx + items_per_page]
 
-        # عرض الشبكة 3x3
+        # الشبكة 3x3
         for i in range(0, len(current_devs), 3):
             grid_cols = st.columns(3)
             for j in range(3):
                 if i + j < len(current_devs):
                     name = current_devs[i + j]
                     with grid_cols[j]:
+                        # الزر الآن يمتثل لقواعد الطول الثابت 180px
                         if st.button(str(name), key=f"dev_btn_{name}"):
                             st.session_state.selected_dev = name
                             st.session_state.view = 'dev_details'
                             st.rerun()
         
-        # أزرار التنقل
+        # أزرار التنقل ممركزة
         st.write("<br>", unsafe_allow_html=True)
         p1, p2 = st.columns(2)
         with p1:
@@ -135,4 +143,4 @@ elif st.session_state.view == 'dev_details':
         st.write("### 🏗️ المشاريع:")
         dev_projects = df[df[dev_col] == dev_name][proj_col].unique()
         for proj in dev_projects:
-            st.markdown(f'<div class="project-card">🔹 {proj}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#fff; border:3px solid #000; padding:15px; border-radius:15px; margin-bottom:12px; box-shadow:6px 6px 0px #000; font-weight:900;">🔹 {proj}</div>', unsafe_allow_html=True)
