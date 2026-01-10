@@ -37,28 +37,24 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. وظيفة جلب البيانات من الرابط (محول إلى صيغة CSV للقراءة)
-@st.cache_data(ttl=300) # يحدّث البيانات كل 5 دقائق
+# 2. وظيفة جلب البيانات
+@st.cache_data(ttl=300)
 def load_data():
-    # الرابط الذي أرسلته محول بصيغة تسمح لـ Pandas بقراءتها
     sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
         df = pd.read_csv(sheet_url)
-        # تنظيف أسماء الأعمدة من أي مسافات
         df.columns = [str(c).strip() for c in df.columns]
         return df
     except Exception as e:
         st.error(f"حدث خطأ أثناء تحميل البيانات من جوجل شيت: {e}")
         return pd.DataFrame()
 
-# تهيئة الحالة
+# تهيئة الحالة (Session State)
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 if 'view' not in st.session_state: st.session_state.view = 'main'
+if 'current_page' not in st.session_state: st.session_state.current_page = 0
 
 df = load_data()
-
-# التحقق من وجود الأعمدة المطلوبة
-required_cols = ['Developer', 'Owner', 'Projects', 'Description', 'Detailed_Info']
 
 # --- التنقل ---
 if st.session_state.view == 'main':
@@ -67,7 +63,7 @@ if st.session_state.view == 'main':
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🏢 دليل المطورين الشامل", use_container_width=True): 
-            st.session_state.view = 'comp'; st.rerun()
+            st.session_state.view = 'comp'; st.session_state.current_page = 0; st.rerun()
     with c2:
         if st.button("🛠️ أدوات البروكر الذكية", use_container_width=True): 
             st.session_state.view = 'tools'; st.rerun()
@@ -77,65 +73,67 @@ elif st.session_state.view == 'comp':
         # --- صفحة التفاصيل العميقة ---
         dev_name = st.session_state.selected_dev
         row = df[df['Developer'] == dev_name].iloc[0]
-        
         st.markdown(f'<div class="hero-banner"><h2>{dev_name}</h2></div>', unsafe_allow_html=True)
         if st.button("🔙 العودة للقائمة"): 
             st.session_state.selected_dev = None; st.rerun()
-            
-        col_r, col_l = st.columns([1.2, 1])
         
+        col_r, col_l = st.columns([1.2, 1])
         with col_r:
-            st.markdown(f"""
-                <div class="custom-card">
-                    <div class="card-title">👤 تفاصيل المالك</div>
-                    <p class="card-val">{row.get('Owner', 'غير متوفر')}</p>
-                    <div class="card-title" style="margin-top:20px;">📖 فلسفة الشركة وقصتها</div>
-                    <p class="card-val" style="line-height:1.6;">{row.get('Description', 'لا يوجد وصف')}</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
+            st.markdown(f'<div class="custom-card"><div class="card-title">👤 تفاصيل المالك</div><p class="card-val">{row.get("Owner", "غير متوفر")}</p><div class="card-title" style="margin-top:20px;">📖 فلسفة الشركة</div><p class="card-val">{row.get("Description", "لا يوجد وصف")}</p></div>', unsafe_allow_html=True)
         with col_l:
-            st.markdown(f"""
-                <div class="custom-card">
-                    <div class="card-title">🏗️ معلومات المشاريع</div>
-                    <span class="card-label">📍 المناطق:</span> <span class="card-val">{row.get('Area', '-')}</span>
-                    <span class="card-label">💰 الأسعار:</span> <span class="card-val">{row.get('Price', '-')}</span>
-                    <span class="card-label">💵 المقدم:</span> <span class="card-val">{row.get('Down_Payment', '-')}</span>
-                    <span class="card-label">📅 التقسيط:</span> <span class="card-val">{row.get('Installments', '-')}</span>
-                </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-            <div class="custom-card">
-                <div class="card-title">💡 سابقة الأعمال والتفاصيل الفنية</div>
-                <p class="card-label" style="color:#f59e0b;">قائمة المشاريع:</p>
-                <p class="card-val" style="font-weight:900;">{row.get('Projects', '-')}</p>
-                <hr>
-                <p class="card-val" style="line-height:1.7; background:#f0f0f0; padding:15px; border-radius:10px;">
-                    {row.get('Detailed_Info', 'لا توجد تفاصيل إضافية')}
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+            st.markdown(f'<div class="custom-card"><div class="card-title">🏗️ معلومات المشاريع</div><span class="card-label">📍 المناطق:</span> <span class="card-val">{row.get("Area", "-")}</span><span class="card-label">💰 الأسعار:</span> <span class="card-val">{row.get("Price", "-")}</span><span class="card-label">💵 المقدم:</span> <span class="card-val">{row.get("Down_Payment", "-")}</span><span class="card-label">📅 التقسيط:</span> <span class="card-val">{row.get("Installments", "-")}</span></div>', unsafe_allow_html=True)
+        
+        st.markdown(f'<div class="custom-card"><div class="card-title">💡 سابقة الأعمال</div><p class="card-label" style="color:#f59e0b;">قائمة المشاريع:</p><p class="card-val" style="font-weight:900;">{row.get("Projects", "-")}</p><hr><p class="card-val" style="line-height:1.7;">{row.get("Detailed_Info", "لا توجد تفاصيل إضافية")}</p></div>', unsafe_allow_html=True)
 
     else:
-        # --- قائمة المطورين (شبكة أزرار) ---
+        # --- قائمة المطورين (شبكة 3x3) ---
         st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
         
-        search = st.text_input("🔍 ابحث عن مطور...")
-        dev_list = df['Developer'].unique()
-        if search:
-            dev_list = [d for d in dev_list if search.lower() in str(d).lower()]
+        # ترك مساحة فارغة في اليسار (توزيع الأعمدة 0.7 للمحتوى و 0.3 فارغ)
+        col_main, col_spacer = st.columns([0.7, 0.3])
+        
+        with col_main:
+            if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
+            search = st.text_input("🔍 ابحث عن مطور...")
             
-        cols = st.columns(3)
-        for i, dev in enumerate(dev_list):
-            with cols[i % 3]:
-                if st.button(dev, key=f"btn_{dev}", use_container_width=True):
-                    st.session_state.selected_dev = dev
-                    st.rerun()
+            dev_list = df['Developer'].unique()
+            if search:
+                dev_list = [d for d in dev_list if search.lower() in str(d).lower()]
+            
+            # حسابات الصفحات (9 كروت لكل صفحة)
+            items_per_page = 9
+            total_pages = (len(dev_list) - 1) // items_per_page + 1
+            start_idx = st.session_state.current_page * items_per_page
+            end_idx = start_idx + items_per_page
+            current_devs = dev_list[start_idx:end_idx]
+
+            # عرض الشبكة 3 أعمدة
+            for i in range(0, len(current_devs), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    if i + j < len(current_devs):
+                        dev_name = current_devs[i + j]
+                        if cols[j].button(dev_name, key=f"btn_{dev_name}", use_container_width=True):
+                            st.session_state.selected_dev = dev_name
+                            st.rerun()
+
+            # --- أزرار التنقل (التالي والسابق) ---
+            st.write("---")
+            nav_prev, nav_page, nav_next = st.columns([1, 2, 1])
+            with nav_prev:
+                if st.session_state.current_page > 0:
+                    if st.button("⬅️ السابق"):
+                        st.session_state.current_page -= 1
+                        st.rerun()
+            with nav_page:
+                st.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.current_page + 1} من {total_pages}</p>", unsafe_allow_html=True)
+            with nav_next:
+                if end_idx < len(dev_list):
+                    if st.button("التالي ➡️"):
+                        st.session_state.current_page += 1
+                        st.rerun()
 
 elif st.session_state.view == 'tools':
     st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر</h2></div>', unsafe_allow_html=True)
     if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
     st.info("سيتم إضافة الحاسبات المتقدمة هنا قريباً")
-
