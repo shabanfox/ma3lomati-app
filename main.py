@@ -1,82 +1,90 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات المنصة
-st.set_page_config(page_title="معلوماتى العقارية", layout="wide")
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. هندسة التصميم (CSS)
+# 2. تصميم CSS احترافي (Premium UI)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
+    @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css');
+
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
-        background-color: #0f0f0f; color: white;
+        background-color: #050505; /* خلفية سوداء عميقة */
     }
 
-    /* إلغاء الفراغات تماماً بين الكروت */
+    /* --- شبكة المطورين (المربعات المتلاصقة 1*1) --- */
     [data-testid="column"] { padding: 0px !important; margin: 0px !important; }
     [data-testid="stVerticalBlock"] { gap: 0px !important; }
     .stHorizontalBlock { gap: 0px !important; }
-    div.block-container { padding: 0rem !important; }
 
-    /* تصميم كارت المطور 1*1 */
-    .dev-tile button {
+    /* تصميم الزر المربع كأنه كارت فخم */
+    div.stButton > button {
         width: 100% !important; 
         aspect-ratio: 1 / 1 !important;
         height: 180px !important;
-        border: none !important;
+        border: 0.1px solid rgba(255,255,255,0.05) !important;
         border-radius: 0px !important;
         margin: 0px !important;
-        font-weight: 900 !important;
-        font-size: 1.2rem !important;
         display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s ease;
+        box-shadow: inset 0px 0px 20px rgba(0,0,0,0.2) !important;
     }
 
-    /* ألوان الشطرنج الذكية */
-    .tile-white button { background-color: #ffffff !important; color: #000 !important; }
-    .tile-yellow button { background-color: #f59e0b !important; color: #000 !important; }
+    /* نمط الشطرنج بألوان مطفية (Matte) */
+    div.stButton > button[key*="even_"] { background-color: #ffffff !important; color: #1a1a1a !important; }
+    div.stButton > button[key*="odd_"] { background-color: #eab308 !important; color: #1a1a1a !important; }
 
-    .dev-tile button:hover {
-        transform: scale(0.95);
-        filter: contrast(1.2);
-        z-index: 5;
+    div.stButton > button:hover {
+        filter: brightness(1.2);
+        transform: scale(0.98);
+        z-index: 10;
+        box-shadow: 0px 0px 30px rgba(234, 179, 8, 0.2) !important;
     }
 
-    /* أزرار التحكم المصغرة والمبعدة */
-    .nav-wrapper { padding: 30px; display: flex; gap: 10px; }
+    /* تنسيق النص (الاسم) */
+    div.stButton > button p {
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
+        margin-top: 10px !important;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- أزرار التحكم (صغيرة جداً ومبعدة) --- */
+    .control-container {
+        padding: 40px 20px;
+        display: flex;
+        justify-content: flex-start;
+        gap: 20px;
+    }
     
-    .nav-btn button {
-        height: 32px !important;
-        width: 90px !important;
+    .small-btn button {
+        height: 30px !important;
+        width: 80px !important;
         background-color: transparent !important;
-        color: #f59e0b !important;
-        border: 1px solid #f59e0b !important;
-        font-size: 0.75rem !important;
+        color: #eab308 !important;
+        border: 1px solid #eab308 !important;
+        font-size: 0.7rem !important;
         border-radius: 4px !important;
-        transition: 0.2s;
-    }
-    
-    .nav-btn button:hover {
-        background-color: #f59e0b !important;
-        color: #000 !important;
     }
 
-    .header-bar {
-        background: linear-gradient(90deg, #000, #1a1a1a);
-        padding: 20px; text-align: center;
-        border-bottom: 4px solid #f59e0b;
-        margin-bottom: 10px;
+    .main-header {
+        padding: 30px; text-align: center;
+        background: linear-gradient(180deg, #111, #050505);
+        border-bottom: 2px solid #eab308;
+        margin-bottom: 5px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. جلب ومعالجة البيانات
+# 3. تحميل البيانات
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -93,85 +101,72 @@ dev_col = 'Developer' if 'Developer' in df.columns else df.columns[1]
 if 'view' not in st.session_state: st.session_state.view = 'home'
 if 'page' not in st.session_state: st.session_state.page = 0
 
-# --- المحرك الرئيسي ---
+# --- العرض ---
 
 if st.session_state.view == 'home':
-    st.markdown('<div class="header-bar"><h1 style="color:#f59e0b; margin:0;">منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header"><h1 style="color:#eab308;">منصة معلوماتى</h1></div>', unsafe_allow_html=True)
     st.write("<div style='height:150px;'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("🏢 استعراض المطورين", key="main_1"): st.session_state.view = 'companies'; st.rerun()
+        if st.button("🏢 دليل المطورين", key="h_dev"): st.session_state.view = 'companies'; st.rerun()
     with c2:
-        if st.button("🛠️ الأدوات العقارية", key="main_2"): st.session_state.view = 'tools'; st.rerun()
+        if st.button("🛠️ الأدوات", key="h_tool"): st.session_state.view = 'tools'; st.rerun()
 
 elif st.session_state.view == 'companies':
-    st.markdown('<div class="header-bar"><h2 style="color:#f59e0b; margin:0;">دليل المطورين</h2></div>', unsafe_allow_html=True)
+    # هيدر الصفحة
+    st.markdown('<div class="main-header"><h2 style="color:#eab308; margin:0;">دليل المطورين العقاريين</h2></div>', unsafe_allow_html=True)
 
-    # صف العودة والبحث
+    # صف أزرار التحكم (العودة والبحث) متباعدين
     st.write("")
-    h1, h2 = st.columns([1, 4])
-    with h1:
-        st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
+    c_back, c_search = st.columns([1, 6])
+    with c_back:
+        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
         if st.button("🔙 عودة", key="back"): st.session_state.view = 'home'; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-    with h2:
-        search = st.text_input("", placeholder="🔍 ابحث عن المطور (مثلاً: Mountain View)...")
+    with c_search:
+        search = st.text_input("", placeholder="🔍 ابحث عن المطور...")
 
-    # تصفية البيانات
     unique_devs = df[dev_col].dropna().unique()
     if search:
         unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
 
-    # الشبكة الملكية (70% يمين)
-    col_grid, col_sidebar = st.columns([0.7, 0.3])
+    # الشبكة المتلاصقة (70% يمين)
+    col_grid, col_empty = st.columns([0.7, 0.3])
 
     with col_grid:
         items = 12
         start = st.session_state.page * items
-        batch = unique_devs[start : start + items]
+        current_batch = unique_devs[start : start + items]
 
-        for i in range(0, len(batch), 4):
+        for i in range(0, len(current_batch), 4):
             cols = st.columns(4)
             for j in range(4):
-                if i + j < len(batch):
-                    dev_name = batch[i + j]
+                if i + j < len(current_batch):
+                    dev_name = current_batch[i + j]
                     # منطق الشطرنج الإحترافي
-                    row_idx = i // 4
-                    color_tag = "tile-white" if (row_idx + j) % 2 == 0 else "tile-yellow"
+                    row = i // 4
+                    tag = "even" if (row + j) % 2 == 0 else "odd"
                     
                     with cols[j]:
-                        st.markdown(f'<div class="dev-tile {color_tag}">', unsafe_allow_html=True)
-                        if st.button(str(dev_name), key=f"btn_{start+i+j}"):
-                            st.session_state.selected_dev = dev_name
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        # إضافة أيقونة رمزية (لوجو) فوق الاسم
+                        icon = "🏢" if tag == "even" else "🏗️"
+                        btn_text = f"{icon}\n\n{dev_name}"
+                        if st.button(btn_text, key=f"{tag}_{start+i+j}"):
+                            st.sidebar.markdown(f"### {dev_name}")
+                            projs = df[df[dev_col] == dev_name].iloc[:, 0].unique()
+                            for p in projs: st.sidebar.write(f"• {p}")
 
-    # السايدبار لعرض المشاريع
-    if 'selected_dev' in st.session_state:
-        with col_sidebar:
-            st.markdown(f"<div style='padding:20px; border-right:2px solid #f59e0b;'>", unsafe_allow_html=True)
-            st.subheader(f"🏗️ {st.session_state.selected_dev}")
-            projs = df[df[dev_col] == st.session_state.selected_dev].iloc[:, 0].unique()
-            for p in projs: st.write(f"• {p}")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    # أزرار التنقل السفلية (مبعدة)
-    st.write("<div style='height:60px;'></div>", unsafe_allow_html=True)
+    # أزرار التنقل (صغيرة جداً في الأسفل)
+    st.write("<div style='height:50px;'></div>", unsafe_allow_html=True)
     n1, n2, n3 = st.columns([1, 8, 1])
     with n1:
-        st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
-        if st.button("⬅️ السابق", key="prev") and st.session_state.page > 0:
+        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
+        if st.button("⬅️ السابق", key="p_v") and st.session_state.page > 0:
             st.session_state.page -= 1; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with n3:
-        st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
+        st.markdown('<div class="small-btn">', unsafe_allow_html=True)
         if (start + items) < len(unique_devs):
-            if st.button("التالي ➡️", key="next"):
+            if st.button("التالي ➡️", key="n_v"):
                 st.session_state.page += 1; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-
-elif st.session_state.view == 'tools':
-    st.markdown('<div class="header-bar"><h2 style="color:#f59e0b; margin:0;">🛠️ الأدوات</h2></div>', unsafe_allow_html=True)
-    st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
-    if st.button("🔙 عودة", key="tool_back"): st.session_state.view = 'home'; st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.info("سيتم إضافة الحاسبة العقارية هنا قريباً.")
