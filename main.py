@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (مقاسات مربعة ثابتة 180px + تراص مطلق)
+# 2. تصميم CSS (نمط الشطرنج + تنسيق أزرار التحكم)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -16,53 +16,53 @@ st.markdown("""
         background-color: #121212; 
     }
 
-    /* إلغاء المسافات تماماً بين العناصر */
+    /* إلغاء المسافات في شبكة المطورين */
     [data-testid="column"] { padding: 0px !important; margin: 0px !important; }
     [data-testid="stVerticalBlock"] { gap: 0px !important; padding: 0px !important; }
     .stHorizontalBlock { gap: 0px !important; }
     div.block-container { padding: 0rem !important; }
 
-    /* الزر المربع 1*1 بمقاس ثابت يستوعب Mountain View */
-    div.stButton > button {
+    /* تصميم أزرار المطورين (المربعات المتلاصقة) */
+    .dev-btn button {
         width: 100% !important; 
-        height: 180px !important; /* مقاس ثابت 1*1 */
+        height: 180px !important; 
         aspect-ratio: 1 / 1 !important;
-        border: 0.5px solid rgba(0,0,0,0.3) !important;
+        border: 0.2px solid rgba(0,0,0,0.1) !important;
         border-radius: 0px !important;
         margin: 0px !important;
-        padding: 15px !important;
+        padding: 10px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        transition: 0.2s ease-in-out;
-        overflow: hidden !important;
-    }
-
-    /* الألوان التبادلية (أبيض وأصفر) */
-    div.stButton > button[key*="even_"] { background-color: #ffffff !important; color: #000 !important; }
-    div.stButton > button[key*="odd_"] { background-color: #f59e0b !important; color: #000 !important; }
-
-    div.stButton > button:hover {
-        filter: brightness(1.2);
-        z-index: 10;
-        transform: scale(1.0);
-        outline: 2px solid #000 !important;
-    }
-
-    /* تنسيق النص داخل المربع الموحد */
-    div.stButton > button p {
         font-weight: 900 !important;
-        font-size: 1.2rem !important; /* حجم مثالي للكلمات الطويلة */
-        line-height: 1.1 !important;
-        text-align: center !important;
+        font-size: 1.2rem !important;
         text-transform: uppercase;
-        word-wrap: break-word !important;
+        transition: 0.2s;
+    }
+
+    /* توزيع ألوان الشطرنج */
+    .white-btn button { background-color: #ffffff !important; color: #000000 !important; }
+    .yellow-btn button { background-color: #f59e0b !important; color: #000000 !important; }
+
+    /* أزرار التحكم (العودة، السابق، التالي) - صغيرة ومتباعدة */
+    .control-btn button {
+        height: 40px !important;
+        width: auto !important;
+        background-color: #333 !important;
+        color: white !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+        margin: 20px 5px !important; /* تباعد عن الشبكة */
+        border: 1px solid #f59e0b !important;
     }
 
     .main-header {
         background: #000; color: #f59e0b; padding: 20px; text-align: center;
         border-bottom: 5px solid #f59e0b; font-weight: 900; font-size: 2.2rem;
     }
+    
+    /* مسافة للبحث */
+    .search-area { padding: 20px; background: #1a1a1a; margin-bottom: 0px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -83,7 +83,7 @@ dev_col = 'Developer' if 'Developer' in df.columns else df.columns[1]
 if 'view' not in st.session_state: st.session_state.view = 'home'
 if 'page' not in st.session_state: st.session_state.page = 0
 
-# --- منطق الصفحات ---
+# --- الصفحات ---
 
 if st.session_state.view == 'home':
     st.markdown('<div class="main-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
@@ -97,16 +97,22 @@ if st.session_state.view == 'home':
 elif st.session_state.view == 'companies':
     st.markdown('<div class="main-header">🏢 دليل المطورين</div>', unsafe_allow_html=True)
     
-    # البحث والعودة
-    b1, b2 = st.columns([1, 6])
-    if b1.button("🔙 عودة", key="back"): st.session_state.view = 'home'; st.rerun()
-    search = b2.text_input("", placeholder="🔍 ابحث عن مطور (مثال: Mountain View)...")
+    # منطقة التحكم العلوية (متباعدة)
+    st.write("")
+    col_back, col_search = st.columns([1, 5])
+    with col_back:
+        st.markdown('<div class="control-btn">', unsafe_allow_html=True)
+        if st.button("🔙 عودة", key="back"): 
+            st.session_state.view = 'home'; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col_search:
+        search = st.text_input("", placeholder="🔍 ابحث عن مطور...")
 
     unique_devs = df[dev_col].dropna().unique()
     if search:
         unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
 
-    # الشبكة المتلاصقة بنسبة 70% يمين
+    # الشبكة جهة اليمين
     col_grid, col_empty = st.columns([0.7, 0.3])
 
     with col_grid:
@@ -114,23 +120,43 @@ elif st.session_state.view == 'companies':
         start = st.session_state.page * items
         current_devs = unique_devs[start : start + items]
 
-        # رسم المربعات المتلاصقة (4 أعمدة)
+        # منطق الشطرنج (Checkerboard)
         for i in range(0, len(current_devs), 4):
             cols = st.columns(4)
             for j in range(4):
                 if i + j < len(current_devs):
                     dev_name = current_devs[i + j]
-                    color_tag = "even" if (i + j) % 2 == 0 else "odd"
+                    # تحديد اللون بناءً على الصف والعمود (i/4 هو رقم الصف، j هو رقم العمود)
+                    row_idx = i // 4
+                    if (row_idx + j) % 2 == 0:
+                        color_class = "white-btn"
+                    else:
+                        color_class = "yellow-btn"
+                    
                     with cols[j]:
-                        if st.button(str(dev_name), key=f"{color_tag}_{start+i+j}"):
+                        st.markdown(f'<div class="dev-btn {color_class}">', unsafe_allow_html=True)
+                        if st.button(str(dev_name), key=f"d_{start+i+j}"):
                             st.sidebar.markdown(f"### 🏗️ {dev_name}")
                             projs = df[df[dev_col] == dev_name].iloc[:, 0].unique()
                             for p in projs: st.sidebar.write(f"• {p}")
+                        st.markdown('</div>', unsafe_allow_html=True)
 
-        # أزرار التنقل
-        st.write("")
+        # أزرار التنقل (متباعدة وصغيرة)
+        st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True) # تباعد إضافي
         n1, n2, n3 = st.columns([1, 2, 1])
-        if n1.button("⬅️ السابق") and st.session_state.page > 0:
-            st.session_state.page -= 1; st.rerun()
-        if n3.button("التالي ➡️") and (start + items) < len(unique_devs):
-            st.session_state.page += 1; st.rerun()
+        with n1:
+            st.markdown('<div class="control-btn">', unsafe_allow_html=True)
+            if st.button("⬅️ السابق", key="p_p") and st.session_state.page > 0:
+                st.session_state.page -= 1; st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+        with n3:
+            st.markdown('<div class="control-btn">', unsafe_allow_html=True)
+            if st.button("التالي ➡️", key="n_p") and (start + items) < len(unique_devs):
+                st.session_state.page += 1; st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+elif st.session_state.view == 'tools':
+    st.markdown('<div class="main-header">🛠️ أدوات البروكر</div>', unsafe_allow_html=True)
+    st.markdown('<div class="control-btn">', unsafe_allow_html=True)
+    if st.button("🔙 عودة", key="bt"): st.session_state.view = 'home'; st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
