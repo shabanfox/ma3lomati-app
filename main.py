@@ -4,15 +4,24 @@ import pandas as pd
 # 1. إعدادات الصفحة والتصميم
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# تصميم CSS احترافي (تمت إضافة ستايل صفحة تسجيل الدخول)
+# تصميم CSS احترافي
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
+    
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
     
+    /* تنسيق زر الخروج الثابت في الأعلى */
+    .logout-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
     /* ستايل صفحة تسجيل الدخول */
     .login-box {
         max-width: 450px;
@@ -30,12 +39,15 @@ st.markdown("""
         background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
         box-shadow: 10px 10px 0px #000;
+        margin-top: 40px; /* ترك مساحة لزر الخروج */
     }
+
     .custom-card {
         background: #ffffff; border: 4px solid #000; padding: 20px; 
         border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
         text-align: right;
     }
+
     .card-title { font-size: 1.8rem; font-weight: 900; color: #f59e0b; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
     .card-label { font-weight: 900; color: #000; font-size: 1.2rem; display: block; margin-top: 10px; }
     .card-val { font-weight: 700; color: #444; font-size: 1.1rem; }
@@ -49,6 +61,15 @@ st.markdown("""
     }
     div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #f59e0b !important; }
     
+    /* ستايل مخصص لزر الخروج الصغير */
+    .stButton > button[kind="secondary"] {
+        background-color: #ff4b4b !important;
+        color: white !important;
+        border: 2px solid #000 !important;
+        min-height: 35px !important;
+        font-size: 0.9rem !important;
+    }
+
     /* ستايل المدخلات */
     .stNumberInput input, .stTextInput input {
         border: 3px solid #000 !important;
@@ -81,7 +102,15 @@ if not st.session_state.authenticated:
     login_page()
     st.stop()
 
-# --- 3. وظيفة جلب البيانات (تبدأ بعد الدخول بنجاح) ---
+# --- زر الخروج الثابت (يظهر فقط بعد الدخول) ---
+with st.container():
+    st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+    if st.button("🔒 خروج", key="logout_btn", kind="secondary"):
+        st.session_state.authenticated = False
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- 3. وظيفة جلب البيانات ---
 @st.cache_data(ttl=300)
 def load_data():
     sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -99,11 +128,6 @@ if 'view' not in st.session_state: st.session_state.view = 'main'
 if 'current_page' not in st.session_state: st.session_state.current_page = 0
 
 df = load_data()
-
-# إضافة زر خروج بسيط في الشريط الجانبي (اختياري)
-if st.sidebar.button("🔓 تسجيل خروج"):
-    st.session_state.authenticated = False
-    st.rerun()
 
 # --- 4. التنقل والمحتوى الرئيسي ---
 if st.session_state.view == 'main':
