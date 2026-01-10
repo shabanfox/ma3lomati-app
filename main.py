@@ -4,52 +4,72 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS المطور
+# 2. تصميم CSS المتطور (الألوان والتنسيق)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     [data-testid="stAppViewContainer"] > section:first-child > div:first-child { padding-top: 0rem !important; }
     
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f4f4f4; 
     }
 
-    /* العنوان البيضاوي المنسدل */
+    /* العنوان البيضاوي */
     .hero-oval-header {
-        background: #000000; border: 5px solid #f59e0b; border-top: none; 
-        padding: 40px 20px; border-radius: 0px 0px 500px 500px; 
-        text-align: center; width: 100%; max-width: 800px; margin: 0 auto 20px auto;
-        box-shadow: 0px 15px 30px rgba(0,0,0,0.2);
+        background: linear-gradient(180deg, #000 0%, #1a1a1a 100%); 
+        border: 4px solid #f59e0b; border-top: none; 
+        padding: 30px 20px; border-radius: 0px 0px 500px 500px; 
+        text-align: center; width: 100%; max-width: 900px; margin: 0 auto 30px auto;
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.3);
     }
-    .hero-oval-header h1 { color: #f59e0b; font-weight: 900; font-size: 2.2rem; margin: 0; }
+    .hero-oval-header h1 { color: #f59e0b; font-weight: 900; font-size: 2.5rem; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 
-    /* ستايل الكروت والأدوات */
-    .custom-card {
-        background: #ffffff; border: 4px solid #000; padding: 20px; 
-        border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
-    }
-    .project-tag {
-        background: #000; color: #f59e0b; padding: 5px 12px; 
-        border-radius: 50px; font-size: 0.85rem; font-weight: 700;
-        display: inline-block; margin: 3px; border: 1px solid #f59e0b;
-    }
-
-    /* أزرار التنقل الرئيسية */
-    div.stButton > button {
-        border: 3px solid #000 !important; border-radius: 15px !important;
-        box-shadow: 4px 4px 0px #000 !important; font-weight: 900 !important;
-        background-color: #fff !important; color: #000 !important; height: 60px !important;
-    }
-    div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #f59e0b !important; }
+    /* أزرار التنقل العلوية */
+    .nav-container { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
     
-    .logout-box { position: fixed; top: 10px; left: 10px; z-index: 999; }
+    /* كروت المطورين - شبكة منظمة */
+    .dev-card {
+        background: white; border-radius: 15px; padding: 20px;
+        border: 2px solid #e0e0e0; transition: all 0.3s ease;
+        text-align: center; cursor: pointer; height: 100%;
+        box-shadow: 5px 5px 0px #000;
+    }
+    .dev-card:hover { border-color: #f59e0b; transform: translateY(-5px); box-shadow: 8px 8px 0px #f59e0b; }
+    .dev-name { font-weight: 900; color: #000; font-size: 1.2rem; margin-bottom: 10px; }
+
+    /* ستايل صفحة الأدوات - لوحة تحكم */
+    .tool-box {
+        background: #fff; border-left: 10px solid #f59e0b;
+        padding: 25px; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;
+    }
+    .tool-title { font-weight: 900; color: #000; font-size: 1.5rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    
+    .result-box {
+        background: #000; color: #f59e0b; padding: 15px; border-radius: 10px;
+        text-align: center; margin-top: 15px; border: 2px solid #f59e0b;
+    }
+
+    /* Tags للمشاريع */
+    .project-tag {
+        background: #fef3c7; color: #92400e; padding: 5px 12px; 
+        border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+        display: inline-block; margin: 4px; border: 1px solid #f59e0b;
+    }
+
+    /* الأزرار */
+    div.stButton > button {
+        border-radius: 12px !important; font-weight: 900 !important;
+        transition: 0.3s !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # 3. إدارة الجلسة والبيانات
 if 'auth' not in st.session_state: st.session_state.auth = False
-if 'view' not in st.session_state: st.session_state.view = 'comp' # الافتراضي دليل المطورين
+if 'view' not in st.session_state: st.session_state.view = 'comp' 
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 
 @st.cache_data(ttl=300)
@@ -66,90 +86,117 @@ if not st.session_state.auth:
     st.markdown('<div class="hero-oval-header"><h1>منصة معلوماتي العقارية</h1></div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
-        pwd = st.text_input("قفل الدخول", type="password", placeholder="أدخل كلمة المرور")
-        if st.button("فتح المنصة", use_container_width=True):
+        st.markdown('<div style="text-align:center; font-size:50px;">🔓</div>', unsafe_allow_html=True)
+        pwd = st.text_input("كلمة المرور", type="password", placeholder="أدخل الباسورد")
+        if st.button("دخول آمن", use_container_width=True):
             if pwd == "Ma3lomati_2026": st.session_state.auth = True; st.rerun()
-            else: st.error("❌ خطأ في كلمة المرور")
+            else: st.error("❌ الباسورد غير صحيح")
     st.stop()
 
-# --- واجهة المنصة بعد الدخول ---
+# --- المحتوى الرئيسي ---
 df = load_data()
-
-# الهيدر البيضاوي ثابت في كل الصفحات
 st.markdown('<div class="hero-oval-header"><h1>منصة معلوماتي العقارية</h1></div>', unsafe_allow_html=True)
 
-# زر الخروج العائم
-st.markdown('<div class="logout-box">', unsafe_allow_html=True)
-if st.button("🔒 خروج"): st.session_state.auth = False; st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-
-# --- شريط التنقل الرئيسي (بديل كلمة الرئيسية) ---
-n_col1, n_col2 = st.columns(2)
-with n_col1:
+# أزرار التنقل الرئيسية (Navigation)
+n1, n2 = st.columns(2)
+with n1:
     if st.button("🏢 دليل المطورين الشامل", use_container_width=True):
         st.session_state.view = 'comp'; st.session_state.selected_dev = None; st.rerun()
-with n_col2:
+with n2:
     if st.button("🛠️ أدوات البروكر الذكية", use_container_width=True):
         st.session_state.view = 'tools'; st.rerun()
 
-st.write("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
-# --- عرض المحتوى بناءً على الزر المختار ---
+# --- سيناريو دليل المطورين ---
 if st.session_state.view == 'comp':
     if st.session_state.selected_dev:
-        # تفاصيل المطور المختارة
+        # صفحة تفاصيل المطور المبهجة
         name = st.session_state.selected_dev
         row = df[df['Developer'] == name].iloc[0]
         if st.button("🔙 العودة للقائمة"): st.session_state.selected_dev = None; st.rerun()
         
-        cr, cl = st.columns([1.3, 1])
-        with cr:
-            st.markdown(f'<div class="custom-card"><h3>👤 المالك</h3><p>{row.get("Owner", "-")}</p><h3>📖 الوصف</h3><p>{row.get("Description", "-")}</p></div>', unsafe_allow_html=True)
-            with st.expander("🏗️ محفظة المشاريع", expanded=True):
-                projects = str(row.get("Projects", "-")).split(",")
-                for p in projects:
-                    st.markdown(f'<span class="project-tag">🔹 {p.strip()}</span>', unsafe_allow_html=True)
-        with cl:
-            st.markdown(f'<div class="custom-card"><h3>📊 بيانات المشاريع</h3><b>📍 المناطق:</b> {row.get("Area", "-")}<br><b>💰 الأسعار:</b> {row.get("Price", "-")}<br><b>💵 المقدم:</b> {row.get("Down_Payment", "-")}<br><b>📅 التقسيط:</b> {row.get("Installments", "-")}</div>', unsafe_allow_html=True)
+        col_r, col_l = st.columns([1.3, 1])
+        with col_r:
+            st.markdown(f'''<div class="tool-box">
+                <div class="tool-title">👤 عن المطور</div>
+                <p><b>المالك:</b> {row.get("Owner", "-")}</p>
+                <p style="text-align:justify;"><b>فلسفة الشركة:</b> {row.get("Description", "-")}</p>
+                <div class="tool-title" style="margin-top:20px;">🏗️ محفظة المشاريع</div>
+            ''', unsafe_allow_html=True)
+            for p in str(row.get("Projects", "-")).split(","):
+                st.markdown(f'<span class="project-tag">{p.strip()}</span>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with col_l:
+            st.markdown(f'''<div class="tool-box">
+                <div class="tool-title">📊 تفاصيل تجارية</div>
+                <p><b>📍 المناطق:</b> {row.get("Area", "-")}</p>
+                <p><b>💰 متوسط السعر:</b> {row.get("Price", "-")}</p>
+                <p><b>💵 أنظمة السداد:</b> {row.get("Installments", "-")}</p>
+                <p><b>📅 المقدم:</b> {row.get("Down_Payment", "-")}</p>
+            </div>''', unsafe_allow_html=True)
     else:
-        # البحث والفلترة (الدليل)
-        col_main, col_filter = st.columns([0.75, 0.25])
-        with col_filter:
-            st.markdown('<div class="custom-card" style="padding:10px;"><h4>🎯 فلاتر</h4></div>', unsafe_allow_html=True)
-            all_areas = ["الكل"] + sorted(list(set([a.strip() for sublist in df['Area'].dropna().str.split(',') for a in sublist])))
-            selected_area = st.selectbox("اختر منطقة:", all_areas)
-        
-        with col_main:
-            search = st.text_input("🔍 ابحث عن مطور أو مشروع...")
-            f_df = df.copy()
-            if selected_area != "الكل":
-                f_df = f_df[f_df['Area'].str.contains(selected_area, na=False)]
-            if search:
-                f_df = f_df[f_df['Developer'].str.contains(search, na=False, case=False) | f_df['Projects'].str.contains(search, na=False, case=False)]
+        # شبكة المطورين (Grid)
+        c_main, c_side = st.columns([0.8, 0.2])
+        with c_side:
+            st.markdown('<div class="tool-box" style="padding:15px;"><h4>📍 تصفية</h4></div>', unsafe_allow_html=True)
+            areas = ["الكل"] + sorted(list(set([a.strip() for sublist in df['Area'].dropna().str.split(',') for a in sublist])))
+            sel_area = st.selectbox("المنطقة", areas)
             
-            devs = f_df['Developer'].unique()
-            for i in range(0, len(devs), 3):
+        with c_main:
+            search = st.text_input("🔍 ابحث عن مطور أو مشروع محدد...")
+            # فلترة البيانات
+            f_df = df.copy()
+            if sel_area != "الكل": f_df = f_df[f_df['Area'].str.contains(sel_area, na=False)]
+            if search: f_df = f_df[f_df['Developer'].str.contains(search, na=False, case=False) | f_df['Projects'].str.contains(search, na=False, case=False)]
+            
+            dev_list = f_df['Developer'].unique()
+            # عرض الشبكة
+            for i in range(0, len(dev_list), 3):
                 cols = st.columns(3)
                 for j in range(3):
-                    if i+j < len(devs):
-                        d_name = devs[i+j]
-                        if cols[j].button(d_name, key=f"d_{d_name}", use_container_width=True):
-                            st.session_state.selected_dev = d_name; st.rerun()
+                    if i+j < len(dev_list):
+                        d_name = dev_list[i+j]
+                        with cols[j]:
+                            st.markdown(f'<div class="dev-card"><div class="dev-name">{d_name}</div>', unsafe_allow_html=True)
+                            if st.button("عرض التفاصيل", key=f"btn_{d_name}", use_container_width=True):
+                                st.session_state.selected_dev = d_name; st.rerun()
+                            st.markdown('</div>', unsafe_allow_html=True)
 
+# --- سيناريو أدوات البروكر ---
 elif st.session_state.view == 'tools':
-    # قسم الأدوات
-    st.markdown('<h2 style="text-align:center;">🛠️ أدوات البروكر</h2>', unsafe_allow_html=True)
-    t1, t2 = st.columns(2)
-    with t1:
-        st.markdown('<div class="custom-card"><h4>💰 حاسبة القسط</h4></div>', unsafe_allow_html=True)
-        price = st.number_input("السعر الإجمالي", step=100000)
-        down = st.number_input("المقدم (%)", 0, 100, 10)
-        years = st.number_input("السنوات", 1, 30, 7)
-        if price > 0:
-            st.warning(f"القسط الشهري: {((price - (price*down/100)) / (years*12)):,.0f}")
-    with t2:
-        st.markdown('<div class="custom-card"><h4>📈 حساب ROI</h4></div>', unsafe_allow_html=True)
-        inv = st.number_input("الاستثمار", step=100000)
-        rent = st.number_input("الإيجار", step=1000)
-        if inv > 0:
-            st.success(f"العائد السنوي: {(rent*12/inv)*100:.2f}%")
+    st.markdown('<div style="text-align:center; margin-bottom:30px;"><h2>🛠️ لوحة الأدوات الذكية</h2></div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown('<div class="tool-box"><div class="tool-title">💰 حاسبة التمويل والقسط</div>', unsafe_allow_html=True)
+        total_price = st.number_input("إجمالي سعر الوحدة (ج.م)", min_value=0, step=100000)
+        dp_pct = st.slider("نسبة المقدم (%)", 0, 50, 10)
+        years = st.select_slider("مدة التقسيط (سنوات)", options=list(range(1, 21)), value=7)
+        
+        if total_price > 0:
+            dp_val = total_price * (dp_pct / 100)
+            monthly = (total_price - dp_val) / (years * 12)
+            st.markdown(f'''<div class="result-box">
+                <p>قيمة المقدم: {dp_val:,.0f} ج.م</p>
+                <h3>القسط الشهري: {monthly:,.0f} ج.م</h3>
+            </div>''', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<div class="tool-box"><div class="tool-title">📈 حاسبة الاستثمار ROI</div>', unsafe_allow_html=True)
+        inv_amt = st.number_input("قيمة شراء العقار", min_value=0, step=100000)
+        exp_rent = st.number_input("الإيجار الشهري المتوقع", min_value=0, step=1000)
+        
+        if inv_amt > 0 and exp_rent > 0:
+            annual_income = exp_rent * 12
+            roi = (annual_income / inv_amt) * 100
+            st.markdown(f'''<div class="result-box">
+                <p>الدخل السنوي المتوقع: {annual_income:,.0f} ج.م</p>
+                <h3>نسبة العائد السنوي: {roi:.2f} %</h3>
+            </div>''', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # أداة إضافية سريعة
+        st.markdown('<div class="tool-box"><div class="tool-title">📝 ملاحظة سريعة</div><p style="font-size:0.9rem; color:#666;">استخدم هذه الحاسبة لإعطاء عميلك أرقاماً تقريبية سريعة تساعده في اتخاذ القرار.</p></div>', unsafe_allow_html=True)
