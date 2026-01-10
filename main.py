@@ -2,25 +2,46 @@ import streamlit as st
 import pandas as pd
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
+st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS
+# 2. تصميم CSS (أسود وذهبي مع لمسة عصرية)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
+    #MainMenu, footer, header {visibility: hidden;}
+    
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #f8f9fa;
     }
-    .main-header {
-        background: #000; color: #f59e0b; padding: 15px; border-radius: 15px;
-        text-align: center; margin-bottom: 20px; border: 2px solid #f59e0b;
+
+    .hero-banner { 
+        background: #000; color: #f59e0b; padding: 20px; border-radius: 15px; 
+        text-align: center; margin-bottom: 25px; border: 3px solid #f59e0b;
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.1);
     }
-    .project-card {
-        background-color: #f9f9f9; padding: 10px; border-radius: 8px;
-        border-right: 4px solid #f59e0b; margin-bottom: 5px; font-weight: 700;
+
+    /* تصميم كارت المطور كزر */
+    div.stButton > button[key^="dev_"] {
+        width: 100% !important; height: 120px !important;
+        background-color: white !important; border: 2px solid #000 !important;
+        border-radius: 15px !important; font-size: 1.3rem !important;
+        font-weight: 900 !important; color: #000 !important;
+        box-shadow: 5px 5px 0px #000 !important; transition: 0.3s;
     }
-    /* تنسيق أزرار التنقل */
-    .stButton > button { width: 100%; border-radius: 10px; font-weight: bold; }
+    div.stButton > button[key^="dev_"]:hover {
+        border-color: #f59e0b !important; color: #f59e0b !important;
+        transform: translate(-3px, -3px); box-shadow: 8px 8px 0px #f59e0b !important;
+    }
+
+    /* ستايل صفحة المطور */
+    .dev-profile { background: white; padding: 30px; border-radius: 20px; border-right: 10px solid #f59e0b; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); }
+    .project-card { background: #f1f1f1; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-weight: 700; border-right: 5px solid #000; }
+    
+    /* زر العودة */
+    div.stButton > button[key="back_btn"] {
+        background-color: #000 !important; color: #f59e0b !important; border: 1px solid #f59e0b !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -37,95 +58,88 @@ def load_data():
 
 df = load_data()
 
-# إدارة حالة الصفحة في session_state
-if 'current_page' not in st.session_state:
-    st.session_state.current_page = 0
+# إدارة التنقل (Navigation State)
+if 'page' not in st.session_state: st.session_state.page = "main"
+if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
+if 'page_num' not in st.session_state: st.session_state.page_num = 0
 
 if not df.empty:
-    proj_col = df.columns[0] 
-    dev_col = df.columns[1]  
-    loc_col = df.columns[2] if len(df.columns) > 2 else None
+    proj_col = df.columns[0]
+    dev_col = df.columns[1]
 
-    st.markdown('<div class="main-header"><h1>🚀 منصة معلوماتى: دليل الشركات</h1></div>', unsafe_allow_html=True)
+    # --- الهيدر ثابت ---
+    st.markdown('<div class="hero-banner"><h1>🚀 منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
 
-    tab_search, tab_tools = st.tabs(["🔍 دليل الشركات", "🛠️ أدوات البروكر"])
+    # --- الصفحة الرئيسية (دليل المطورين) ---
+    if st.session_state.page == "main":
+        tab_list, tab_tools = st.tabs(["🔍 دليل الشركات والمشاريع", "🛠️ أدوات البروكر"])
 
-    with tab_search:
-        col_side, col_main = st.columns([1, 3])
-
-        with col_side:
-            st.markdown("### ⚙️ تصفية")
-            search_query = st.text_input("🔍 ابحث عن شركة أو مشروع")
-            if loc_col:
-                all_locs = ["كل المناطق"] + sorted(df[loc_col].dropna().unique().tolist())
-                selected_loc = st.selectbox("📍 المنطقة", all_locs)
-            else:
-                selected_loc = "كل المناطق"
-
-        with col_main:
-            # الفلترة
-            filtered_df = df.copy()
-            if search_query:
-                filtered_df = filtered_df[
-                    filtered_df[dev_col].str.contains(search_query, na=False, case=False) |
-                    filtered_df[proj_col].str.contains(search_query, na=False, case=False)
-                ]
-            if selected_loc != "كل المناطق" and loc_col:
-                filtered_df = filtered_df[filtered_df[loc_col] == selected_loc]
-
-            # الشركات الفريدة
-            unique_devs = filtered_df[dev_col].dropna().unique()
-            total_companies = len(unique_devs)
+        with tab_list:
+            col_s, col_m = st.columns([1, 3])
+            with col_s:
+                st.write("### ⚙️ تصفية")
+                search = st.text_input("🔍 ابحث عن مطور...")
             
-            # حسابات الصفحات (10 شركات لكل صفحة)
-            items_per_page = 10
-            total_pages = (total_companies // items_per_page) + (1 if total_companies % items_per_page > 0 else 0)
-            
-            # التأكد من أن الصفحة الحالية لا تتعدى الإجمالي بعد الفلترة
-            if st.session_state.current_page >= total_pages:
-                st.session_state.current_page = 0
+            with col_m:
+                unique_devs = df[dev_col].dropna().unique()
+                if search:
+                    unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
 
-            start_idx = st.session_state.current_page * items_per_page
-            end_idx = start_idx + items_per_page
-            current_list = unique_devs[start_idx:end_idx]
+                # نظام الصفحات (10 مطورين)
+                items = 10
+                total_p = (len(unique_devs) // items) + (1 if len(unique_devs) % items > 0 else 0)
+                start = st.session_state.page_num * items
+                current_devs = unique_devs[start:start+items]
 
-            st.success(f"✅ عرض {len(current_list)} من إجمالي {total_companies} شركة (صفحة {st.session_state.current_page + 1} من {total_pages})")
+                st.info(f"عرض {len(current_devs)} مطور - صفحة {st.session_state.page_num + 1}")
 
-            # عرض الشركات
-            for dev in current_list:
-                with st.expander(f"🏢 المطور: {dev}"):
-                    dev_projects = filtered_df[filtered_df[dev_col] == dev][proj_col].unique()
-                    for p in dev_projects:
-                        st.markdown(f'<div class="project-card">📍 مشروع: {p}</div>', unsafe_allow_html=True)
+                # عرض المطورين ككروت قابلة للضغط
+                for d_name in current_devs:
+                    if st.button(f"🏢 {d_name}", key=f"dev_{d_name}"):
+                        st.session_state.selected_dev = d_name
+                        st.session_state.page = "details"
+                        st.rerun()
 
-            # أزرار التنقل (السابق والتالي)
-            st.write("---")
-            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
-            
-            with nav_col1:
-                if st.button("⬅️ السابق") and st.session_state.current_page > 0:
-                    st.session_state.current_page -= 1
-                    st.rerun()
-            
-            with nav_col3:
-                if st.button("التالي ➡️") and st.session_state.current_page < total_pages - 1:
-                    st.session_state.current_page += 1
-                    st.rerun()
+                # أزرار التنقل
+                c1, c2 = st.columns(2)
+                if c1.button("⬅️ السابق") and st.session_state.page_num > 0:
+                    st.session_state.page_num -= 1; st.rerun()
+                if c2.button("التالي ➡️") and (start + items) < len(unique_devs):
+                    st.session_state.page_num += 1; st.rerun()
 
-    with tab_tools:
-        # تبويب الأدوات كما هو
-        st.markdown("### 🛠️ الأدوات الحسابية")
-        t_col1, t_col2 = st.columns(2)
-        with t_col1:
-            price = st.number_input("سعر الوحدة", value=1000000)
-            down = st.slider("المقدم (%)", 0, 50, 10)
-            years = st.number_input("السنوات", 1, 15, 8)
-            t_down = price * (down/100)
-            monthly = (price - t_down) / (years * 12) if years > 0 else 0
-            st.metric("المقدم", f"{t_down:,.0f}")
-            st.metric("القسط", f"{monthly:,.0f}")
-        with t_col2:
-            buy = st.number_input("سعر الشراء", value=2000000)
-            rent = st.number_input("الإيجار السنوي", value=160000)
-            roi = (rent / buy) * 100 if buy > 0 else 0
-            st.metric("ROI %", f"{roi:.2f} %")
+        with tab_tools:
+            # (أدوات البروكر الحسابية تظل هنا)
+            st.write("### 🛠️ الأدوات الحسابية")
+            # حاسبة القسط السريع
+            p = st.number_input("سعر الوحدة", 1000000)
+            y = st.slider("السنوات", 1, 15, 8)
+            st.metric("القسط التقريبي", f"{(p/ (y*12)):,.0f} ج.م")
+
+    # --- صفحة نبذة عن المطور (Details Page) ---
+    elif st.session_state.page == "details":
+        if st.button("🔙 العودة للدليل", key="back_btn"):
+            st.session_state.page = "main"
+            st.rerun()
+
+        dev = st.session_state.selected_dev
+        st.markdown(f"""
+            <div class="dev-profile">
+                <h1>🏢 {dev}</h1>
+                <p style='color: #666; font-size: 1.2rem;'>
+                    تعتبر شركة <b>{dev}</b> من الشركات الرائدة في السوق العقاري المصري، 
+                    وتتميز بمشاريعها ذات التصميم الفريد والجودة العالية في التنفيذ.
+                </p>
+                <hr>
+                <h3>🏗️ مشاريع الشركة المتاحة:</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # عرض مشاريع هذا المطور فقط
+        dev_projs = df[df[dev_col] == dev][proj_col].unique()
+        cols = st.columns(2)
+        for idx, p_name in enumerate(dev_projs):
+            with cols[idx % 2]:
+                st.markdown(f'<div class="project-card">📍 {p_name}</div>', unsafe_allow_html=True)
+
+else:
+    st.error("⚠️ لم يتم العثور على بيانات.")
