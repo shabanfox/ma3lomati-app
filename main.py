@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة والتصميم
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# تصميم CSS احترافي
+# تصميم CSS احترافي (تمت إضافة ستايل صفحة تسجيل الدخول)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -12,6 +12,20 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
+    
+    /* ستايل صفحة تسجيل الدخول */
+    .login-box {
+        max-width: 450px;
+        margin: 80px auto;
+        padding: 40px;
+        background: #000;
+        border-radius: 25px;
+        border: 4px solid #f59e0b;
+        box-shadow: 15px 15px 0px #eee;
+        text-align: center;
+        color: #f59e0b;
+    }
+
     .hero-banner { 
         background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
@@ -36,7 +50,7 @@ st.markdown("""
     div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #f59e0b !important; }
     
     /* ستايل المدخلات */
-    .stNumberInput input {
+    .stNumberInput input, .stTextInput input {
         border: 3px solid #000 !important;
         border-radius: 10px !important;
         padding: 10px !important;
@@ -44,7 +58,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. وظيفة جلب البيانات
+# --- 2. نظام التحقق من تسجيل الدخول ---
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+def login_page():
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<h1>🔐 دخول النظام</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#fff;">يرجى إدخال كلمة المرور للوصول للمنصة</p>', unsafe_allow_html=True)
+    
+    pwd = st.text_input("كلمة المرور", type="password", key="login_pwd")
+    if st.button("تسجيل الدخول"):
+        if pwd == "Ma3lomati_2026":
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ كلمة المرور غير صحيحة")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# منع عرض المحتوى إلا بعد تسجيل الدخول
+if not st.session_state.authenticated:
+    login_page()
+    st.stop()
+
+# --- 3. وظيفة جلب البيانات (تبدأ بعد الدخول بنجاح) ---
 @st.cache_data(ttl=300)
 def load_data():
     sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -63,7 +100,12 @@ if 'current_page' not in st.session_state: st.session_state.current_page = 0
 
 df = load_data()
 
-# --- التنقل ---
+# إضافة زر خروج بسيط في الشريط الجانبي (اختياري)
+if st.sidebar.button("🔓 تسجيل خروج"):
+    st.session_state.authenticated = False
+    st.rerun()
+
+# --- 4. التنقل والمحتوى الرئيسي ---
 if st.session_state.view == 'main':
     st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -76,7 +118,7 @@ if st.session_state.view == 'main':
 
 elif st.session_state.view == 'comp':
     if st.session_state.selected_dev:
-        # صفحة التفاصيل (نفس الكود الخاص بك دون تغيير)
+        # صفحة التفاصيل
         dev_name = st.session_state.selected_dev
         row = df[df['Developer'] == dev_name].iloc[0]
         st.markdown(f'<div class="hero-banner"><h2>{dev_name}</h2></div>', unsafe_allow_html=True)
@@ -92,7 +134,7 @@ elif st.session_state.view == 'comp':
 
     else:
         st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
-        col_main, col_spacer = st.columns([0.7, 0.3])
+        col_main, _ = st.columns([0.7, 0.3])
         with col_main:
             if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
             search = st.text_input("🔍 ابحث عن مطور...")
@@ -108,9 +150,9 @@ elif st.session_state.view == 'comp':
                 cols = st.columns(3)
                 for j in range(3):
                     if i + j < len(current_devs):
-                        dev_name = current_devs[i + j]
-                        if cols[j].button(dev_name, key=f"btn_{dev_name}", use_container_width=True):
-                            st.session_state.selected_dev = dev_name; st.rerun()
+                        d_name = current_devs[i + j]
+                        if cols[j].button(d_name, key=f"btn_{d_name}", use_container_width=True):
+                            st.session_state.selected_dev = d_name; st.rerun()
 
             st.write("---")
             nav_prev, nav_page, nav_next = st.columns([1, 2, 1])
@@ -128,7 +170,6 @@ elif st.session_state.view == 'tools':
     if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
     
     t1, t2 = st.columns(2)
-    
     with t1:
         st.markdown('<div class="custom-card"><div class="card-title">💰 حاسبة الأقساط</div></div>', unsafe_allow_html=True)
         total_price = st.number_input("إجمالي سعر الوحدة (ج.م)", min_value=0, step=100000)
@@ -160,4 +201,3 @@ elif st.session_state.view == 'tools':
                     <h2>نسبة العائد: {roi:.2f}% سنوياً</h2>
                 </div>
             """, unsafe_allow_html=True)
-
