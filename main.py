@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة والتصميم الأساسي
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# تصميم CSS شامل (أسود بالكامل وتعديل ألوان المدخلات)
+# تصميم CSS شامل (أسود بالكامل وتنسيق الأزرار بجانب بعضها)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -41,7 +41,7 @@ st.markdown("""
         border-bottom: 2px solid #f59e0b; padding-bottom: 10px; margin-bottom: 20px; 
     }
 
-    /* تعديل شكل حقول الإدخال لتصبح سوداء */
+    /* شكل حقول الإدخال السوداء */
     .stNumberInput input {
         background-color: #1a1a1a !important;
         color: white !important;
@@ -65,16 +65,16 @@ st.markdown("""
     div.stButton > button {
         border: 2px solid #f59e0b !important; border-radius: 12px !important;
         background-color: #000 !important; color: #f59e0b !important;
-        font-weight: 900 !important; min-height: 50px !important; width: 100%;
-        transition: 0.3s;
+        font-weight: 900 !important; min-height: 60px !important; width: 100%;
+        transition: 0.3s; font-size: 1.2rem !important;
     }
     div.stButton > button:hover { background-color: #f59e0b !important; color: #000 !important; }
 
-    /* زر الخروج/الدخول */
+    /* زر تسجيل الخروج العلوي */
     .top-nav { display: flex; justify-content: flex-start; padding: 10px; }
     .login-btn {
         background-color: #000; color: #f59e0b; padding: 5px 20px; 
-        border: 1px solid #f59e0b; border-radius: 10px; text-decoration: none;
+        border: 1px solid #f59e0b; border-radius: 10px; text-decoration: none; font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -91,10 +91,10 @@ if not st.session_state["authenticated"]:
             if pwd == "Ma3lomati_2026":
                 st.session_state["authenticated"] = True
                 st.rerun()
-            else: st.error("خطأ!")
+            else: st.error("خطأ في كلمة المرور!")
     st.stop()
 
-# 3. جلب البيانات
+# 3. جلب البيانات من الشيت
 @st.cache_data(ttl=300)
 def load_data():
     sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -106,27 +106,33 @@ df = load_data()
 # الحالة والتنقل
 if 'view' not in st.session_state: st.session_state.view = 'main'
 
-# الهيدر العلوي
-st.markdown('<div class="top-nav"><a href="#" class="login-btn">خروج</a></div>', unsafe_allow_html=True)
+# الهيدر العلوي (زر الخروج)
+st.markdown('<div class="top-nav"><a href="/" class="login-btn">خروج</a></div>', unsafe_allow_html=True)
 
-# --- الصفحات ---
+# --- محتوى الصفحات ---
 if st.session_state.view == 'main':
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
+    
+    # وضع الأزرار بجانب بعضها البعض
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("🏢 دليل المطورين"): st.session_state.view = 'comp'; st.rerun()
+        if st.button("🏢 دليل المطورين الشامل"): 
+            st.session_state.view = 'comp'; st.rerun()
     with c2:
-        if st.button("🛠️ أدوات البروكر"): st.session_state.view = 'tools'; st.rerun()
+        if st.button("🛠️ أدوات البروكر الذكية"): 
+            st.session_state.view = 'tools'; st.rerun()
 
 elif st.session_state.view == 'comp':
-    # كود عرض المطورين (مختصر للتوضيح)
     st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 العودة"): st.session_state.view = 'main'; st.rerun()
+    if st.button("🔙 العودة للرئيسية"): 
+        st.session_state.view = 'main'; st.rerun()
+    st.write("<br>", unsafe_allow_html=True)
     st.dataframe(df, use_container_width=True)
 
 elif st.session_state.view == 'tools':
     st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر الذكية</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+    if st.button("🔙 العودة للرئيسية"): 
+        st.session_state.view = 'main'; st.rerun()
     
     col1, col2 = st.columns(2)
     
@@ -144,7 +150,7 @@ elif st.session_state.view == 'tools':
 
     with col2:
         st.markdown('<div class="calc-container"><div class="calc-title">📈 حاسبة العائد ROI</div>', unsafe_allow_html=True)
-        inv = st.number_input("إجمالي المبلغ المستثمر (سعر الشراء)", min_value=0, step=100000, key="inv_in")
+        inv = st.number_input("إجمالي المبلغ المستثمر", min_value=0, step=100000, key="inv_in")
         rent = st.number_input("الإيجار الشهري المتوقع", min_value=0, step=1000, key="rent_in")
         
         if inv > 0:
