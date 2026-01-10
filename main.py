@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS المدمج (الكارت هو الزر)
+# 2. تصميم CSS (الحجم الكبير السابق + الكارت المدمج)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -15,63 +15,63 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
-    /* هيدر مصغر */
+    /* هيدر فخم وكبير */
     .hero-banner { 
-        background: #000000; color: #f59e0b; padding: 15px; border-radius: 15px; 
-        text-align: center; margin-bottom: 20px; border: 3px solid #f59e0b;
-        box-shadow: 6px 6px 0px #000;
+        background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
+        text-align: center; margin-bottom: 30px; border: 5px solid #f59e0b;
+        box-shadow: 10px 10px 0px #000;
     }
-    .hero-banner h1 { font-size: 1.8rem !important; font-weight: 900; margin: 0; }
+    .hero-banner h1 { font-size: 2.5rem !important; font-weight: 900; margin: 0; }
 
-    /* دمج الكارت مع الزر - تحويل زر المطور لمربع كبير متساوٍ */
+    /* الكروت: العودة للحجم الكبير (220px) مع الدمج */
     div.stButton > button[key^="dev_"] {
         width: 100% !important;
-        height: 145px !important; /* الحجم المصغر */
+        height: 220px !important; /* الحجم الفخم السابق */
         background-color: #ffffff !important;
-        border: 4px solid #000000 !important;
-        border-radius: 15px !important;
-        box-shadow: 6px 6px 0px #000000 !important;
-        font-size: 1.2rem !important;
+        border: 5px solid #000000 !important;
+        border-radius: 25px !important;
+        box-shadow: 10px 10px 0px #000000 !important;
+        font-size: 1.8rem !important; /* خط كبير وواضح */
         font-weight: 900 !important;
         color: #000 !important;
         display: flex !important;
-        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         white-space: normal !important;
-        line-height: 1.3 !important;
-        transition: 0.2s !important;
+        line-height: 1.4 !important;
+        transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     }
 
     div.stButton > button[key^="dev_"]:hover {
-        transform: translate(-3px, -3px) !important;
-        box-shadow: 9px 9px 0px #f59e0b !important;
+        transform: translate(-5px, -5px) !important;
+        box-shadow: 15px 15px 0px #f59e0b !important;
         border-color: #f59e0b !important;
         color: #f59e0b !important;
+        background-color: #fafafa !important;
     }
 
-    /* زر العودة نانو أزرق */
+    /* زر العودة نانو أزرق (صغير جداً) */
     div.stButton > button[key^="back_"] {
         background-color: #007bff !important; color: white !important;
-        font-size: 0.65rem !important; padding: 2px 6px !important;
-        min-height: 22px !important; width: auto !important;
-        border: none !important; border-radius: 4px !important;
+        font-size: 0.7rem !important; padding: 2px 10px !important;
+        min-height: 28px !important; width: auto !important;
+        border: none !important; border-radius: 6px !important;
         box-shadow: 2px 2px 0px #000 !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 20px !important;
     }
 
     /* أزرار الصفحة الرئيسية */
     div.stButton > button:not([key^="dev_"]):not([key^="back_"]) {
-        border: 4px solid #000 !important; border-radius: 15px !important;
-        box-shadow: 5px 5px 0px #000 !important; font-weight: 900 !important;
-        height: 120px !important; font-size: 1.2rem !important;
+        border: 5px solid #000 !important; border-radius: 20px !important;
+        box-shadow: 8px 8px 0px #000 !important; font-weight: 900 !important;
+        height: 160px !important; font-size: 1.6rem !important;
     }
 
-    /* كروت عرض النتائج في الأدوات */
-    .tool-result-box {
-        background: #fff; border: 3px solid #000; padding: 10px;
-        border-radius: 15px; box-shadow: 5px 5px 0px #000;
-        text-align: center; margin-top: 10px;
+    /* شكل عرض المشاريع في التفاصيل */
+    .project-card {
+        background: #fff; border: 4px solid #000; padding: 15px;
+        border-radius: 15px; box-shadow: 6px 6px 0px #000;
+        margin-bottom: 12px; font-weight: 900; font-size: 1.3rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -97,15 +97,15 @@ proj_col = df.columns[0]
 
 # --- الصفحة الرئيسية ---
 if st.session_state.view == 'main':
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
-    st.write("<br>", unsafe_allow_html=True)
-    _, mid_col, _ = st.columns([0.15, 0.7, 0.15])
+    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى العقارية</h1></div>', unsafe_allow_html=True)
+    st.write("<br><br>", unsafe_allow_html=True)
+    _, mid_col, _ = st.columns([0.1, 0.8, 0.1])
     with mid_col:
-        c1, c2 = st.columns(2, gap="medium")
+        c1, c2 = st.columns(2, gap="large")
         if c1.button("🏢\nدليل المطورين"): st.session_state.view = 'comp'; st.rerun()
         if c2.button("🛠️\nأدوات البروكر"): st.session_state.view = 'tools'; st.rerun()
 
-# --- صفحة دليل المطورين (الكارت هو الزر) ---
+# --- صفحة دليل المطورين (الكارت المدمج بالحجم الكبير) ---
 elif st.session_state.view == 'comp':
     st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
     col_main, _ = st.columns([0.7, 0.3])
@@ -121,7 +121,7 @@ elif st.session_state.view == 'comp':
         start = st.session_state.page * items
         current = unique_devs[start : start + items]
 
-        # عرض الكروت كأزرار مدمجة
+        # الشبكة الكبيرة 3x3
         for i in range(0, len(current), 3):
             cols = st.columns(3)
             for j in range(3):
@@ -135,7 +135,7 @@ elif st.session_state.view == 'comp':
         # أزرار التنقل
         st.write("<br>", unsafe_allow_html=True)
         n1, n2 = st.columns(2)
-        if n1.button("⬅️ السابق", key="back_p") and st.session_state.page > 0: st.session_state.page -= 1; st.rerun()
+        if n1.button("⬅️ السابق", key="prev_p") and st.session_state.page > 0: st.session_state.page -= 1; st.rerun()
         if n2.button("التالي ➡️", key="next_p") and (start + items) < len(unique_devs): st.session_state.page += 1; st.rerun()
 
 # --- صفحة التفاصيل ---
@@ -145,4 +145,4 @@ elif st.session_state.view == 'details':
     
     projs = df[df[target_col] == st.session_state.selected_dev][proj_col].unique()
     for p in projs:
-        st.markdown(f'<div class="tool-result-box"><b>🔹 {p}</b></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="project-card">🔹 {p}</div>', unsafe_allow_html=True)
