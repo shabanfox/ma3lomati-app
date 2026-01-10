@@ -1,166 +1,161 @@
 import streamlit as st
 import pandas as pd
-import io
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS (هوية بصرية أسود وذهبي)
+# 2. تصميم CSS الموحد (المشاريع والأدوات)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    #MainMenu, footer, header {visibility: hidden;}
+    
+    #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
+    
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff;
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
-    .main-banner { 
-        background: #000; color: #f59e0b; padding: 30px; border-radius: 20px; 
+
+    .hero-banner { 
+        background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
+        box-shadow: 10px 10px 0px #000;
     }
-    /* الأزرار الكبيرة الرئيسية */
-    div.stButton > button[key="btn_devs_home"], div.stButton > button[key="btn_tools_home"] {
-        width: 100% !important; height: 220px !important; font-size: 2.2rem !important;
-        font-weight: 900 !important; border-radius: 25px !important; border: 4px solid #000 !important;
-        box-shadow: 10px 10px 0px #000 !important; transition: 0.3s;
+    .hero-banner h1, .hero-banner h2 { font-weight: 900; color: #f59e0b !important; margin: 0; }
+
+    /* ستايل الكروت الموحد (للمطورين وللأدوات) */
+    .custom-card {
+        background: #ffffff; border: 4px solid #000; padding: 20px; 
+        border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; transition: 0.3s;
     }
-    div.stButton > button[key="btn_devs_home"] { background-color: #f59e0b !important; color: #000 !important; }
-    div.stButton > button[key="btn_tools_home"] { background-color: #000 !important; color: #f59e0b !important; }
-    
-    /* كروت المطورين (Grid) */
-    div.stButton > button[key^="grid_"] {
-        width: 100% !important; height: 90px !important; background: white !important;
-        border: 2px solid #000 !important; border-radius: 12px !important;
-        font-weight: 800 !important; box-shadow: 4px 4px 0px #000 !important; margin-bottom: 10px;
+    .card-title { font-size: 1.5rem; font-weight: 900; color: #000; }
+    .card-val { font-size: 2.2rem; font-weight: 900; color: #f59e0b; margin-top: 10px; }
+
+    /* أزرار التنقل والتحكم */
+    div.stButton > button {
+        border: 3px solid #000 !important; border-radius: 15px !important;
+        box-shadow: 5px 5px 0px #000 !important; font-weight: 900 !important;
+        background-color: #fff !important; color: #000 !important;
     }
-    div.stButton > button[key^="grid_"]:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
-    
-    .stat-card { background: #fdf6e9; padding: 15px; border-radius: 10px; border: 1px solid #f59e0b; text-align: center; }
-    .desc-box { background: #f8f9fa; padding: 20px; border-radius: 15px; border-right: 8px solid #000; margin-top: 10px; }
+    div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0px #f59e0b !important; }
+
+    /* تحسين المدخلات (Inputs) لتناسب التصميم */
+    input { border: 3px solid #000 !important; border-radius: 10px !important; font-weight: 700 !important; }
+    label { font-weight: 900 !important; font-size: 1.1rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. تحميل البيانات (دقة عالية)
+# 3. جلب البيانات
 @st.cache_data
-def get_data():
-    csv_data = """Developer,Owner,Projects,Area,Price,Min_Val,Description,Type,Delivery,Installments,Down_Payment,Detailed_Info
-Mountain View,عمرو سليمان,iCity,التجمع,8.5M,850K,مجتمعات السعادة,سكني,2027,8,10%,نظام 4D المبتكر وفصل حركة السيارات
-Palm Hills,ياسين منصور,Badya,زايد,12M,1.2M,رائد السوق,فاخر,2026,7,10%,أول مدينة مستدامة بالذكاء الاصطناعي
-SODIC,سوديك,Villette,التجمع,13M,650K,جودة عالمية,سكني,2025,7,5%,أقوى إدارة مرافق وصيانة في مصر
-Emaar Misr,محمد العبار,Mivida,التجمع,18M,900K,فخامة إماراتية,عالمي,2026,8,5%,أعلى عائد استثماري في السوق
-Ora Dev,نجيب ساويرس,Zed,زايد,16M,1.6M,رفاهية الأبراج,فاخر,2028,8,10%,تشطيبات فندقية كاملة بالتكييفات
-Hassan Allam,حسن علام,Swan Lake,مستقبل,15.5M,775K,قمة الرقي,فاخر,2026,7,5%,المطور المفضل للطبقة الأرستقراطية
-Madinet Masr,عبد الله سلام,Sarai,التجمع,7.2M,720K,تاريخ عريق,سكني,2025,8,10%,أكبر لاجون صناعي في القاهرة الجديدة
-Tatweer Misr,أحمد شلبي,Bloomfields,مستقبل,9.5M,475K,ابتكار تعليمي,متميز,2027,8,5%,منطقة جامعات دولية داخل الكمبوند
-TMG,هشام طلعت,مدينتي,السويس,11M,1.1M,مدن متكاملة,مدينة,2027,10,10%,نظام إدارة ذكية وتحصيل إلكتروني
-Nile Dev,محمد طاهر,Nile Towers,العاصمة,5.2M,520K,ملوك الأبراج,تجاري,2028,10,10%,ثالث أعلى ناطحة سحاب في أفريقيا
-La Vista,علاء الهادي,LV City,العاصمة,15M,2.2M,فيلات فاخرة,فاخر,2026,6,15%,قوة ملاءة مالية جبارة وبناء ذاتي
-LMD,أحمد صبور,One Ninety,التجمع,10.5M,1.05M,تجربة فندقية,متميز,2027,8,10%,يضم فندق W Global ومنطقة تجارية
-Misr Italia,عائلة العسال,IL Bosco,العاصمة,6.5M,650K,غابات عمودية,سكني,2026,9,10%,أول مطور يطبق مفهوم الأشجار على المباني
-Orascom,سميح ساويرس,O West,أكتوبر,11.5M,575K,مطور الجونة,عالمي,2026,8,5%,روح الجونة في قلب مدينة أكتوبر
-PRE,أديب سلامة,The Brooks,التجمع,9.2M,920K,تصاميم هندسية,متميز,2027,8,10%,شلالات مائية ومناظر طبيعية فريدة
-Marakez,فواز الحكير,District 5,القطامية,10.8M,1.08M,مولات وسكن,متكامل,2026,8,10%,صاحب مول العرب ويربط التجمع بالسخنة
-City Edge,حكومي,North Edge,العلمين,14M,700K,المطور الوطني,فندقي,2025,7,5%,ناطحات سحاب مباشرة على البحر
-Hyde Park,ماجد شريف,Hyde Park,التجمع,9M,900K,القلب الأخضر,سكني,2026,8,10%,أكبر نادي رياضي بالقاهرة الجديدة
-Inertia,أحمد العدوي,Jefaira,الساحل,7.9M,790K,جيل الشباب,سياحي,2027,8,10%,مدينة ساحلية تعمل طوال العام
-Iwan,وليد مختار,The Axis,زايد,8.4M,840K,توازن نفسي,مودرن,2026,8,10%,فلسفة الـ Wellness ومساحات للتأمل
-Akam,عصام منصور,Scene 7,العاصمة,5.5M,550K,سكن رياضي,سكني,2026,10,10%,11 أكاديمية رياضية دولية
-Taj Misr,مصطفى خليل,De Joya,العاصمة,4.8M,240K,الأكثر مبيعاً,اقتصادي,2026,10,5%,أقل نسبة تحميل في مساحات الشقق
-Equity,أحمد السويدي,Waterway,التجمع,13.5M,2.0M,الرفاهية,فاخر,2025,7,15%,البراند رقم 1 في مصر حالياً
-New Giza,صلاح دياب,New Giza,أكتوبر,14M,2.1M,الفخامة,فاخر,2025,6,15%,أرقى مجتمع سكني متكامل في أكتوبر
-Saudi Egy,شراكة دولية,Jayd,التجمع,9.8M,980K,ثقة دولية,متميز,2026,8,10%,شركة SED العريقة بسابقة أعمال ضخمة"""
-    # ملاحظة: تم اختصار البيانات هنا للمثال، ولكن الكود سيقرأ كل ما ترسله.
-    return pd.read_csv(io.StringIO(csv_data))
+def load_data():
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    try:
+        df = pd.read_csv(url)
+        df.columns = [str(c).strip() for c in df.columns]
+        return df
+    except:
+        return pd.DataFrame(columns=['Developer'])
 
-df = get_data()
+if 'data' not in st.session_state: st.session_state.data = load_data()
+if 'view' not in st.session_state: st.session_state.view = 'main'
+if 'page' not in st.session_state: st.session_state.page = 0
 
-# إدارة حالة التطبيق
-if 'nav' not in st.session_state: st.session_state.nav = "home"
-if 'dev_pick' not in st.session_state: st.session_state.dev_pick = None
-if 'p_num' not in st.session_state: st.session_state.p_num = 0
+df = st.session_state.data
+target_col = 'Developer' if 'Developer' in df.columns else df.columns[1]
 
-# --- 1. صفحة البداية ---
-if st.session_state.nav == "home":
-    st.markdown('<div class="main-banner"><h1>🚀 منصة معلوماتى العقارية</h1><p>دليلك الشامل للمطورين وأدوات البروكر الذكية</p></div>', unsafe_allow_html=True)
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        if st.button("🏢 الشركات\n(Developers)", key="btn_devs_home"):
-            st.session_state.nav = "list"; st.rerun()
-    with col2:
-        if st.button("🛠️ أدوات\nالبروكر", key="btn_tools_home"):
-            st.session_state.nav = "tools"; st.rerun()
+# --- الصفحة الرئيسية ---
+if st.session_state.view == 'main':
+    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+    st.write("<div style='height:80px;'></div>", unsafe_allow_html=True)
+    _, mid_col, _ = st.columns([0.1, 0.8, 0.1])
+    with mid_col:
+        c1, c2 = st.columns(2, gap="large")
+        with c1:
+            if st.button("🏢\nدليل المطورين", use_container_width=True): st.session_state.view = 'comp'; st.rerun()
+        with c2:
+            if st.button("🛠️\nأدوات البروكر", use_container_width=True): st.session_state.view = 'tools'; st.rerun()
 
-# --- 2. صفحة قائمة الشركات (Grid) ---
-elif st.session_state.nav == "list":
-    if st.button("🔙 العودة للرئيسية"): st.session_state.nav = "home"; st.rerun()
+# --- صفحة دليل المطورين ---
+elif st.session_state.view == 'comp':
+    st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
+    col_main, _ = st.columns([0.7, 0.3])
     
-    st.title("🏢 دليل المطورين العقاريين")
-    q = st.text_input("🔍 ابحث عن اسم المطور...", placeholder="مثال: Mountain View, SODIC...")
-    
-    devs = df['Developer'].unique()
-    if q: devs = [d for d in devs if q.lower() in d.lower()]
-    
-    # شبكة الأزرار
-    per_p = 12
-    start = st.session_state.p_num * per_p
-    subset = devs[start : start+per_p]
-    
-    for i in range(0, len(subset), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i+j < len(subset):
-                d_name = subset[i+j]
-                with cols[j]:
-                    if st.button(d_name, key=f"grid_{d_name}"):
-                        st.session_state.dev_pick = d_name
-                        st.session_state.nav = "details"; st.rerun()
-    
-    # التنقل
-    st.write("---")
-    c1, c2, c3 = st.columns([1,2,1])
-    if c1.button("⬅️ السابق") and st.session_state.p_num > 0:
-        st.session_state.p_num -= 1; st.rerun()
-    if c3.button("التالي ➡️") and (start+per_p) < len(devs):
-        st.session_state.p_num += 1; st.rerun()
+    with col_main:
+        if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.session_state.page = 0; st.rerun()
+        
+        search = st.text_input("🔍 ابحث عن المطور (بحث سريع)...")
+        unique_devs = df[target_col].dropna().unique()
+        
+        # بحث سريع ومتوافق
+        if search:
+            unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
+        
+        items_per_page = 9
+        start_idx = st.session_state.page * items_per_page
+        current_devs = unique_devs[start_idx : start_idx + items_per_page]
 
-# --- 3. صفحة تفاصيل المطور (Profile) ---
-elif st.session_state.nav == "details":
-    if st.button("🔙 العودة للقائمة"): st.session_state.nav = "list"; st.rerun()
-    
-    d = st.session_state.dev_pick
-    row = df[df['Developer'] == d].iloc[0]
-    
-    st.markdown(f"""
-        <div class="main-banner">
-            <h1>🏢 {d}</h1>
-            <p>المالك: <b>{row['Owner']}</b> | التصنيف: <b>{row['Type']}</b></p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    col_a, col_b, col_c = st.columns(3)
-    col_a.markdown(f'<div class="stat-card"><h3>📍 المنطقة</h3><p>{row["Area"]}</p></div>', unsafe_allow_html=True)
-    col_b.markdown(f'<div class="stat-card"><h3>💰 السعر يبدأ من</h3><p>{row["Price"]}</p></div>', unsafe_allow_html=True)
-    col_c.markdown(f'<div class="stat-card"><h3>💳 المقدم</h3><p>{row["Down_Payment"]}</p></div>', unsafe_allow_html=True)
-    
-    st.markdown(f"""
-        <div class="desc-box">
-            <h3>📖 نبذة عن المطور ( {row['Description']} )</h3>
-            <p>{row['Detailed_Info']}</p>
-            <hr>
-            <p>🚀 <b>المشروع الأبرز:</b> {row['Projects']}</p>
-            <p>⏳ <b>تاريخ الاستلام:</b> {row['Delivery']}</p>
-            <p>📅 <b>سنوات التقسيط:</b> {row['Installments']} سنوات</p>
-        </div>
-    """, unsafe_allow_html=True)
+        for i in range(0, len(current_devs), 3):
+            grid_cols = st.columns(3)
+            for j in range(3):
+                if i + j < len(current_devs):
+                    with grid_cols[j]:
+                        st.markdown(f'<div class="custom-card" style="height:150px;"><div class="card-title">{current_devs[i+j]}</div></div>', unsafe_allow_html=True)
 
-# --- 4. صفحة أدوات البروكر ---
-elif st.session_state.nav == "tools":
-    if st.button("🔙 العودة للرئيسية"): st.session_state.nav = "home"; st.rerun()
-    st.title("🛠️ أدوات البروكر العقاري")
-    # حاسبة القسط
-    with st.expander("💰 حاسبة القسط السريع", expanded=True):
-        p = st.number_input("سعر الوحدة الإجمالي", 1000000)
-        d = st.slider("نسبة المقدم %", 0, 50, 10)
-        y = st.number_input("سنوات التقسيط", 1, 15, 8)
-        down_val = p * (d/100)
-        monthly = (p - down_val) / (y * 12)
-        st.metric("القسط الشهري", f"{monthly:,.0f} ج.م")
+        # أزرار التنقل
+        st.write("<br>", unsafe_allow_html=True)
+        nav_prev, nav_next = st.columns([1, 1])
+        with nav_prev:
+            if st.session_state.page > 0:
+                if st.button("⬅️ السابق"): st.session_state.page -= 1; st.rerun()
+        with nav_next:
+            if (start_idx + items_per_page) < len(unique_devs):
+                if st.button("التالي ➡️"): st.session_state.page += 1; st.rerun()
+
+# --- صفحة الأدوات (بتصميم المشاريع الموحد) ---
+elif st.session_state.view == 'tools':
+    st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر الذكية</h2></div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'main'; st.rerun()
+    
+    t1, t2 = st.tabs(["💰 حاسبة الأقساط", "📈 حاسبة العائد ROI"])
+    
+    with t1:
+        st.write("<br>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1: price = st.number_input("سعر الوحدة الإجمالي", value=1000000, step=100000)
+        with c2: down_payment = st.number_input("المقدم %", value=10)
+        with c3: years = st.number_input("سنوات التقسيط", value=8)
+        
+        calc_dn = price * (down_payment/100)
+        calc_mo = (price - calc_dn) / (years * 12) if years > 0 else 0
+        
+        # عرض النتيجة بنفس ستايل كروت المشاريع
+        st.markdown(f"""
+            <div class="custom-card">
+                <span style="font-weight:700;">المقدم المطلوب</span>
+                <div class="card-val">{calc_dn:,.0f} ج.م</div>
+                <hr style="width:100%; border:1px solid #eee;">
+                <span style="font-weight:700;">القسط الشهري</span>
+                <div class="card-val" style="color:#22c55e;">{calc_mo:,.0f} ج.م</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with t2:
+        st.write("<br>", unsafe_allow_html=True)
+        r1, r2, r3 = st.columns(3)
+        with r1: buy_p = st.number_input("سعر الشراء", value=1000000)
+        with r2: sell_p = st.number_input("سعر البيع المتوقع", value=1500000)
+        with r3: annual_rent = st.number_input("الإيجار السنوي", value=100000)
+        
+        profit = (sell_p - buy_p) + annual_rent
+        roi = (profit / buy_p) * 100 if buy_p > 0 else 0
+        
+        st.markdown(f"""
+            <div class="custom-card">
+                <span style="font-weight:700;">إجمالي الربح الاستثماري</span>
+                <div class="card-val">{profit:,.0f} ج.م</div>
+                <hr style="width:100%; border:1px solid #eee;">
+                <span style="font-weight:700;">نسبة العائد (ROI)</span>
+                <div class="card-val" style="color:#22c55e;">%{roi:.1f}</div>
+            </div>
+        """, unsafe_allow_html=True)
