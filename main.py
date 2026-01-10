@@ -4,12 +4,11 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS احترافي (نظام الشبكة Grid والخطوط)
+# 2. تصميم CSS (نظام الشبكة Grid مع التركيز على المطور)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* إخفاء القوائم الافتراضية */
     #MainMenu, footer, header {visibility: hidden;}
     
     html, body, [data-testid="stAppViewContainer"] { 
@@ -19,10 +18,9 @@ st.markdown("""
     .hero-banner { 
         background: #000; color: #f59e0b; padding: 20px; border-radius: 15px; 
         text-align: center; margin-bottom: 25px; border: 3px solid #f59e0b;
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.1);
     }
 
-    /* تصميم كارت المطور Developer كزر شبكي */
+    /* كارت المطور Developer */
     div.stButton > button[key^="dev_"] {
         width: 100% !important; 
         height: 100px !important;
@@ -39,22 +37,21 @@ st.markdown("""
     div.stButton > button[key^="dev_"]:hover {
         border-color: #f59e0b !important; 
         color: #f59e0b !important;
-        transform: translateY(-3px);
         box-shadow: 6px 6px 0px #f59e0b !important;
     }
 
-    .dev-profile-card { 
-        background: #fdf6e9; padding: 20px; border-radius: 15px; 
+    .dev-profile-header { 
+        background: #fdf6e9; padding: 25px; border-radius: 20px; 
         border: 2px solid #f59e0b; margin-bottom: 20px; text-align: center;
     }
-    .project-item { 
-        background: #f8f9fa; padding: 12px; border-radius: 8px; 
-        margin-bottom: 8px; font-weight: 700; border-right: 5px solid #f59e0b;
+    .project-card { 
+        background: #f8f9fa; padding: 15px; border-radius: 10px; 
+        margin-bottom: 10px; font-weight: 700; border-right: 5px solid #000;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. دالة جلب البيانات
+# 3. جلب البيانات
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -67,37 +64,37 @@ def load_data():
 
 df = load_data()
 
-# إدارة حالة التطبيق (التنقل والصفحات)
+# إدارة التنقل والصفحات
 if 'page' not in st.session_state: st.session_state.page = "main"
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
 
 if not df.empty:
-    # تحديد الأعمدة الأساسية
+    # ربط الأعمدة: المطور هو البطل هنا
     proj_col = df.columns[0] # المشروع
     dev_col = df.columns[1]  # المطور (Developer)
 
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى العقارية الذكية</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى: دليل المطورين</h1></div>', unsafe_allow_html=True)
 
-    # --- الصفحة الرئيسية: دليل المطورين (شبكة) ---
+    # --- الصفحة الرئيسية: شبكة المطورين (Developers Grid) ---
     if st.session_state.page == "main":
-        tab_list, tab_tools = st.tabs(["🔍 دليل المطورين (Developers)", "🛠️ أدوات البروكر"])
+        tab_list, tab_tools = st.tabs(["🏢 الشركات العقارية", "🛠️ الأدوات"])
 
         with tab_list:
-            search = st.text_input("🔍 ابحث عن Developer...", placeholder="اكتب اسم الشركة هنا...")
+            search = st.text_input("🔍 ابحث عن اسم المطور (Developer)...")
             
-            # استخراج قائمة المطورين الفريدة
+            # فلترة المطورين فقط
             unique_devs = df[dev_col].dropna().unique()
             if search:
                 unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
 
-            # إعدادات الصفحات: 12 مطور في الصفحة (3 أعمدة × 4 صفوف)
+            # نظام الصفحات (12 مطور - 3 أعمدة)
             items_per_page = 12
             total_pages = (len(unique_devs) // items_per_page) + (1 if len(unique_devs) % items_per_page > 0 else 0)
             start_idx = st.session_state.page_num * items_per_page
             current_devs = unique_devs[start_idx : start_idx + items_per_page]
 
-            # بناء الشبكة (Grid)
+            # عرض المطورين "جنب بعض"
             for i in range(0, len(current_devs), 3):
                 cols = st.columns(3)
                 for j in range(3):
@@ -109,53 +106,37 @@ if not df.empty:
                                 st.session_state.page = "details"
                                 st.rerun()
 
-            # أزرار التنقل بين الصفحات
+            # أزرار التنقل
             st.markdown("---")
-            nav1, nav_info, nav2 = st.columns([1, 2, 1])
-            with nav1:
+            n1, n_info, n2 = st.columns([1, 2, 1])
+            with n1:
                 if st.button("⬅️ السابق") and st.session_state.page_num > 0:
-                    st.session_state.page_num -= 1
-                    st.rerun()
-            with nav_info:
+                    st.session_state.page_num -= 1; st.rerun()
+            with n_info:
                 st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.page_num + 1} من {total_pages}</p>", unsafe_allow_html=True)
-            with nav2:
+            with n2:
                 if st.button("التالي ➡️") and (start_idx + items_per_page) < len(unique_devs):
-                    st.session_state.page_num += 1
-                    st.rerun()
+                    st.session_state.page_num += 1; st.rerun()
 
-        with tab_tools:
-            st.subheader("🛠️ حاسبات عقارية سريعة")
-            c1, c2 = st.columns(2)
-            with c1:
-                price = st.number_input("سعر الوحدة", value=1000000, step=100000)
-                years = st.slider("سنوات التقسيط", 1, 15, 8)
-                st.metric("القسط الشهري", f"{(price/(years*12)):,.0f} ج.م")
-            with c2:
-                rent = st.number_input("الإيجار السنوي المتوقع", value=150000)
-                st.metric("ROI (العائد الاستثماري)", f"{(rent/price)*100:.2f} %")
-
-    # --- صفحة تفاصيل المطور (Developer Details) ---
+    # --- صفحة المطور (Developer Details) ---
     elif st.session_state.page == "details":
-        if st.button("🔙 العودة للقائمة الرئيسية"):
+        if st.button("🔙 عودة للقائمة"):
             st.session_state.page = "main"
             st.rerun()
 
-        selected_dev = st.session_state.selected_dev
+        dev = st.session_state.selected_dev
         st.markdown(f"""
-            <div class="dev-profile-card">
-                <h1>🏢 المطور: {selected_dev}</h1>
-                <p>قائمة المشاريع الرسمية المتاحة لشركة <b>{selected_dev}</b></p>
+            <div class="dev-profile-header">
+                <h1>🏢 {dev}</h1>
+                <p>عرض كافة مشاريع مطور <b>{dev}</b> العقارية</p>
             </div>
         """, unsafe_allow_html=True)
         
-        st.subheader("🏗️ المشاريع التابعة:")
-        projects = df[df[dev_col] == selected_dev][proj_col].unique()
-        
-        # عرض المشاريع في عمودين
+        projs = df[df[dev_col] == dev][proj_col].unique()
         p_cols = st.columns(2)
-        for idx, p_name in enumerate(projects):
+        for idx, p_name in enumerate(projs):
             with p_cols[idx % 2]:
-                st.markdown(f'<div class="project-item">📍 {p_name}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="project-card">🔹 {p_name}</div>', unsafe_allow_html=True)
 
 else:
-    st.error("⚠️ لم نتمكن من العثور على عمود باسم Developer أو ملف البيانات غير صحيح.")
+    st.error("⚠️ لم يتم العثور على بيانات.")
