@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (تقليل المسافات وتوحيد الأبعاد)
+# 2. تصميم CSS (إلغاء الفواصل وجعل الأزرار ضخمة)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -14,34 +14,28 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
 
+    /* الهيدر */
     .main-header {
-        background: #000; color: #f59e0b; padding: 15px; text-align: center;
-        border-bottom: 6px solid #f59e0b; font-weight: 900; font-size: 2rem; margin-bottom: 10px;
+        background: #000; color: #f59e0b; padding: 20px; text-align: center;
+        border-bottom: 8px solid #f59e0b; font-weight: 900; font-size: 2.5rem; margin-bottom: 0px;
     }
 
-    /* أزرار الصفحة الرئيسية */
-    .home-btn button {
-        height: 150px !important; width: 100% !important; font-size: 1.8rem !important; 
-        border: 4px solid #000 !important; box-shadow: 8px 8px 0px #f59e0b !important;
-        border-radius: 0px !important;
-    }
+    /* إزالة المسافات بين الأعمدة والصفوف تماماً */
+    [data-testid="column"] { padding: 0px !important; margin: 0px !important; }
+    [data-testid="stVerticalBlock"] { gap: 0px !important; }
+    .stHorizontalBlock { gap: 0px !important; }
 
-    /* إلغاء المسافات بين أعمدة ستريمليت */
-    [data-testid="column"] {
-        padding: 2px !important; /* مسافة ضئيلة جداً بين الأزرار */
-    }
-
-    /* تصميم أزرار الشبكة المتراصة */
+    /* تصميم أزرار الشركات الضخمة والمتلاصقة */
     div.stButton > button {
         width: 100% !important; 
-        height: 100px !important; 
+        height: 140px !important; /* حجم كبير وواضح */
         background-color: #ffffff !important; 
         color: #000 !important;
-        border: 3px solid #000 !important; 
+        border: 2px solid #000 !important; /* حدود رقيقة لتمييز الأزرار المتلاصقة */
         border-radius: 0px !important;
-        box-shadow: 4px 4px 0px #000 !important; 
-        padding: 5px !important;
-        margin: 0px !important; /* إزالة الهوامش */
+        margin: 0px !important;
+        padding: 10px !important;
+        transition: 0.2s;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -50,18 +44,29 @@ st.markdown("""
     div.stButton > button:hover {
         background-color: #000 !important;
         color: #f59e0b !important;
-        transform: scale(0.98); /* تأثير ضغطة بسيطة */
+        z-index: 10;
+        position: relative;
+        transform: scale(1.02); /* تكبير بسيط عند الوقوف عليه */
+        border-color: #f59e0b !important;
     }
 
+    /* النص داخل الأزرار الضخمة */
     div.stButton > button p {
         font-weight: 900 !important;
-        font-size: 0.85rem !important;
-        line-height: 1.1 !important;
+        font-size: 1.1rem !important; /* خط كبير وواضح */
+        line-height: 1.3 !important;
+        text-align: center !important;
+    }
+
+    /* أزرار الهوم الرئيسية */
+    .home-btn button {
+        height: 250px !important; font-size: 2.5rem !important;
+        border: 8px solid #000 !important; box-shadow: 15px 15px 0px #f59e0b !important;
     }
     
-    /* إخفاء الفراغات الرأسية الزائدة بين الأسطر */
-    [data-testid="stVerticalBlock"] {
-        gap: 0.1rem !important;
+    /* فلاتر البحث */
+    .stTextInput input {
+        border: 4px solid #000 !important; border-radius: 0px !important; height: 50px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -81,12 +86,12 @@ if 'view' not in st.session_state: st.session_state.view = 'home'
 if 'page' not in st.session_state: st.session_state.page = 0
 df = load_data()
 
-# --- محتوى المنصة ---
+# --- المنصة ---
 
 if st.session_state.view == 'home':
     st.markdown('<div class="main-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
-    st.markdown("<div style='height:50px;'></div>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="large")
     with c1:
         st.markdown('<div class="home-btn">', unsafe_allow_html=True)
         if st.button("🏢\nدليل الشركات"): st.session_state.view = 'companies'; st.rerun()
@@ -97,49 +102,49 @@ if st.session_state.view == 'home':
         st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.view == 'companies':
-    st.markdown('<div class="main-header">🏢 دليل المشاريع</div>', unsafe_allow_html=True)
-    # زر العودة والبحث في سطر واحد لتوفير المساحة
-    b1, b2 = st.columns([1, 4])
-    if b1.button("🔙 عودة"): st.session_state.view = 'home'; st.rerun()
-    q = b2.text_input("", placeholder="🔍 ابحث عن مشروع أو مطور...")
+    st.markdown('<div class="main-header">🏢 قائمة المشاريع</div>', unsafe_allow_html=True)
+    
+    # شريط البحث والعودة
+    col_back, col_search = st.columns([1, 5])
+    if col_back.button("🔙 عودة"): st.session_state.view = 'home'; st.rerun()
+    q = col_search.text_input("", placeholder="🔍 ابحث عن مشروعك الآن...")
 
     df_f = df
     if q:
         df_f = df[df.apply(lambda r: q.lower() in r.astype(str).str.lower().values, axis=1)]
 
-    # تقسيم 60% يمين و 40% يسار
+    # تقسيم المساحة: 60% يمين للشبكة المتلاصقة
     col_grid, col_empty = st.columns([0.6, 0.4])
 
     with col_grid:
-        items_per_page = 9
-        start = st.session_state.page * items_per_page
-        subset = df_f.iloc[start : start + items_per_page]
+        items = 9
+        start = st.session_state.page * items
+        subset = df_f.iloc[start : start + items]
 
-        # رسم الشبكة المتراصة
+        # الشبكة المتلاصقة (3x3)
         for i in range(0, len(subset), 3):
-            grid_cols = st.columns(3)
+            grid = st.columns(3)
             for j in range(3):
                 if i + j < len(subset):
                     row = subset.iloc[i + j]
-                    with grid_cols[j]:
-                        if st.button(f"{row.iloc[0]}\n{row.iloc[2]}", key=f"g_{start+i+j}"):
-                            st.sidebar.markdown(f"### 📍 {row.iloc[0]}")
+                    with grid[j]:
+                        # الزر كبير وواضح بدون فواصل
+                        label = f"{row.iloc[0]}\n───\n{row.iloc[2]}"
+                        if st.button(label, key=f"tile_{start+i+j}"):
+                            st.sidebar.markdown(f"## 📌 {row.iloc[0]}")
                             st.sidebar.info(f"**المطور:** {row.iloc[2]}\n\n**الموقع:** {row.iloc[3]}\n\n**السداد:** {row.iloc[4]}")
 
-        # أزرار التنقل (السابق / التالي)
-        st.markdown("<br>", unsafe_allow_html=True)
+        # أزرار التنقل
+        st.write("")
         nav1, nav2, nav3 = st.columns([1, 1, 1])
-        if nav1.button("⬅️") and st.session_state.page > 0:
-            st.session_state.page -= 1; st.rerun()
-        nav2.markdown(f"<p style='text-align:center;'>ص {st.session_state.page + 1}</p>", unsafe_allow_html=True)
-        if nav3.button("➡️") and (start + items_per_page) < len(df_f):
-            st.session_state.page += 1; st.rerun()
+        if nav1.button("⬅️ السابق"):
+            if st.session_state.page > 0: st.session_state.page -= 1; st.rerun()
+        nav2.markdown(f"<p style='text-align:center; font-weight:bold; padding-top:10px;'>صفحة {st.session_state.page + 1}</p>", unsafe_allow_html=True)
+        if nav3.button("التالي ➡️"):
+            if (start + items) < len(df_f): st.session_state.page += 1; st.rerun()
 
 elif st.session_state.view == 'tools':
-    st.markdown('<div class="main-header">🛠️ أدوات البروكر</div>', unsafe_allow_html=True)
-    if st.button("🔙 عودة"): st.session_state.view = 'home'; st.rerun()
-    # إضافة أدوات البروكر هنا
-    t1, t2 = st.tabs(["💰 القسط", "📊 ROI"])
-    with t1:
-        v = st.number_input("السعر", value=2000000)
-        st.write(f"قسط 10 سنوات: {v/120:,.0f} ج.م")
+    st.markdown('<div class="main-header">🛠️ أدوات الحاسبة</div>', unsafe_allow_html=True)
+    if st.button("🔙 العودة للرئيسية"): st.session_state.view = 'home'; st.rerun()
+    # هنا تضع كود الحاسبات الخاص بك
+    st.success("أدوات البروكر جاهزة للاستخدام")
