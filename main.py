@@ -1,31 +1,33 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة والتصميم
+# 1. إعدادات الصفحة والتصميم الأساسي
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# تصميم CSS احترافي
+# تصميم CSS احترافي شامل
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
+    /* إخفاء القوائم الافتراضية لستريمليت */
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
     }
     
-    /* تنسيق زر الخروج الثابت في الأعلى */
+    /* تنسيق زر الخروج الثابت في الزاوية العلوية */
     .logout-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
+        top: 15px;
+        right: 15px;
+        z-index: 999999;
     }
 
-    /* ستايل صفحة تسجيل الدخول */
+    /* ستايل شاشة تسجيل الدخول */
     .login-box {
         max-width: 450px;
-        margin: 80px auto;
+        margin: 100px auto;
         padding: 40px;
         background: #000;
         border-radius: 25px;
@@ -35,13 +37,15 @@ st.markdown("""
         color: #f59e0b;
     }
 
+    /* الهيدر العلوي */
     .hero-banner { 
         background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
         box-shadow: 10px 10px 0px #000;
-        margin-top: 40px; /* ترك مساحة لزر الخروج */
+        margin-top: 50px; 
     }
 
+    /* كروت المعلومات */
     .custom-card {
         background: #ffffff; border: 4px solid #000; padding: 20px; 
         border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
@@ -52,7 +56,7 @@ st.markdown("""
     .card-label { font-weight: 900; color: #000; font-size: 1.2rem; display: block; margin-top: 10px; }
     .card-val { font-weight: 700; color: #444; font-size: 1.1rem; }
     
-    /* ستايل الأزرار */
+    /* ستايل الأزرار العام */
     div.stButton > button {
         border: 3px solid #000 !important; border-radius: 15px !important;
         box-shadow: 4px 4px 0px #000 !important; font-weight: 900 !important;
@@ -61,13 +65,11 @@ st.markdown("""
     }
     div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #f59e0b !important; }
     
-    /* ستايل مخصص لزر الخروج الصغير */
-    .stButton > button[kind="secondary"] {
+    /* تنسيق زر الخروج ليكون أحمر ومميز */
+    button[key="logout_btn"] {
         background-color: #ff4b4b !important;
         color: white !important;
-        border: 2px solid #000 !important;
-        min-height: 35px !important;
-        font-size: 0.9rem !important;
+        box-shadow: 3px 3px 0px #000 !important;
     }
 
     /* ستايل المدخلات */
@@ -79,17 +81,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. نظام التحقق من تسجيل الدخول ---
+# --- 2. نظام تسجيل الدخول ---
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
 def login_page():
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
     st.markdown('<h1>🔐 دخول النظام</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color:#fff;">يرجى إدخال كلمة المرور للوصول للمنصة</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#fff;">منصة معلوماتى - للمستشارين العقاريين</p>', unsafe_allow_html=True)
     
-    pwd = st.text_input("كلمة المرور", type="password", key="login_pwd")
-    if st.button("تسجيل الدخول"):
+    pwd = st.text_input("كلمة المرور", type="password", key="login_pwd_input")
+    if st.button("دخول"):
         if pwd == "Ma3lomati_2026":
             st.session_state.authenticated = True
             st.rerun()
@@ -97,20 +99,19 @@ def login_page():
             st.error("❌ كلمة المرور غير صحيحة")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# منع عرض المحتوى إلا بعد تسجيل الدخول
+# فحص حالة الدخول
 if not st.session_state.authenticated:
     login_page()
     st.stop()
 
-# --- زر الخروج الثابت (يظهر فقط بعد الدخول) ---
-with st.container():
-    st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-    if st.button("🔒 خروج", key="logout_btn", kind="secondary"):
-        st.session_state.authenticated = False
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- زر الخروج الثابت (يظهر فقط بعد تسجيل الدخول) ---
+st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+if st.button("🔒 خروج", key="logout_btn"):
+    st.session_state.authenticated = False
+    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 3. وظيفة جلب البيانات ---
+# --- 3. وظيفة جلب البيانات من Google Sheets ---
 @st.cache_data(ttl=300)
 def load_data():
     sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -119,19 +120,21 @@ def load_data():
         df.columns = [str(c).strip() for c in df.columns]
         return df
     except Exception as e:
-        st.error(f"حدث خطأ أثناء تحميل البيانات: {e}")
+        st.error(f"حدث خطأ في الاتصال بقاعدة البيانات: {e}")
         return pd.DataFrame()
 
-# تهيئة الحالة
+# تهيئة حالة الجلسة للتنقل
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 if 'view' not in st.session_state: st.session_state.view = 'main'
 if 'current_page' not in st.session_state: st.session_state.current_page = 0
 
 df = load_data()
 
-# --- 4. التنقل والمحتوى الرئيسي ---
+# --- 4. منطق عرض الصفحات ---
+
+# الصفحة الرئيسية
 if st.session_state.view == 'main':
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى العقارية</h1><p>دليلك الذكي للسوق العقاري المصري</p></div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🏢 دليل المطورين الشامل", use_container_width=True): 
@@ -140,9 +143,10 @@ if st.session_state.view == 'main':
         if st.button("🛠️ أدوات البروكر الذكية", use_container_width=True): 
             st.session_state.view = 'tools'; st.rerun()
 
+# صفحة المطورين
 elif st.session_state.view == 'comp':
     if st.session_state.selected_dev:
-        # صفحة التفاصيل
+        # عرض تفاصيل المطور المختار
         dev_name = st.session_state.selected_dev
         row = df[df['Developer'] == dev_name].iloc[0]
         st.markdown(f'<div class="hero-banner"><h2>{dev_name}</h2></div>', unsafe_allow_html=True)
@@ -157,6 +161,7 @@ elif st.session_state.view == 'comp':
         st.markdown(f'<div class="custom-card"><div class="card-title">💡 سابقة الأعمال</div><p class="card-label" style="color:#f59e0b;">قائمة المشاريع:</p><p class="card-val" style="font-weight:900;">{row.get("Projects", "-")}</p><hr><p class="card-val" style="line-height:1.7;">{row.get("Detailed_Info", "لا توجد تفاصيل إضافية")}</p></div>', unsafe_allow_html=True)
 
     else:
+        # عرض قائمة المطورين
         st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
         col_main, _ = st.columns([0.7, 0.3])
         with col_main:
@@ -165,6 +170,7 @@ elif st.session_state.view == 'comp':
             dev_list = df['Developer'].unique()
             if search: dev_list = [d for d in dev_list if search.lower() in str(d).lower()]
             
+            # نظام الصفحات
             items_per_page = 9
             total_pages = (len(dev_list) - 1) // items_per_page + 1
             start_idx = st.session_state.current_page * items_per_page
@@ -189,6 +195,7 @@ elif st.session_state.view == 'comp':
                 if (start_idx + items_per_page) < len(dev_list):
                     if st.button("التالي ➡️"): st.session_state.current_page += 1; st.rerun()
 
+# صفحة الأدوات الذكية
 elif st.session_state.view == 'tools':
     st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر المحترف</h2></div>', unsafe_allow_html=True)
     if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
