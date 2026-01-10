@@ -4,18 +4,18 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS - السحر كله هنا للتوسيط الكامل
+# 2. تصميم CSS - التوسيط الاحترافي الفاخر
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* إخفاء الهيدر والقوائم */
+    /* إخفاء العناصر الافتراضية لستريمليت */
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
-    /* جعل الصفحة مرنة للتوسيط */
+    /* تنسيق الخلفية العامة */
     html, body, [data-testid="stAppViewContainer"] { 
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
-        background-color: #121212; /* خلفية داكنة فخمة */
+        background-color: #121212; /* خلفية داكنة جداً للفخامة */
     }
 
     /* حاوية التوسيط المطلق */
@@ -23,42 +23,46 @@ st.markdown("""
         display: flex;
         justify-content: center;
         align-items: center;
+        height: 100vh;
     }
 
-    /* تصميم صندوق الدخول */
+    /* المربع الأسود المركزي */
     .login-box {
         background: #000000;
-        padding: 60px;
-        border-radius: 40px;
+        padding: 50px 40px;
+        border-radius: 35px;
         border: 4px solid #f59e0b;
-        box-shadow: 0px 0px 50px rgba(245, 158, 11, 0.2);
+        box-shadow: 0px 0px 60px rgba(245, 158, 11, 0.15);
         text-align: center;
+        width: 100%;
         max-width: 450px;
-        width: 90%;
     }
 
+    /* كلمة معلوماتى العقارية داخل المربع */
     .login-box h1 {
         color: #f59e0b;
         font-weight: 900;
-        font-size: 3.5rem;
-        margin-bottom: 0px;
+        font-size: 2.8rem;
+        margin-bottom: 5px;
+        line-height: 1.2;
     }
 
-    .login-box h2 {
-        color: #fff;
-        font-weight: 700;
-        margin-bottom: 20px;
+    .login-box p {
+        color: #ffffff;
+        font-size: 1.1rem;
+        margin-bottom: 35px;
+        opacity: 0.8;
     }
 
-    /* ستايل زر الخروج الثابت (يظهر بعد الدخول) */
+    /* ستايل زر الخروج الثابت (أعلى اليمين بعد الدخول) */
     .logout-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
+        top: 25px;
+        right: 25px;
         z-index: 9999;
     }
 
-    /* ستايل مدخلات النصوص */
+    /* ستايل حقل إدخال كلمة المرور */
     .stTextInput input {
         background-color: #1a1a1a !important;
         color: white !important;
@@ -67,51 +71,54 @@ st.markdown("""
         text-align: center;
         font-size: 1.2rem !important;
         height: 55px !important;
+        margin-bottom: 10px;
     }
     .stTextInput input:focus {
         border-color: #f59e0b !important;
+        box-shadow: 0px 0px 10px rgba(245, 158, 11, 0.3) !important;
     }
 
-    /* ستايل الأزرار */
+    /* ستايل زر الدخول */
     div.stButton > button {
-        border-radius: 15px !important;
-        font-weight: 900 !important;
         background-color: #f59e0b !important;
         color: #000 !important;
+        font-weight: 900 !important;
         border: none !important;
+        border-radius: 15px !important;
         width: 100% !important;
         height: 55px !important;
-        font-size: 1.2rem !important;
-        transition: 0.3s;
+        font-size: 1.3rem !important;
+        transition: 0.4s ease;
     }
     div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0px 0px 20px rgba(245, 158, 11, 0.4) !important;
+        transform: translateY(-3px);
+        box-shadow: 0px 10px 20px rgba(245, 158, 11, 0.3) !important;
     }
-    
-    /* محتوى المنصة */
+
+    /* تنسيق المحتوى الداخلي (الهيدر) */
     .hero-banner { 
         background: #000000; color: #f59e0b; padding: 30px; border-radius: 20px; 
         text-align: center; margin-bottom: 30px; border: 3px solid #f59e0b;
-        margin-top: 80px;
+        margin-top: 100px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. نظام التحقق من الدخول ---
+# --- 3. نظام تسجيل الدخول ---
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
 def login_page():
-    # الصندوق يظهر الآن في منتصف الشاشة تلقائياً
+    # الصندوق الأسود في منتصف الصفحة
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<h1>🏠</h1>', unsafe_allow_html=True)
-    st.markdown('<h2>معلوماتى العقارية</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="color:#aaa;">دخول المستشارين العقاريين</p>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 4rem; margin-bottom: 10px;">🏠</div>', unsafe_allow_html=True)
+    st.markdown('<h1>معلوماتى العقارية</h1>', unsafe_allow_html=True)
+    st.markdown('<p>نظام الدخول الآمن للمستشارين</p>', unsafe_allow_html=True)
     
-    pwd = st.text_input("كلمة المرور", type="password", key="p_in", label_visibility="collapsed", placeholder="أدخل كلمة المرور")
+    # حقل الإدخال بدون عنوان (Label) لتوفير المساحة
+    pwd = st.text_input("كلمة المرور", type="password", key="login_pass", label_visibility="collapsed", placeholder="أدخل كلمة المرور هنا")
     
-    if st.button("دخول آمن"):
+    if st.button("دخول للمنصة"):
         if pwd == "Ma3lomati_2026":
             st.session_state.authenticated = True
             st.rerun()
@@ -120,28 +127,28 @@ def login_page():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# فحص الحالة
+# فحص حالة المستخدم
 if not st.session_state.authenticated:
     login_page()
     st.stop()
 
-# --- 4. المحتوى بعد الدخول ---
+# --- 4. محتوى المنصة (يظهر بعد الدخول بنجاح) ---
 
-# زر الخروج (ثابت فوق عاليمين)
+# زر الخروج الثابت في الزاوية
 st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-if st.button("🔒 خروج", key="logout_btn"):
+if st.button("🔒 تسجيل الخروج", key="logout_btn"):
     st.session_state.authenticated = False
     st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# الهيدر الرئيسي للمنصة
-st.markdown('<div class="hero-banner"><h1>🏠 أهلاً بك في منصة معلوماتى</h1><p>أدواتك للنجاح في السوق العقاري</p></div>', unsafe_allow_html=True)
+# الهيدر الرئيسي
+st.markdown('<div class="hero-banner"><h1>🏠 أهلاً بك في منصة معلوماتى</h1><p>دليلك الشامل للمطورين وأدوات السوق العقاري</p></div>', unsafe_allow_html=True)
 
-# أزرار التنقل الرئيسية
-c1, c2 = st.columns(2)
-with c1:
-    if st.button("🏢 دليل المطورين", use_container_width=True):
-        st.write("تم الانتقال لدليل المطورين...")
-with c2:
-    if st.button("🛠️ الأدوات الذكية", use_container_width=True):
-        st.write("تم الانتقال للأدوات...")
+# أزرار الأقسام
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("🏢 دليل المطورين العقاريين", use_container_width=True):
+        st.info("جاري الانتقال لدليل المطورين...")
+with col2:
+    if st.button("🛠️ الأدوات والحاسبات الذكية", use_container_width=True):
+        st.info("جاري فتح الأدوات...")
