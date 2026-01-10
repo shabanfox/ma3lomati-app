@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (أزرار 3D ضخمة متلاصقة + تنسيق احترافي)
+# 2. تصميم CSS (تركيز كامل على اسم المطور + تأثير 3D)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -16,18 +16,18 @@ st.markdown("""
 
     .main-header {
         background: #000; color: #f59e0b; padding: 20px; text-align: center;
-        border-bottom: 8px solid #f59e0b; font-weight: 900; font-size: 2.5rem; margin-bottom: 0px;
+        border-bottom: 8px solid #f59e0b; font-weight: 900; font-size: 2.5rem;
     }
 
-    /* إزالة الفواصل تماماً لجعل الأزرار متلاصقة */
+    /* إزالة المسافات تماماً لجعل الأزرار متلاصقة */
     [data-testid="column"] { padding: 0px !important; margin: 0px !important; }
     [data-testid="stVerticalBlock"] { gap: 0px !important; }
     .stHorizontalBlock { gap: 0px !important; }
 
-    /* أزرار المشاريع ثلاثية الأبعاد (3D) */
+    /* أزرار أسماء المطورين 3D */
     div.stButton > button {
         width: 100% !important; 
-        height: 150px !important; /* حجم كبير */
+        height: 140px !important; 
         background-color: #ffffff !important; 
         color: #000 !important;
         border: 2px solid #000 !important; 
@@ -46,27 +46,28 @@ st.markdown("""
     div.stButton > button:hover {
         background-color: #000 !important;
         color: #f59e0b !important;
-        transform: translate(-4px, -4px); /* حركة البروز للأمام */
+        transform: translate(-4px, -4px);
         box-shadow: 10px 10px 0px #f59e0b, 18px 18px 0px #333;
         z-index: 10;
         position: relative;
     }
 
     div.stButton > button p {
-        font-weight: 900 !important; font-size: 1.1rem !important; line-height: 1.3;
+        font-weight: 900 !important; 
+        font-size: 1.4rem !important; /* تكبير اسم المطور ليكون واضحاً */
+        line-height: 1.2;
+        text-align: center !important;
     }
 
-    /* أزرار الصفحة الرئيسية الضخمة */
+    /* أزرار الهوم الرئيسية */
     .home-btn button {
-        height: 280px !important; font-size: 2.8rem !important;
-        border: 10px solid #000 !important;
-        box-shadow: 15px 15px 0px #f59e0b !important;
+        height: 250px !important; font-size: 2.5rem !important;
+        border: 8px solid #000 !important; box-shadow: 15px 15px 0px #f59e0b !important;
     }
 
-    /* صناديق الحاسبة */
-    .calc-box {
-        background: #000; color: #f59e0b; padding: 30px; border: 5px solid #f59e0b;
-        text-align: center; font-weight: 900; font-size: 2rem;
+    /* قسم الفلاتر */
+    .filter-box {
+        background: #f9f9f9; padding: 15px; border: 3px solid #000; margin-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -86,12 +87,11 @@ if 'view' not in st.session_state: st.session_state.view = 'home'
 if 'page' not in st.session_state: st.session_state.page = 0
 df = load_data()
 
-# --- محرك العرض ---
+# --- محتوى المنصة ---
 
-# أ. الصفحة الرئيسية (القرارين الأساسيين)
 if st.session_state.view == 'home':
     st.markdown('<div class="main-header">🏠 منصة معلوماتى العقارية</div>', unsafe_allow_html=True)
-    st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="large")
     with c1:
         st.markdown('<div class="home-btn">', unsafe_allow_html=True)
@@ -102,60 +102,61 @@ if st.session_state.view == 'home':
         if st.button("🛠️\nأدوات البروكر"): st.session_state.view = 'tools'; st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ب. صفحة الشركات (هنا أزرار المشاريع 3x3)
 elif st.session_state.view == 'companies':
-    st.markdown('<div class="main-header">🏢 دليل المشاريع والمطورين</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">🏢 دليل المطورين العقاريين</div>', unsafe_allow_html=True)
     
-    # الفلاتر والبحث
-    b1, b2, b3 = st.columns([1, 3, 2])
-    if b1.button("🔙 عودة"): st.session_state.view = 'home'; st.rerun()
-    search_q = b2.text_input("", placeholder="🔍 ابحث عن مشروع أو مطور...")
-    loc_filter = b3.selectbox("📍 الموقع", ["الكل"] + list(df['الموقع'].unique() if 'الموقع' in df.columns else []))
+    # البحث والفلاتر
+    with st.container():
+        st.markdown('<div class="filter-box">', unsafe_allow_html=True)
+        f1, f2, f3 = st.columns([1, 3, 2])
+        if f1.button("🔙 عودة"): st.session_state.view = 'home'; st.rerun()
+        search_q = f2.text_input("", placeholder="🔍 ابحث عن اسم المطور...")
+        # استخراج المطورين الفريدين للفلترة
+        devs_list = ["الكل"] + list(df['المطور'].unique() if 'المطور' in df.columns else [])
+        selected_dev = f3.selectbox("🏢 تصفية حسب المطور", devs_list)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # تطبيق الفلترة
+    # تطبيق الفلاتر
     df_f = df
     if search_q:
-        df_f = df_f[df_f.apply(lambda r: search_q.lower() in r.astype(str).str.lower().values, axis=1)]
-    if loc_filter != "الكل":
-        df_f = df_f[df_f['الموقع'] == loc_filter]
+        df_f = df_f[df_f['المطور'].str.contains(search_q, case=False, na=False)]
+    if selected_dev != "الكل":
+        df_f = df_f[df_f['المطور'] == selected_dev]
 
-    st.markdown("---")
-    
-    # تقسيم 60% يمين (الأزرار) و 40% يسار
+    # عرض الشبكة (60% يمين للأزرار المتلاصقة)
     col_grid, col_empty = st.columns([0.6, 0.4])
 
     with col_grid:
-        items_per_page = 9
-        start = st.session_state.page * items_per_page
-        subset = df_f.iloc[start : start + items_per_page]
+        items = 9
+        # استخراج المطورين من البيانات المفلترة لعرضهم كأزرار
+        unique_devs = df_f['المطور'].unique()
+        start = st.session_state.page * items
+        current_devs = unique_devs[start : start + items]
 
-        # رسم شبكة الأزرار 3D (3 أزرار في السطر)
-        for i in range(0, len(subset), 3):
-            cols = st.columns(3)
+        for i in range(0, len(current_devs), 3):
+            grid = st.columns(3)
             for j in range(3):
-                if i + j < len(subset):
-                    row = subset.iloc[i + j]
-                    with cols[j]:
-                        # محتوى الزر
-                        btn_txt = f"{row.iloc[0]}\n───\n{row.iloc[1]}" # اسم المشروع والمطور
-                        if st.button(btn_txt, key=f"3d_{start+i+j}"):
-                            st.sidebar.markdown(f"### 📋 تفاصيل المشروع")
-                            st.sidebar.info(f"**المشروع:** {row.iloc[0]}\n\n**المطور:** {row.iloc[1]}")
+                if i + j < len(current_devs):
+                    dev_name = current_devs[i + j]
+                    with grid[j]:
+                        if st.button(dev_name, key=f"dev_{start+i+j}"):
+                            # عرض مشاريع هذا المطور في الجانب عند الضغط
+                            dev_projects = df[df['المطور'] == dev_name]
+                            st.sidebar.markdown(f"### 🏢 مطور: {dev_name}")
+                            for idx, p_row in dev_projects.iterrows():
+                                st.sidebar.write(f"🔹 **{p_row['المشروع']}** - {p_row['الموقع']}")
+                            st.sidebar.divider()
 
-        # أزرار التنقل (السابق / التالي)
+        # أزرار التنقل
         st.write("")
         n1, n2, n3 = st.columns([1, 1, 1])
         if n1.button("⬅️ السابق") and st.session_state.page > 0:
             st.session_state.page -= 1; st.rerun()
-        n2.markdown(f"<p style='text-align:center; font-weight:bold;'>صفحة {st.session_state.page + 1}</p>", unsafe_allow_html=True)
-        if n3.button("التالي ➡️") and (start + items_per_page) < len(df_f):
+        n2.markdown(f"<p style='text-align:center; font-weight:900;'>صفحة {st.session_state.page + 1}</p>", unsafe_allow_html=True)
+        if n3.button("التالي ➡️") and (start + items) < len(unique_devs):
             st.session_state.page += 1; st.rerun()
 
-# ج. صفحة الأدوات
 elif st.session_state.view == 'tools':
-    st.markdown('<div class="main-header">🛠️ الحاسبات المالية</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">🛠️ أدوات البروكر</div>', unsafe_allow_html=True)
     if st.button("🔙 عودة للرئيسية"): st.session_state.view = 'home'; st.rerun()
-    
-    # حاسبة بسيطة
-    price = st.number_input("سعر الوحدة", value=1000000)
-    st.markdown(f'<div class="calc-box">القسط الشهري (10 سنوات): {price/120:,.0f} ج.م</div>', unsafe_allow_html=True)
+    st.success("الأدوات المالية جاهزة للعمل.")
