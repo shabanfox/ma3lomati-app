@@ -2,79 +2,30 @@ import streamlit as st
 import pandas as pd
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
 
-# 2. تصميم CSS الموحد (الكروت كأزرار مدمجة)
+# 2. CSS احترافي للوظائف الجديدة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
-    #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
-    
     html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; background-color: #ffffff; 
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
     }
-
-    .hero-banner { 
-        background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
-        text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
-        box-shadow: 10px 10px 0px #000;
+    .main-header {
+        background: linear-gradient(90deg, #000000, #1a1a1a);
+        color: #f59e0b; padding: 20px; border-radius: 15px;
+        text-align: center; margin-bottom: 20px; border-bottom: 5px solid #f59e0b;
     }
-    .hero-banner h1, .hero-banner h2 { font-weight: 900; color: #f59e0b !important; margin: 0; }
-
-    /* تحويل زر المطور إلى كارت ضخم بنفس مقاساتك */
-    div.stButton > button[key^="dev_"] {
-        width: 100% !important;
-        height: 150px !important; /* نفس الحجم الذي كان في الكود الخاص بك */
-        background-color: #ffffff !important;
-        border: 4px solid #000 !important;
-        border-radius: 20px !important;
-        box-shadow: 8px 8px 0px #000 !important;
-        font-size: 1.5rem !important;
-        font-weight: 900 !important;
-        color: #000 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: 0.3s !important;
-        white-space: normal !important;
-        line-height: 1.2 !important;
+    /* ستايل الفلاتر */
+    [data-testid="stSidebar"] { background-color: #f8f9fa; border-left: 1px solid #ddd; }
+    
+    /* أزرار مدمجة للنتائج */
+    div.stButton > button {
+        width: 100% !important; border-radius: 10px !important;
+        border: 2px solid #000 !important; font-weight: 700 !important;
+        transition: 0.3s;
     }
-
-    div.stButton > button[key^="dev_"]:hover {
-        transform: translate(-3px, -3px) !important;
-        box-shadow: 10px 10px 0px #f59e0b !important;
-        border-color: #f59e0b !important;
-        color: #f59e0b !important;
-    }
-
-    /* زر العودة نانو أزرق */
-    div.stButton > button[key^="back_"] {
-        background-color: #007bff !important;
-        color: white !important;
-        font-size: 0.7rem !important;
-        padding: 2px 10px !important;
-        min-height: 25px !important;
-        width: auto !important;
-        border: none !important;
-        border-radius: 5px !important;
-        box-shadow: 2px 2px 0px #000 !important;
-        margin-bottom: 20px !important;
-    }
-
-    /* الأزرار العامة (الرئيسية) */
-    div.stButton > button:not([key^="dev_"]):not([key^="back_"]) {
-        border: 3px solid #000 !important; border-radius: 15px !important;
-        box-shadow: 5px 5px 0px #000 !important; font-weight: 900 !important;
-        background-color: #fff !important; color: #000 !important;
-    }
-
-    /* ستايل كروت عرض النتائج في الأدوات */
-    .custom-card-result {
-        background: #ffffff; border: 4px solid #000; padding: 20px; 
-        border-radius: 20px; text-align: center; box-shadow: 8px 8px 0px #000;
-    }
-    .card-val { font-size: 2.2rem; font-weight: 900; color: #f59e0b; margin-top: 10px; }
+    div.stButton > button:hover { background-color: #f59e0b !important; color: white !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -87,71 +38,68 @@ def load_data():
         df.columns = [str(c).strip() for c in df.columns]
         return df
     except:
-        return pd.DataFrame(columns=['Developer', 'Project'])
+        return pd.DataFrame(columns=['Developer', 'Project', 'Location'])
 
-if 'data' not in st.session_state: st.session_state.data = load_data()
-if 'view' not in st.session_state: st.session_state.view = 'main'
-if 'page' not in st.session_state: st.session_state.page = 0
+df = load_data()
 
-df = st.session_state.data
-target_col = 'Developer' if 'Developer' in df.columns else df.columns[1]
-proj_col = df.columns[0]
+# --- الهيدر الرئيسي ---
+st.markdown('<div class="main-header"><h1>🚀 منصة معلوماتى العقارية الذكية</h1></div>', unsafe_allow_html=True)
 
-# --- الصفحة الرئيسية ---
-if st.session_state.view == 'main':
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
-    st.write("<div style='height:80px;'></div>", unsafe_allow_html=True)
-    _, mid_col, _ = st.columns([0.1, 0.8, 0.1])
-    with mid_col:
-        c1, c2 = st.columns(2, gap="large")
-        if c1.button("🏢\nدليل المطورين", use_container_width=True): st.session_state.view = 'comp'; st.rerun()
-        if c2.button("🛠️\nأدوات البروكر", use_container_width=True): st.session_state.view = 'tools'; st.rerun()
+# --- نظام التبويبات (Tabs) لدمج كل شيء ---
+tab_devs, tab_tools, tab_search = st.tabs(["🏢 دليل المطورين والمشاريع", "🛠️ أدوات البروكر", "🔍 البحث المتقدم"])
 
-# --- صفحة دليل المطورين ---
-elif st.session_state.view == 'comp':
-    st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
-    col_main, _ = st.columns([0.7, 0.3])
+# --- 1. تبويب المطورين ---
+with tab_devs:
+    col_filter, col_display = st.columns([1, 3])
     
-    with col_main:
-        if st.button("🔙 عودة للرئيسية", key="back_home"): st.session_state.view = 'main'; st.rerun()
+    with col_filter:
+        st.subheader("⚙️ فلاتر سريعة")
+        search_dev = st.text_input("اسم المطور", placeholder="مثال: اعمار...")
+        # إذا كان لديك عمود للمناطق في الداتا
+        location_list = df['Location'].unique() if 'Location' in df.columns else ["كل المناطق"]
+        selected_loc = st.selectbox("المنطقة", location_list)
         
-        search = st.text_input("🔍 ابحث عن المطور...")
-        unique_devs = df[target_col].dropna().unique()
-        if search: unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
+    with col_display:
+        filtered_df = df.copy()
+        if search_dev:
+            filtered_df = filtered_df[filtered_df['Developer'].str.contains(search_dev, na=False, case=False)]
         
-        items_per_page = 9
-        start_idx = st.session_state.page * items_per_page
-        current_devs = unique_devs[start_idx : start_idx + items_per_page]
+        devs = filtered_df['Developer'].unique()
+        st.write(f"✅ تم العثور على {len(devs)} مطور")
+        
+        for dev in devs[:12]: # عرض أول 12 كمثال
+            with st.expander(f"🏢 {dev}"):
+                projects = df[df['Developer'] == dev]['Project'].unique()
+                for p in projects:
+                    st.write(f"🔹 {p}")
 
-        # عرض الكروت كأزرار ضخمة متساوية
-        for i in range(0, len(current_devs), 3):
-            grid_cols = st.columns(3)
-            for j in range(3):
-                if i + j < len(current_devs):
-                    dev_name = current_devs[i+j]
-                    with grid_cols[j]:
-                        # هنا الكارت هو الزر مباشرة
-                        if st.button(dev_name, key=f"dev_{dev_name}"):
-                            st.session_state.selected_dev = dev_name
-                            st.session_state.view = 'details'; st.rerun()
-
-        # أزرار التنقل
-        st.write("<br>", unsafe_allow_html=True)
-        nav_prev, nav_next = st.columns(2)
-        if nav_prev.button("⬅️ السابق") and st.session_state.page > 0: st.session_state.page -= 1; st.rerun()
-        if nav_next.button("التالي ➡️") and (start_idx + items_per_page) < len(unique_devs): st.session_state.page += 1; st.rerun()
-
-# --- صفحة التفاصيل ---
-elif st.session_state.view == 'details':
-    st.markdown(f'<div class="hero-banner"><h2>{st.session_state.selected_dev}</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 عودة للقائمة", key="back_list"): st.session_state.view = 'comp'; st.rerun()
+# --- 2. تبويب الأدوات (في مكانها الصحيح) ---
+with tab_tools:
+    st.subheader("🧮 الحاسبات التمويلية")
+    c1, c2 = st.columns(2)
     
-    projs = df[df[target_col] == st.session_state.selected_dev][proj_col].unique()
-    for p in projs:
-        st.markdown(f'<div class="custom-card-result" style="height:auto; min-height:60px; margin-bottom:10px; padding:15px;"><b>🔹 {p}</b></div>', unsafe_allow_html=True)
+    with c1:
+        st.info("💰 حاسبة الأقساط")
+        p = st.number_input("سعر الوحدة", value=1000000, step=100000)
+        d = st.slider("المقدم (%)", 0, 50, 10)
+        y = st.number_input("السنوات", 1, 20, 8)
+        
+        down_val = p * (d/100)
+        monthly = (p - down_val) / (y * 12)
+        st.success(f"المقدم: {down_val:,.0f} | القسط: {monthly:,.0f}")
 
-# --- صفحة الأدوات ---
-elif st.session_state.view == 'tools':
-    st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر الذكية</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 عودة للرئيسية", key="back_tools"): st.session_state.view = 'main'; st.rerun()
-    # (بقية كود الحاسبات كما هو بنفس تنسيق الكروت الخاص بك)
+    with c2:
+        st.info("📈 حاسبة العائد ROI")
+        buy = st.number_input("سعر الشراء", value=2000000)
+        rent = st.number_input("الإيجار السنوي المتوقع", value=150000)
+        roi = (rent / buy) * 100
+        st.warning(f"نسبة العائد السنوي: {roi:.2f}%")
+
+# --- 3. تبويب البحث المتقدم ---
+with tab_search:
+    st.subheader("🔎 ابحث عن أي مشروع مباشرة")
+    search_query = st.text_input("اكتب اسم المشروع أو المطور هنا...", key="global_search")
+    
+    if search_query:
+        results = df[df.apply(lambda row: search_query.lower() in row.astype(str).str.lower().values, axis=1)]
+        st.dataframe(results, use_container_width=True)
