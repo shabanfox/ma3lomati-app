@@ -4,7 +4,7 @@ import pandas as pd
 # 1. إعدادات الصفحة الأساسية
 st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS الفاخر (نفس التصميم اللي بعته مع تعديل بسيط للأزرار)
+# 2. تصميم CSS الفاخر
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -22,6 +22,7 @@ st.markdown("""
     }
     .hero-banner h1 { font-weight: 900; font-size: 2.8rem; margin: 0; color: #f59e0b !important; }
 
+    /* الأزرار الرئيسية */
     div.stButton > button {
         width: 100% !important; height: 130px !important;
         background-color: #ffffff !important; color: #000000 !important;
@@ -30,21 +31,19 @@ st.markdown("""
         box-shadow: 10px 10px 0px 0px #000000 !important;
         transition: 0.2s;
     }
+    div.stButton > button:hover { transform: translate(-3px, -3px); box-shadow: 13px 13px 0px #f59e0b !important; }
 
-    /* كروت المشاريع (Micro-Cards) */
-    .micro-card {
-        background: #ffffff; border: 3px solid #000; padding: 12px; 
-        border-radius: 18px; margin-bottom: 12px; box-shadow: 6px 6px 0px #000;
-        height: 180px; display: flex; flex-direction: column; justify-content: space-between;
+    /* كارت المطور البسيط */
+    .dev-card {
+        background: #ffffff; border: 4px solid #000; padding: 20px; 
+        border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
+        height: 150px; display: flex; align-items: center; justify-content: center;
+        text-align: center; transition: 0.3s;
     }
-    .m-title { font-size: 1.2rem; font-weight: 900; color: #000; line-height: 1.2; }
-    .m-dev { color: #f59e0b; font-weight: 900; font-size: 0.9rem; margin-top: 5px; }
-    .m-price { 
-        background: #000; color: #fff; font-size: 1rem; font-weight: 900; 
-        padding: 5px; border-radius: 8px; text-align: center; margin-top: 10px;
-    }
+    .dev-card:hover { border-color: #f59e0b; box-shadow: 10px 10px 0px #f59e0b; transform: scale(1.02); }
+    .dev-name { font-size: 1.6rem; font-weight: 900; color: #000; }
 
-    /* أزرار التحكم (التالي والسابق) - تصميم مصغر */
+    /* أزرار التحكم (التالي والسابق) */
     div.stButton > button[key^="nav_"] {
         height: 45px !important; width: 120px !important;
         font-size: 1rem !important; border-radius: 10px !important;
@@ -79,48 +78,46 @@ if st.session_state.view == 'main':
     with mid_col:
         c1, c2 = st.columns(2, gap="large")
         with c1:
-            if st.button("🏢\nدليل المشاريع", key="btn_p"): st.session_state.view = 'comp'; st.rerun()
+            if st.button("🏢\nدليل المطورين", key="main_dev"): st.session_state.view = 'comp'; st.rerun()
         with c2:
-            if st.button("🛠️\nأدوات البروكر", key="btn_t"): st.session_state.view = 'tools'; st.rerun()
+            if st.button("🛠️\nأدوات البروكر", key="main_tool"): st.session_state.view = 'tools'; st.rerun()
 
 elif st.session_state.view == 'comp':
-    st.markdown('<div class="hero-banner"><h2>🔍 إدارة المشاريع العقارية</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 عودة للرئيسية", key="nav_back_home"): 
+    st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين العقاريين</h2></div>', unsafe_allow_html=True)
+    if st.button("🔙 عودة للرئيسية", key="nav_back"): 
         st.session_state.view = 'main'; st.session_state.page = 0; st.rerun()
     
-    col_grid, col_admin = st.columns([0.72, 0.28], gap="large")
+    col_grid, col_admin = st.columns([0.75, 0.25], gap="large")
 
     with col_grid:
-        q = st.text_input("🔍 ابحث عن أي تفاصيل (مشروع، مطور، موقع)...")
-        df_f = st.session_state.data
-        if q: df_f = df_f[df_f.apply(lambda r: q.lower() in r.astype(str).str.lower().values, axis=1)]
+        search = st.text_input("🔍 ابحث عن اسم المطور...")
         
-        # --- منطق الصفحات (9 كروت لكل صفحة) ---
+        # استخراج أسماء المطورين الفريدة
+        unique_devs = st.session_state.data['المطور'].dropna().unique()
+        if search:
+            unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
+        
+        # --- منطق الصفحات (9 مطورين لكل صفحة) ---
         items_per_page = 9
-        total_items = len(df_f)
+        total_items = len(unique_devs)
         start_idx = st.session_state.page * items_per_page
         end_idx = start_idx + items_per_page
-        current_batch = df_f.iloc[start_idx:end_idx]
+        current_devs = unique_devs[start_idx:end_idx]
 
-        # عرض الكروت 3x3
-        for i in range(0, len(current_batch), 3):
+        # عرض الكروت 3x3 (اسم المطور فقط)
+        for i in range(0, len(current_devs), 3):
             grid_cols = st.columns(3)
             for j in range(3):
-                if i + j < len(current_batch):
-                    row = current_batch.iloc[i + j]
+                if i + j < len(current_devs):
+                    dev_name = current_devs[i + j]
                     with grid_cols[j]:
                         st.markdown(f"""
-                        <div class="micro-card">
-                            <div>
-                                <div class="m-title">{row[0]}</div>
-                                <div class="m-dev">🏢 {row[2]}</div>
-                                <div style="font-size:0.8rem; color:#555; margin-top:5px;">📍 {row[3]}</div>
-                            </div>
-                            <div class="m-price">{row[4]}</div>
+                        <div class="dev-card">
+                            <div class="dev-name">{dev_name}</div>
                         </div>
                         """, unsafe_allow_html=True)
 
-        # --- أزرار التنقل (التالي والسابق) في المنتصف ---
+        # --- أزرار التنقل في المنتصف ---
         st.write("<br>", unsafe_allow_html=True)
         _, nav_mid, _ = st.columns([1, 1, 1])
         with nav_mid:
@@ -136,18 +133,13 @@ elif st.session_state.view == 'comp':
 
     with col_admin:
         st.markdown('<div class="admin-panel">', unsafe_allow_html=True)
-        st.markdown("### ➕ إضافة مشروع")
-        with st.form("add_form", clear_on_submit=True):
-            n = st.text_input("اسم المشروع")
-            d = st.text_input("اسم المطور")
-            l = st.text_input("الموقع الجغرافي")
-            p = st.text_input("السعر / نظام السداد")
-            if st.form_submit_button("حفظ وإضافة للشبكة"):
-                if n:
-                    new_r = pd.DataFrame([[n, "", d, l, p]], columns=st.session_state.data.columns)
+        st.markdown("### ➕ إضافة مطور جديد")
+        with st.form("add_dev", clear_on_submit=True):
+            new_dev = st.text_input("اسم المطور")
+            if st.form_submit_button("إضافة للقائمة"):
+                if new_dev:
+                    new_r = pd.DataFrame([["", "", new_dev, "", ""]], columns=st.session_state.data.columns)
                     st.session_state.data = pd.concat([new_r, st.session_state.data], ignore_index=True)
-                    st.success("تم الحفظ!")
+                    st.success("تمت الإضافة!")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-
-# (بقية كود صفحة الأدوات يبقى كما هو في رسالتك الأصلية...)
