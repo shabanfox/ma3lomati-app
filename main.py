@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide")
+st.set_page_config(page_title="منصة معلوماتى الذكية", layout="wide")
 
-# 2. CSS احترافي للوظائف الجديدة
+# 2. تصميم CSS احترافي وهادئ
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -12,94 +12,99 @@ st.markdown("""
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
     }
     .main-header {
-        background: linear-gradient(90deg, #000000, #1a1a1a);
-        color: #f59e0b; padding: 20px; border-radius: 15px;
-        text-align: center; margin-bottom: 20px; border-bottom: 5px solid #f59e0b;
+        background: #000; color: #f59e0b; padding: 15px; border-radius: 15px;
+        text-align: center; margin-bottom: 20px; border: 2px solid #f59e0b;
     }
-    /* ستايل الفلاتر */
-    [data-testid="stSidebar"] { background-color: #f8f9fa; border-left: 1px solid #ddd; }
-    
-    /* أزرار مدمجة للنتائج */
-    div.stButton > button {
-        width: 100% !important; border-radius: 10px !important;
-        border: 2px solid #000 !important; font-weight: 700 !important;
-        transition: 0.3s;
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #f1f1f1; border-radius: 10px 10px 0 0; padding: 10px 20px; font-weight: bold;
     }
-    div.stButton > button:hover { background-color: #f59e0b !important; color: white !important; }
+    .stTabs [aria-selected="true"] { background-color: #f59e0b !important; color: white !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. جلب البيانات
+# 3. جلب البيانات ومعالجة أسماء الأعمدة تلقائياً
 @st.cache_data
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
         df = pd.read_csv(url)
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = [str(c).strip() for c in df.columns] # إزالة المسافات من أسماء الأعمدة
         return df
     except:
-        return pd.DataFrame(columns=['Developer', 'Project', 'Location'])
+        return pd.DataFrame()
 
 df = load_data()
 
-# --- الهيدر الرئيسي ---
-st.markdown('<div class="main-header"><h1>🚀 منصة معلوماتى العقارية الذكية</h1></div>', unsafe_allow_html=True)
+if not df.empty:
+    # تحديد الأعمدة ديناميكياً لتجنب KeyError
+    # نفترض أن العمود الأول هو المشروع والثاني هو المطور بناءً على رابط ملفك
+    proj_col = df.columns[0] 
+    dev_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
+    loc_col = df.columns[2] if len(df.columns) > 2 else None
 
-# --- نظام التبويبات (Tabs) لدمج كل شيء ---
-tab_devs, tab_tools, tab_search = st.tabs(["🏢 دليل المطورين والمشاريع", "🛠️ أدوات البروكر", "🔍 البحث المتقدم"])
+    st.markdown('<div class="main-header"><h1>🚀 منصة معلوماتى العقارية الذكية</h1></div>', unsafe_allow_html=True)
 
-# --- 1. تبويب المطورين ---
-with tab_devs:
-    col_filter, col_display = st.columns([1, 3])
-    
-    with col_filter:
-        st.subheader("⚙️ فلاتر سريعة")
-        search_dev = st.text_input("اسم المطور", placeholder="مثال: اعمار...")
-        # إذا كان لديك عمود للمناطق في الداتا
-        location_list = df['Location'].unique() if 'Location' in df.columns else ["كل المناطق"]
-        selected_loc = st.selectbox("المنطقة", location_list)
+    # --- التبويبات الرئيسية ---
+    tab_search, tab_tools = st.tabs(["🔍 البحث والدليل", "🛠️ أدوات البروكر"])
+
+    with tab_search:
+        col_side, col_main = st.columns([1, 3])
+
+        with col_side:
+            st.markdown("### ⚙️ فلاتر البحث")
+            search_query = st.text_input("🔍 ابحث (مطور أو مشروع)", placeholder="اكتب هنا...")
+            
+            if loc_col:
+                all_locs = ["كل المناطق"] + sorted(df[loc_col].dropna().unique().tolist())
+                selected_loc = st.selectbox("📍 المنطقة", all_locs)
+            else:
+                selected_loc = "كل المناطق"
+
+        with col_main:
+            # عملية الفلترة
+            filtered_df = df.copy()
+            
+            if search_query:
+                filtered_df = filtered_df[
+                    filtered_df[dev_col].str.contains(search_query, na=False, case=False) |
+                    filtered_df[proj_col].str.contains(search_query, na=False, case=False)
+                ]
+            
+            if selected_loc != "كل المناطق" and loc_col:
+                filtered_df = filtered_df[filtered_df[loc_col] == selected_loc]
+
+            unique_devs = filtered_df[dev_col].unique()
+            st.success(f"✅ تم العثور على {len(unique_devs)} مطور")
+
+            # عرض النتائج بنظام القوائم الذكية (Accordions)
+            for dev in unique_devs:
+                with st.expander(f"🏢 {dev}"):
+                    dev_projects = filtered_df[filtered_df[dev_col] == dev][proj_col].unique()
+                    for p in dev_projects:
+                        st.markdown(f"📍 **{p}**")
+
+    with tab_tools:
+        st.markdown("### 🛠️ الأدوات الحسابية")
+        t_col1, t_col2 = st.columns(2)
         
-    with col_display:
-        filtered_df = df.copy()
-        if search_dev:
-            filtered_df = filtered_df[filtered_df['Developer'].str.contains(search_dev, na=False, case=False)]
-        
-        devs = filtered_df['Developer'].unique()
-        st.write(f"✅ تم العثور على {len(devs)} مطور")
-        
-        for dev in devs[:12]: # عرض أول 12 كمثال
-            with st.expander(f"🏢 {dev}"):
-                projects = df[df['Developer'] == dev]['Project'].unique()
-                for p in projects:
-                    st.write(f"🔹 {p}")
+        with t_col1:
+            st.info("💰 حاسبة القسط")
+            price = st.number_input("سعر الوحدة", value=1000000)
+            down = st.slider("المقدم (%)", 0, 50, 10)
+            years = st.number_input("السنوات", 1, 15, 8)
+            
+            total_down = price * (down/100)
+            monthly = (price - total_down) / (years * 12) if years > 0 else 0
+            st.metric("المقدم المطلوب", f"{total_down:,.0f}")
+            st.metric("القسط الشهري", f"{monthly:,.0f}")
 
-# --- 2. تبويب الأدوات (في مكانها الصحيح) ---
-with tab_tools:
-    st.subheader("🧮 الحاسبات التمويلية")
-    c1, c2 = st.columns(2)
-    
-    with c1:
-        st.info("💰 حاسبة الأقساط")
-        p = st.number_input("سعر الوحدة", value=1000000, step=100000)
-        d = st.slider("المقدم (%)", 0, 50, 10)
-        y = st.number_input("السنوات", 1, 20, 8)
-        
-        down_val = p * (d/100)
-        monthly = (p - down_val) / (y * 12)
-        st.success(f"المقدم: {down_val:,.0f} | القسط: {monthly:,.0f}")
+        with t_col2:
+            st.info("📈 حاسبة ROI")
+            buy_price = st.number_input("سعر الشراء", value=2000000)
+            annual_rent = st.number_input("الإيجار السنوي", value=160000)
+            roi = (annual_rent / buy_price) * 100 if buy_price > 0 else 0
+            st.metric("نسبة العائد", f"{roi:.2f} %")
 
-    with c2:
-        st.info("📈 حاسبة العائد ROI")
-        buy = st.number_input("سعر الشراء", value=2000000)
-        rent = st.number_input("الإيجار السنوي المتوقع", value=150000)
-        roi = (rent / buy) * 100
-        st.warning(f"نسبة العائد السنوي: {roi:.2f}%")
-
-# --- 3. تبويب البحث المتقدم ---
-with tab_search:
-    st.subheader("🔎 ابحث عن أي مشروع مباشرة")
-    search_query = st.text_input("اكتب اسم المشروع أو المطور هنا...", key="global_search")
-    
-    if search_query:
-        results = df[df.apply(lambda row: search_query.lower() in row.astype(str).str.lower().values, axis=1)]
-        st.dataframe(results, use_container_width=True)
+else:
+    st.error("⚠️ لم يتم العثور على بيانات في ملف Google Sheets. تأكد من نشر الملف (Publish to web).")
