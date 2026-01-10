@@ -4,61 +4,64 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتى", layout="wide")
 
-# 2. تصميم CSS (أسود صريح، كروت صفراء، توسيط أزرار التنقل)
+# 2. تصميم CSS (الأسود والذهبي الملكي)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* 1. إخفاء زوائد المنصة بالكامل */
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
-    /* 2. الخلفية سوداء غامقة جداً */
+    /* الخلفية سوداء غامقة */
     html, body, [data-testid="stAppViewContainer"] { 
         background-color: #000000 !important; 
         direction: RTL; 
         font-family: 'Cairo', sans-serif;
     }
 
-    /* 3. شبكة المطورين: صفراء 1*1 متلاصقة جهة اليمين */
+    /* إلغاء المسافات بين كروت المطورين */
     [data-testid="column"] { padding: 0px !important; margin: 0px !important; }
     [data-testid="stVerticalBlock"] { gap: 0px !important; }
     .stHorizontalBlock { gap: 0px !important; }
     div.block-container { padding: 0rem !important; }
 
+    /* الكروت بلون ذهبي ملكي متدرج */
     div.stButton > button[key^="dev_"] {
         width: 100% !important; 
         aspect-ratio: 1 / 1 !important;
-        height: 160px !important;
-        background-color: #FFCC00 !important; /* أصفر فاقع */
-        color: #000000 !important; /* نص أسود */
-        border: 0.5px solid #000000 !important;
+        height: 180px !important;
+        /* تدرج ذهبي فخم */
+        background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C) !important;
+        color: #000000 !important; 
+        border: 0.5px solid rgba(0,0,0,0.3) !important;
         border-radius: 0px !important;
         font-weight: 900 !important;
+        font-size: 1.2rem !important;
         margin: 0px !important;
+        transition: 0.4s;
     }
 
-    /* 4. أزرار التحكم: تصغير وتوسيط وتلاصق */
+    /* تأثير عند الوقوف على الكارت الذهبي */
+    div.stButton > button[key^="dev_"]:hover {
+        filter: brightness(1.2);
+        transform: scale(0.97);
+        box-shadow: 0px 0px 20px rgba(212, 175, 55, 0.4) !important;
+    }
+
+    /* أزرار التنقل (السابق والتالي) صغيرة وجنب بعض في النص */
     .stButton > button[key^="nav_"] {
         height: 35px !important;
-        width: 100px !important;
-        background-color: #111 !important;
-        color: #fff !important;
-        border: 1px solid #fff !important;
-        border-radius: 4px !important;
+        width: 110px !important;
+        background-color: transparent !important;
+        color: #D4AF37 !important; /* لون الخط ذهبي */
+        border: 1px solid #D4AF37 !important;
+        border-radius: 2px !important;
         font-size: 0.8rem !important;
     }
 
-    /* توسيط الأزرار في نص الصفحة */
-    .center-nav {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        padding: 50px 0px;
-        width: 100%;
-    }
+    h1, h2 { color: #D4AF37 !important; text-align: center; padding: 20px; font-weight: 900; }
     
-    /* جعل الهيدر أبيض فوق الأسود */
-    h1, h2 { color: white !important; text-align: center; padding: 20px; }
+    /* مربع البحث */
+    input { background-color: #111 !important; color: white !important; border: 1px solid #D4AF37 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -83,27 +86,26 @@ if st.session_state.view == 'home':
     st.write("<br><br>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1: 
-        if st.button("🏢 دليل المطورين", key="nav_h1"): st.session_state.view = 'companies'; st.rerun()
+        if st.button("🏢 دخول دليل المطورين", key="nav_h1"): st.session_state.view = 'companies'; st.rerun()
     with c2: 
-        if st.button("🛠️ أدوات البروكر", key="nav_h2"): st.session_state.view = 'tools'; st.rerun()
+        if st.button("🛠️ دخول أدوات البروكر", key="nav_h2"): st.session_state.view = 'tools'; st.rerun()
 
 elif st.session_state.view == 'companies':
     st.markdown('<h2>دليل المطورين</h2>', unsafe_allow_html=True)
 
     # صف العودة والبحث
-    st.markdown('<div style="padding: 10px;">', unsafe_allow_html=True)
+    st.write("")
     c_back, c_search = st.columns([1, 5])
     with c_back:
         if st.button("🔙 عودة", key="nav_back"): st.session_state.view = 'home'; st.rerun()
     with c_search:
-        search = st.text_input("", placeholder="🔍 ابحث هنا...")
-    st.markdown('</div>', unsafe_allow_html=True)
+        search = st.text_input("", placeholder="🔍 ابحث عن المطور هنا...")
 
     unique_devs = df[dev_col].dropna().unique()
     if search:
         unique_devs = [d for d in unique_devs if search.lower() in str(d).lower()]
 
-    # الشبكة جهة اليمين 70%
+    # الشبكة الذهبية جهة اليمين 70%
     col_grid, col_empty = st.columns([0.7, 0.3])
     with col_grid:
         items = 12
@@ -121,17 +123,17 @@ elif st.session_state.view == 'companies':
                             projs = df[df[dev_col] == dev_name].iloc[:, 0].unique()
                             for p in projs: st.sidebar.write(f"• {p}")
 
-    # --- أزرار التالي والسابق في نص الصفحة وجنب بعض بالظبط ---
-    st.markdown('<div style="height:60px;"></div>', unsafe_allow_html=True)
+    # أزرار التنقل (السابق والتالي) ممركزة وجنب بعض
+    st.write("<div style='height:80px;'></div>", unsafe_allow_html=True)
     
-    # استخدام أعمدة لتوسيط الأزرار بشكل هندسي دقيق
-    _, mid_col, _ = st.columns([2, 1, 2])
+    # تقسيم الأعمدة لتوسيط الأزرار
+    _, mid_col, _ = st.columns([2.2, 1, 2])
     with mid_col:
-        btn_left, btn_right = st.columns(2)
-        with btn_left:
+        btn_l, btn_r = st.columns(2)
+        with btn_l:
             if st.button("⬅️ السابق", key="nav_prev") and st.session_state.page > 0:
                 st.session_state.page -= 1; st.rerun()
-        with btn_right:
+        with btn_r:
             if (start + items) < len(unique_devs):
                 if st.button("التالي ➡️", key="nav_next"):
                     st.session_state.page += 1; st.rerun()
