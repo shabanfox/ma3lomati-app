@@ -48,11 +48,11 @@ def load_master_data():
 
 df = load_master_data()
 
-# 4. القائمة العلوية (تم تعديل الترتيب ليصبح المطورين أولاً من اليمين)
+# 4. القائمة العلوية (تم تعديل الترتيب من اليسار إلى اليمين)
 selected = option_menu(
     menu_title=None, 
-    options=["🏢 المطورين", "🏗️ المشاريع", "🛠️ أدوات البروكر"], 
-    icons=["person-badge", "building", "tools"], 
+    options=["🛠️ أدوات البروكر", "🏗️ المشاريع", "🏢 المطورين"], 
+    icons=["tools", "building", "person-badge"], 
     menu_icon="cast", 
     default_index=0, 
     orientation="horizontal",
@@ -63,29 +63,28 @@ selected = option_menu(
     }
 )
 
-# --- 1. شاشة المطورين (أصبحت الآن الاختيار الأول) ---
-if selected == "🏢 المطورين":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏢 سجل المطورين العقاريين</h2>", unsafe_allow_html=True)
+# --- 1. شاشة أدوات البروكر ---
+if selected == "🛠️ أدوات البروكر":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات العمل اليومية</h2>", unsafe_allow_html=True)
     
-    search_d = st.text_input("🔍 ابحث عن اسم المطور أو المالك...")
-    
-    # استخراج داتا المطورين فقط (بدون تكرار)
-    dev_df = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer'])
-    
-    if search_d:
-        dev_df = dev_df[dev_df.apply(lambda r: search_d.lower() in str(r).lower(), axis=1)]
-
-    for _, row in dev_df.iterrows():
-        st.markdown(f"""
-            <div class="custom-card" style="border-right-color: #fff;">
-                <h3 style="color:#f59e0b; margin:0;">🏢 {row.get('Developer', '-')}</h3>
-                <p style="color:#eee; margin-top:10px;">👤 <b>المالك:</b> {row.get('Owner', '-')}</p>
-                <div style="background:#1a1a1a; padding:15px; border-radius:10px; color:#bbb; font-size:14px; line-height:1.6;">
-                    <b>📖 سابقة الأعمال والتفاصيل:</b><br>
-                    {row.get('Detailed_Info', 'لا توجد تفاصيل إضافية مسجلة')}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+    col_calc, col_msg = st.columns(2)
+    with col_calc:
+        st.markdown("<div class='custom-card'><h3>💰 حاسبة القسط</h3>", unsafe_allow_html=True)
+        p = st.number_input("إجمالي السعر", min_value=0, value=1000000)
+        d = st.number_input("المقدم", min_value=0, value=100000)
+        y = st.slider("السنوات", 1, 15, 7)
+        if p > 0:
+            st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>{(p-d)/(y*12):,.0f} ج.م/شهر</h2>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with col_msg:
+        st.markdown("<div class='custom-card'><h3>📱 رسالة واتساب</h3>", unsafe_allow_html=True)
+        # التأكد من وجود عمود Projects لتجنب الأخطاء
+        proj_list = df['Projects'].dropna().unique() if 'Projects' in df.columns else ["لا توجد مشاريع"]
+        proj = st.selectbox("اختر المشروع", proj_list)
+        if st.button("توليد نص العرض"):
+            st.code(f"تحية طيبة.. أرشح لك مشروع {proj} بتفاصيل مميزة...")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- 2. شاشة المشاريع ---
 elif selected == "🏗️ المشاريع":
@@ -93,13 +92,13 @@ elif selected == "🏗️ المشاريع":
     
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1: search_p = st.text_input("🔍 ابحث عن مشروع أو ميزة...")
-    with col2: area_p = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()))
-    with col3: type_p = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()))
+    with col2: area_p = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()) if 'Area' in df.columns else ["الكل"])
+    with col3: type_p = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()) if 'Type' in df.columns else ["الكل"])
 
     dff_p = df.copy()
     if search_p: dff_p = dff_p[dff_p.apply(lambda r: search_p.lower() in str(r).lower(), axis=1)]
-    if area_p != "الكل": dff_p = dff_p[dff_p['Area'] == area_p]
-    if type_p != "الكل": dff_p = dff_p[dff_p['Type'] == type_p]
+    if 'Area' in dff_p.columns and area_p != "الكل": dff_p = dff_p[dff_p['Area'] == area_p]
+    if 'Type' in dff_p.columns and type_p != "الكل": dff_p = dff_p[dff_p['Type'] == type_p]
 
     for _, row in dff_p.iterrows():
         st.markdown(f"""
@@ -120,23 +119,30 @@ elif selected == "🏗️ المشاريع":
             </div>
         """, unsafe_allow_html=True)
 
-# --- 3. شاشة أدوات البروكر ---
-elif selected == "🛠️ أدوات البروكر":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات العمل اليومية</h2>", unsafe_allow_html=True)
+# --- 3. شاشة المطورين ---
+elif selected == "🏢 المطورين":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏢 سجل المطورين العقاريين</h2>", unsafe_allow_html=True)
     
-    col_calc, col_msg = st.columns(2)
-    with col_calc:
-        st.markdown("<div class='custom-card'><h3>💰 حاسبة القسط</h3>", unsafe_allow_html=True)
-        p = st.number_input("إجمالي السعر", min_value=0, value=1000000)
-        d = st.number_input("المقدم", min_value=0, value=100000)
-        y = st.slider("السنوات", 1, 15, 7)
-        if p > 0:
-            st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>{(p-d)/(y*12):,.0f} ج.م/شهر</h2>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    search_d = st.text_input("🔍 ابحث عن اسم المطور أو المالك...")
+    
+    if not df.empty and 'Developer' in df.columns:
+        # استخراج داتا المطورين فقط (بدون تكرار)
+        subset_cols = [c for c in ['Developer', 'Owner', 'Detailed_Info'] if c in df.columns]
+        dev_df = df[subset_cols].drop_duplicates(subset=['Developer'])
         
-    with col_msg:
-        st.markdown("<div class='custom-card'><h3>📱 رسالة واتساب</h3>", unsafe_allow_html=True)
-        proj = st.selectbox("اختر المشروع", df['Projects'].dropna().unique())
-        if st.button("توليد نص العرض"):
-            st.code(f"تحية طيبة.. أرشح لك مشروع {proj} بتفاصيل مميزة...")
-        st.markdown("</div>", unsafe_allow_html=True)
+        if search_d:
+            dev_df = dev_df[dev_df.apply(lambda r: search_d.lower() in str(r).lower(), axis=1)]
+
+        for _, row in dev_df.iterrows():
+            st.markdown(f"""
+                <div class="custom-card" style="border-right-color: #fff;">
+                    <h3 style="color:#f59e0b; margin:0;">🏢 {row.get('Developer', '-')}</h3>
+                    <p style="color:#eee; margin-top:10px;">👤 <b>المالك:</b> {row.get('Owner', '-')}</p>
+                    <div style="background:#1a1a1a; padding:15px; border-radius:10px; color:#bbb; font-size:14px; line-height:1.6;">
+                        <b>📖 سابقة الأعمال والتفاصيل:</b><br>
+                        {row.get('Detailed_Info', 'لا توجد تفاصيل إضافية مسجلة')}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.warning("لم يتم العثور على بيانات المطورين في الملف.")
