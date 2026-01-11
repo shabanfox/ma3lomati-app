@@ -1,134 +1,146 @@
 import streamlit as st
 import pandas as pd
-from streamlit_option_menu import option_menu
+from streamlit_option_menu import option_menu 
 
 # 1. إعدادات النظام
-st.set_page_config(page_title="معلوماتى PRO | 2026", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="منصة معلوماتي PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. هندسة التصميم (Premium Dark & Gold)
+# 2. التصميم الفخم (Black & Gold)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
-    /* خلفية التطبيق والخطوط */
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] { background-color: #050505; direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; }
-    [data-testid="stSidebar"] { background-color: #0a0a0a; border-left: 1px solid #222; }
-    
-    /* تصميم الكارت المتطور */
-    .project-card {
-        background: linear-gradient(145deg, #111, #050505);
-        border: 1px solid #222; border-right: 5px solid #f59e0b;
-        border-radius: 15px; padding: 25px; margin-bottom: 20px; color: white;
+    [data-testid="stAppViewContainer"] {
+        background-color: #050505;
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif;
     }
-    
-    .price-badge { background: #f59e0b; color: black; padding: 4px 12px; border-radius: 6px; font-weight: 900; float: left; }
-    .card-header { font-size: 1.4rem; font-weight: 900; color: #f59e0b; margin-bottom: 5px; }
-    
-    /* شبكة البيانات الصغير داخل الكارت */
-    .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-    .info-box { background: #1a1a1a; padding: 8px; border-radius: 8px; border: 1px solid #333; text-align: center; }
-    .info-label { color: #888; font-size: 11px; display: block; }
-    .info-val { color: #eee; font-weight: 700; font-size: 13px; }
-    
-    /* ستايل الفلاتر */
-    .stSelectbox label, .stTextInput label { color: #f59e0b !important; font-weight: 700 !important; }
+
+    /* كروت المشاريع والمطورين */
+    .custom-card {
+        background: linear-gradient(145deg, #111, #080808);
+        border: 1px solid #222; border-right: 5px solid #f59e0b;
+        border-radius: 15px; padding: 25px; margin-bottom: 20px;
+        transition: 0.3s all; color: white;
+    }
+    .custom-card:hover { border-color: #f59e0b; transform: translateY(-5px); }
+
+    .price-tag {
+        background: #f59e0b; color: black; padding: 5px 15px;
+        border-radius: 8px; font-weight: 900; font-size: 16px;
+    }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px 0; }
+    .stat-box { background: #1a1a1a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+    .stat-label { color: #888; font-size: 12px; display: block; }
+    .stat-value { color: #f59e0b; font-weight: 700; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. محرك البيانات
+# 3. جلب البيانات
 @st.cache_data(ttl=300)
-def load_data():
+def load_master_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    df = pd.read_csv(url)
-    df.columns = [str(c).strip() for c in df.columns]
-    return df
+    try:
+        data = pd.read_csv(url)
+        data.columns = [str(c).strip() for c in data.columns]
+        return data
+    except: return pd.DataFrame()
 
-df = load_data()
+df = load_master_data()
 
-# 4. القائمة العلوية
+# 4. القائمة العلوية (فصل المشاريع عن المطورين)
 selected = option_menu(
     menu_title=None, 
-    options=["🏗️ دليل المشاريع", "🏢 سجل المطورين", "🛠️ أدوات البروكر"], 
-    icons=["building", "person-vcard", "calculator"], 
+    options=["🏗️ المشاريع", "🏢 المطورين", "🛠️ أدوات البروكر"], 
+    icons=["building", "person-badge", "tools"], 
+    menu_icon="cast", 
+    default_index=0, 
     orientation="horizontal",
     styles={
-        "container": {"background-color": "#000", "border-bottom": "2px solid #f59e0b", "padding": "0!important"},
-        "nav-link": {"font-size": "16px", "color":"white", "text-align": "center"},
+        "container": {"padding": "0!important", "background-color": "#000", "border-bottom": "3px solid #f59e0b"},
+        "nav-link": {"font-size": "18px", "color":"white", "font-family": "Cairo"},
         "nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "900"},
     }
 )
 
-# --- نظام الفلاتر الجانبي (يعمل في كل الصفحات) ---
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/602/602182.png", width=80)
-    st.markdown("### 🔍 تصفية النتائج")
+# --- 1. شاشة المشاريع ---
+if selected == "🏗️ المشاريع":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏗️ دليل المشاريع العقارية</h2>", unsafe_allow_html=True)
     
-    # فلتر البحث النصي الشامل
-    search_query = st.text_input("بحث بالاسم، المطور، أو الميزة")
-    
-    # فلاتر التصنيف
-    f_area = st.multiselect("📍 المنطقة", options=sorted(df['Area'].dropna().unique()))
-    f_type = st.multiselect("🏠 نوع الوحدة", options=sorted(df['Unit Type'].dropna().unique() if 'Unit Type' in df.columns else df['Type'].dropna().unique()))
-    f_dev = st.multiselect("🏢 المطور العقاري", options=sorted(df['Developer'].dropna().unique()))
-    f_delivery = st.multiselect("📅 سنة التسليم", options=sorted(df['Delivery'].dropna().unique()))
+    # فلاتر المشاريع
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1: search_p = st.text_input("🔍 ابحث عن مشروع أو ميزة...")
+    with col2: area_p = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()))
+    with col3: type_p = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()))
 
-# تطبيق الفلترة على الداتا
-dff = df.copy()
-if search_query:
-    dff = dff[dff.apply(lambda r: search_query.lower() in str(r).lower(), axis=1)]
-if f_area: dff = dff[dff['Area'].isin(f_area)]
-if f_type: 
-    target_col = 'Unit Type' if 'Unit Type' in df.columns else 'Type'
-    dff = dff[dff[target_col].isin(f_type)]
-if f_dev: dff = dff[dff['Developer'].isin(f_dev)]
-if f_delivery: dff = dff[dff['Delivery'].isin(f_delivery)]
+    # تصفية
+    dff_p = df.copy()
+    if search_p: dff_p = dff_p[dff_p.apply(lambda r: search_p.lower() in str(r).lower(), axis=1)]
+    if area_p != "الكل": dff_p = dff_p[dff_p['Area'] == area_p]
+    if type_p != "الكل": dff_p = dff_p[dff_p['Type'] == type_p]
 
-# --- العرض بناءً على الاختيار ---
-if selected == "🏗️ دليل المشاريع":
-    st.markdown(f"<h3 style='color:white;'>تم العثور على ({len(dff)}) مشروع مطابق</h3>", unsafe_allow_html=True)
-    
-    for _, row in dff.iterrows():
+    for _, row in dff_p.iterrows():
         st.markdown(f"""
-            <div class="project-card">
-                <div class="price-badge">يبدأ من: {row.get('Min_Val', row.get('Start Price (sqm)', '-'))}</div>
-                <div class="card-header">{row.get('Projects', row.get('Project Name', 'مشروع عقاري'))}</div>
-                <div style="color:#888; font-size:14px;">بواسطة: <b style="color:#f59e0b;">{row.get('Developer', '-')}</b> | المالك: {row.get('DeveloperOwner', row.get('Owner', '-'))}</div>
-                
-                <div class="info-grid">
-                    <div class="info-box"><span class="info-label">📍 المنطقة</span><span class="info-val">{row.get('Area', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">📐 المساحة (فدان)</span><span class="info-val">{row.get('Size (Acres)', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">📅 التسليم</span><span class="info-val">{row.get('Delivery', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">📈 نسبة الإشغال</span><span class="info-val">{row.get('Occupancy %', '-')}</span></div>
+            <div class="custom-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <h3 style="color:#f59e0b; margin:0;">{row.get('Projects', 'اسم المشروع')}</h3>
+                    <span class="price-tag">{row.get('Min_Val (Start Price)', '0')}</span>
                 </div>
-
-                <div class="info-grid" style="margin-top:0;">
-                    <div class="info-box"><span class="info-label">💵 المقدم</span><span class="info-val">{row.get('Down_Payment', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">⏳ التقسيط</span><span class="info-val">{row.get('Installments', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">👷 الاستشاري</span><span class="info-val">{row.get('Consultant', '-')}</span></div>
-                    <div class="info-box"><span class="info-label">🏠 النوع</span><span class="info-val">{row.get('Unit Type', row.get('Type', '-'))}</span></div>
+                <p style="color:#aaa; margin-bottom:0;">المطور: <b>{row.get('Developer', '-')}</b></p>
+                <div class="stat-grid">
+                    <div class="stat-box"><span class="stat-label">المنطقة</span><span class="stat-value">{row.get('Area', '-')}</span></div>
+                    <div class="stat-box"><span class="stat-label">المقدم</span><span class="stat-value">{row.get('Down_Payment', '-')}</span></div>
+                    <div class="stat-box"><span class="stat-label">التقسيط</span><span class="stat-value">{row.get('Installments', '-')}</span></div>
                 </div>
-
-                <div style="border-top:1px solid #222; padding-top:15px; margin-top:10px;">
-                    <p style="color:#f59e0b; font-size:13px; margin-bottom:5px;"><b>★ الميزة التنافسية:</b></p>
-                    <p style="color:#ccc; font-size:14px; line-height:1.4;">{row.get('Competitive Advantage', row.get('Description', '-'))}</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        with st.expander("🔍 قراءة التفاصيل الفنية الكاملة"):
-            st.write(row.get('Detailed_Info', 'لا توجد تفاصيل إضافية مسجلة لهذا المشروع.'))
-
-elif selected == "🏢 سجل المطورين":
-    dev_info = dff[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer'])
-    for _, d_row in dev_info.iterrows():
-        st.markdown(f"""
-            <div class="project-card" style="border-right-color: #fff;">
-                <h2 style="color:#f59e0b; margin:0;">🏢 {d_row['Developer']}</h2>
-                <p style="color:#888;"><b>إدارة:</b> {d_row['Owner']}</p>
-                <div style="background:#111; padding:15px; border-radius:10px; border:1px solid #222; color:#bbb;">
-                    {d_row['Detailed_Info']}
+                <div style="color:#ccc; font-size:14px; border-top:1px solid #222; padding-top:10px;">
+                    <b>💡 الميزة:</b> {row.get('Description', '-')}
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
+# --- 2. شاشة المطورين ---
+elif selected == "🏢 المطورين":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏢 سجل المطورين العقاريين</h2>", unsafe_allow_html=True)
+    
+    search_d = st.text_input("🔍 ابحث عن اسم المطور أو المالك...")
+    
+    # استخراج داتا المطورين فقط (بدون تكرار)
+    dev_df = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer'])
+    
+    if search_d:
+        dev_df = dev_df[dev_df.apply(lambda r: search_d.lower() in str(r).lower(), axis=1)]
+
+    for _, row in dev_df.iterrows():
+        st.markdown(f"""
+            <div class="custom-card" style="border-right-color: #fff;">
+                <h3 style="color:#f59e0b; margin:0;">🏢 {row.get('Developer', '-')}</h3>
+                <p style="color:#eee; margin-top:10px;">👤 <b>المالك:</b> {row.get('Owner', '-')}</p>
+                <div style="background:#1a1a1a; padding:15px; border-radius:10px; color:#bbb; font-size:14px; line-height:1.6;">
+                    <b>📖 سابقة الأعمال والتفاصيل:</b><br>
+                    {row.get('Detailed_Info', 'لا توجد تفاصيل إضافية مسجلة')}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+# --- 3. شاشة أدوات البروكر ---
 elif selected == "🛠️ أدوات البروكر":
-    st.info("الأدوات قيد التحديث لربطها ببيانات الأسعار والمساحات تلقائياً.")
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات العمل اليومية</h2>", unsafe_allow_html=True)
+    
+    col_calc, col_msg = st.columns(2)
+    with col_calc:
+        st.markdown("<div class='custom-card'><h3>💰 حاسبة القسط</h3>", unsafe_allow_html=True)
+        p = st.number_input("إجمالي السعر", min_value=0, value=1000000)
+        d = st.number_input("المقدم", min_value=0, value=100000)
+        y = st.slider("السنوات", 1, 15, 7)
+        if p > 0:
+            st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>{(p-d)/(y*12):,.0f} ج.م/شهر</h2>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with col_msg:
+        st.markdown("<div class='custom-card'><h3>📱 رسالة واتساب</h3>", unsafe_allow_html=True)
+        proj = st.selectbox("اختر المشروع", df['Projects'].dropna().unique())
+        if st.button("توليد نص العرض"):
+            st.code(f"تحية طيبة.. أرشح لك مشروع {proj} بتفاصيل مميزة...")
+        st.markdown("</div>", unsafe_allow_html=True)
+
