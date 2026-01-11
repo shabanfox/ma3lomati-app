@@ -1,205 +1,141 @@
 import streamlit as st
 import pandas as pd
+from streamlit_option_menu import option_menu # ستحتاج لتثبيت المكتبة: pip install streamlit-option-menu
 
-# 1. إعدادات الصفحة وتصفير المسافات تماماً
-st.set_page_config(page_title="منصة معلوماتى العقارية", layout="wide", initial_sidebar_state="collapsed")
+# 1. إعدادات النظام القصوى
+st.set_page_config(page_title="Ma3lomati PRO Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. تصميم CSS الشامل (الدخول + المنصة)
+# 2. هندسة التصميم (Black & Gold Premium)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
-    /* إخفاء العناصر الافتراضية */
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     
-    /* إلغاء الفراغ الأبيض العلوي تماماً */
-    [data-testid="stAppViewContainer"] > section:first-child > div:first-child {
-        padding-top: 0rem !important;
-        padding-left: 0rem !important;
-        padding-right: 0rem !important;
-    }
-    
-    html, body, [data-testid="stAppViewContainer"] { 
-        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; 
-        background-color: #ffffff; margin: 0 !important; padding: 0 !important;
+    /* الحاوية الرئيسية */
+    [data-testid="stAppViewContainer"] {
+        background-color: #050505;
+        direction: RTL; text-align: right; font-family: 'Cairo', sans-serif;
     }
 
-    /* --- تصميم صفحة الدخول (البيضاوي المنسدل) --- */
-    .login-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; }
-    
-    .hero-oval-header {
-        background: #000000; border: 5px solid #f59e0b; border-top: none; 
-        padding: 50px 20px; border-radius: 0px 0px 500px 500px; 
-        text-align: center; width: 100%; max-width: 800px;
-        box-shadow: 0px 15px 30px rgba(0,0,0,0.2); margin-bottom: 30px;
+    /* ستايل كروت المشاريع - تحويلها لبطاقات فنية */
+    .project-card {
+        background: linear-gradient(145deg, #111, #050505);
+        border: 1px solid #222; border-right: 4px solid #f59e0b;
+        border-radius: 15px; padding: 20px; margin-bottom: 20px;
+        transition: 0.4s all;
     }
-    .hero-oval-header h1 { color: #f59e0b; font-weight: 900; font-size: 2.5rem; margin: 0; }
-    .gold-lock { font-size: 60px; color: #f59e0b; margin-bottom: 20px; text-align: center; width: 100%; }
+    .project-card:hover { border-color: #f59e0b; transform: scale(1.01); box-shadow: 0 10px 20px rgba(245, 158, 11, 0.1); }
 
-    /* حقل الباسورد: نص أسود على خلفية بيضاء */
-    .stTextInput input {
-        background-color: #ffffff !important; color: #000000 !important;
-        border: 3px solid #000000 !important; border-radius: 15px !important;
-        text-align: center; font-size: 1.3rem !important; height: 60px !important;
-        font-weight: 700; box-shadow: 5px 5px 0px #f59e0b !important;
+    /* تفاصيل السعر والتقسيط */
+    .stat-box {
+        background: #1a1a1a; padding: 10px; border-radius: 8px;
+        text-align: center; border: 1px solid #333;
     }
+    .stat-label { color: #888; font-size: 12px; display: block; }
+    .stat-value { color: #f59e0b; font-weight: 700; font-size: 14px; }
 
-    /* --- تصميم محتوى المنصة --- */
-    .hero-banner { 
-        background: #000000; color: #f59e0b; padding: 25px; border-radius: 20px; 
-        text-align: center; margin-bottom: 30px; border: 4px solid #f59e0b;
-        box-shadow: 10px 10px 0px #000;
+    /* أزرار التنقل */
+    .nav-btn {
+        background: #f59e0b !important; color: #000 !important;
+        font-weight: 900 !important; border-radius: 10px !important;
     }
-    .custom-card {
-        background: #ffffff; border: 4px solid #000; padding: 20px; 
-        border-radius: 20px; margin-bottom: 20px; box-shadow: 8px 8px 0px #000;
-        text-align: right;
-    }
-    .card-title { font-size: 1.8rem; font-weight: 900; color: #f59e0b; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-    .card-label { font-weight: 900; color: #000; font-size: 1.2rem; display: block; margin-top: 10px; }
-    .card-val { font-weight: 700; color: #444; font-size: 1.1rem; }
-
-    /* ستايل الأزرار العام */
-    div.stButton > button {
-        border: 3px solid #000 !important; border-radius: 15px !important;
-        box-shadow: 4px 4px 0px #000 !important; font-weight: 900 !important;
-        background-color: #fff !important; color: #000 !important;
-        font-size: 1.1rem !important; min-height: 50px !important;
-    }
-    div.stButton > button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #f59e0b !important; }
-
-    /* زر الخروج العائم */
-    .logout-box { position: fixed; top: 10px; left: 10px; z-index: 999; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. إدارة الجلسة والبيانات
-if 'auth' not in st.session_state: st.session_state.auth = False
-if 'view' not in st.session_state: st.session_state.view = 'main'
-if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
-if 'current_page' not in st.session_state: st.session_state.current_page = 0
-
+# 3. محرك البيانات الشامل
 @st.cache_data(ttl=300)
-def load_data():
-    sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    try:
-        df = pd.read_csv(sheet_url)
-        df.columns = [str(c).strip() for c in df.columns]
-        return df
-    except: return pd.DataFrame()
+def get_master_data():
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    df = pd.read_csv(url)
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
 
-# 4. شاشة تسجيل الدخول
-def login_screen():
-    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
-    st.markdown('<div class="hero-oval-header"><h1>منصة معلوماتي العقارية</h1></div>', unsafe_allow_html=True)
-    st.markdown('<div class="gold-lock">🔒</div>', unsafe_allow_html=True)
+df = get_master_data()
+
+# 4. القائمة العلوية الاحترافية (Navigation Bar)
+selected = option_menu(
+    menu_title=None, 
+    options=["المطورين والمشاريع", "أدوات البروكر", "الإعدادات"], 
+    icons=["building", "tools", "gear"], 
+    menu_icon="cast", 
+    default_index=0, 
+    orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": "#000", "border-bottom": "2px solid #f59e0b"},
+        "icon": {"color": "#f59e0b", "font-size": "20px"}, 
+        "nav-link": {"font-size": "18px", "text-align": "center", "margin":"0px", "color":"white"},
+        "nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "900"},
+    }
+)
+
+# --- شاشة المطورين والمشاريع ---
+if selected == "المطورين والمشاريع":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>📊 قاعدة بيانات السوق العقاري</h2>", unsafe_allow_html=True)
     
-    col_a, col_b, col_c = st.columns([1, 1.5, 1])
-    with col_b:
-        pwd = st.text_input("الباسورد", type="password", placeholder="أدخل كلمة المرور", label_visibility="collapsed")
-        if st.button("دخول", use_container_width=True):
-            if pwd == "Ma3lomati_2026":
-                st.session_state.auth = True
-                st.rerun()
-            else:
-                st.error("⚠️ الباسورد غير صحيح")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # منطقة الفلاتر الذكية (في سطر واحد لتقليل الفوضى)
+    f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
+    with f1: search = st.text_input("🔍 ابحث عن (مشروع، مطور، أو استشاري)")
+    with f2: area = st.selectbox("📍 المنطقة", ["الكل"] + list(df['Area'].unique()))
+    with f3: u_type = st.selectbox("🏠 النوع", ["الكل"] + list(df['Type'].unique()))
+    with f4: sort_by = st.selectbox("⚖️ ترتيب حسب", ["الأحدث", "السعر: من الأقل", "السعر: من الأعلى"])
 
-# تفعيل الحماية
-if not st.session_state.auth:
-    login_screen()
-    st.stop()
+    # تطبيق الفلترة
+    dff = df.copy()
+    if search: dff = dff[dff.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
+    if area != "الكل": dff = dff[dff['Area'] == area]
+    if u_type != "الكل": dff = dff[dff['Type'] == u_type]
 
-# --- المنصة الرئيسية (بعد الدخول) ---
-df = load_data()
+    st.write("---")
 
-# زر الخروج العائم
-st.markdown('<div class="logout-box">', unsafe_allow_html=True)
-if st.button("🔒 خروج"):
-    st.session_state.auth = False
-    st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+    # عرض البيانات بنظام الـ Grid المتطور
+    for i in range(0, len(dff), 2): # عرض مشروعين في كل صف لشكل أكثر فخامة
+        cols = st.columns(2)
+        for j in range(2):
+            if i + j < len(dff):
+                row = dff.iloc[i + j]
+                with cols[j]:
+                    st.markdown(f"""
+                        <div class="project-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="color:#f59e0b; margin:0;">{row.get('Project Name', 'N/A')}</h3>
+                                <span style="background:#f59e0b; color:black; padding:2px 10px; border-radius:5px; font-weight:900;">{row.get('Min_Val', '0')} ج.م</span>
+                            </div>
+                            <p style="color:#888; margin-top:5px;">بواسطة: <b>{row.get('Developer', 'N/A')}</b> | المالك: {row.get('DeveloperOwner', '-')}</p>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top:15px;">
+                                <div class="stat-box"><span class="stat-label">📍 المنطقة</span><span class="stat-value">{row.get('Area', '-')}</span></div>
+                                <div class="stat-box"><span class="stat-label">💵 المقدم</span><span class="stat-value">{row.get('Down_Payment', '-')}</span></div>
+                                <div class="stat-box"><span class="stat-label">⏳ التقسيط</span><span class="stat-value">{row.get('Installments', '-')}</span></div>
+                            </div>
+                            
+                            <div style="margin-top:15px; font-size:14px; color:#ccc; border-top:1px solid #222; padding-top:10px;">
+                                <b>💡 الميزة:</b> {row.get('Competitive Advantage', '-')}<br>
+                                <b>👷 الاستشاري:</b> {row.get('Consultant', '-')}
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("👁️ عرض التفاصيل والوصف الكامل", key=f"det_{i+j}"):
+                        st.info(f"📄 **وصف المشروع:** {row.get('Detailed_Info', row.get('Description', 'لا يوجد وصف'))}")
 
-# سيناريوهات العرض
-if st.session_state.view == 'main':
-    st.markdown('<div class="hero-banner"><h1>🏠 منصة معلوماتى</h1></div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("🏢 دليل المطورين الشامل", use_container_width=True): 
-            st.session_state.view = 'comp'; st.session_state.current_page = 0; st.rerun()
-    with c2:
-        if st.button("🛠️ أدوات البروكر الذكية", use_container_width=True): 
-            st.session_state.view = 'tools'; st.rerun()
-
-elif st.session_state.view == 'comp':
-    if st.session_state.selected_dev:
-        # صفحة التفاصيل
-        dev_name = st.session_state.selected_dev
-        row = df[df['Developer'] == dev_name].iloc[0]
-        st.markdown(f'<div class="hero-banner"><h2>{dev_name}</h2></div>', unsafe_allow_html=True)
-        if st.button("🔙 العودة للقائمة"): st.session_state.selected_dev = None; st.rerun()
-        
-        col_r, col_l = st.columns([1.2, 1])
-        with col_r:
-            st.markdown(f'<div class="custom-card"><div class="card-title">👤 تفاصيل المالك</div><p class="card-val">{row.get("Owner", "غير متوفر")}</p><div class="card-title" style="margin-top:20px;">📖 فلسفة الشركة</div><p class="card-val">{row.get("Description", "لا يوجد وصف")}</p></div>', unsafe_allow_html=True)
-        with col_l:
-            st.markdown(f'<div class="custom-card"><div class="card-title">🏗️ معلومات المشاريع</div><span class="card-label">📍 المناطق:</span> <span class="card-val">{row.get("Area", "-")}</span><span class="card-label">💰 الأسعار:</span> <span class="card-val">{row.get("Price", "-")}</span><span class="card-label">💵 المقدم:</span> <span class="card-val">{row.get("Down_Payment", "-")}</span><span class="card-label">📅 التقسيط:</span> <span class="card-val">{row.get("Installments", "-")}</span></div>', unsafe_allow_html=True)
-    else:
-        # قائمة المطورين (توزيع 70% يمين)
-        st.markdown('<div class="hero-banner"><h2>🏢 دليل المطورين</h2></div>', unsafe_allow_html=True)
-        col_main, col_spacer = st.columns([0.7, 0.3])
-        
-        with col_main:
-            if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
-            search = st.text_input("🔍 ابحث عن مطور...")
-            dev_list = df['Developer'].unique()
-            if search: dev_list = [d for d in dev_list if search.lower() in str(d).lower()]
-            
-            items_per_page = 9
-            total_pages = (len(dev_list) - 1) // items_per_page + 1
-            start_idx = st.session_state.current_page * items_per_page
-            current_devs = dev_list[start_idx:start_idx + items_per_page]
-
-            for i in range(0, len(current_devs), 3):
-                grid_cols = st.columns(3)
-                for j in range(3):
-                    if i + j < len(current_devs):
-                        name = current_devs[i + j]
-                        if grid_cols[j].button(name, key=f"dev_{name}", use_container_width=True):
-                            st.session_state.selected_dev = name; st.rerun()
-            
-            st.write("---")
-            n1, n2, n3 = st.columns([1, 2, 1])
-            with n1:
-                if st.session_state.current_page > 0:
-                    if st.button("⬅️ السابق"): st.session_state.current_page -= 1; st.rerun()
-            with n2:
-                st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.current_page + 1} من {total_pages}</p>", unsafe_allow_html=True)
-            with n3:
-                if (start_idx + items_per_page) < len(dev_list):
-                    if st.button("التالي ➡️"): st.session_state.current_page += 1; st.rerun()
-
-elif st.session_state.view == 'tools':
-    st.markdown('<div class="hero-banner"><h2>🛠️ أدوات البروكر المحترف</h2></div>', unsafe_allow_html=True)
-    if st.button("🔙 الرئيسية"): st.session_state.view = 'main'; st.rerun()
+# --- شاشة أدوات البروكر ---
+elif selected == "أدوات البروكر":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ عُدة البروكر المحترف</h2>", unsafe_allow_html=True)
     
-    t1, t2 = st.columns(2)
-    with t1:
-        st.markdown('<div class="custom-card"><div class="card-title">💰 حاسبة الأقساط</div></div>', unsafe_allow_html=True)
-        tp = st.number_input("إجمالي السعر (ج.م)", min_value=0, step=100000)
-        dp_pct = st.number_input("المقدم (%)", 0, 100, 10)
-        yrs = st.number_input("السنوات", 1, 30, 7)
-        if tp > 0:
-            dv = tp * (dp_pct / 100)
-            mn = (tp - dv) / (yrs * 12)
-            st.markdown(f'<div style="background:#000; color:#f59e0b; padding:10px; border-radius:10px; text-align:center;"><h5>المقدم: {dv:,.0f}</h5><h4>القسط: {mn:,.0f}</h4></div>', unsafe_allow_html=True)
+    col_l, col_r = st.columns(2)
+    with col_l:
+        st.markdown("<div class='project-card'><h3>💰 حاسبة القسط السريع</h3>", unsafe_allow_html=True)
+        price = st.number_input("إجمالي السعر", min_value=0)
+        down = st.number_input("المقدم (قيمة وليس نسبة)", min_value=0)
+        years = st.slider("سنوات التقسيط", 1, 15, 7)
+        if price > 0:
+            monthly = (price - down) / (years * 12)
+            st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>{monthly:,.0f} ج.م / شهر</h2>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    with t2:
-        st.markdown('<div class="custom-card"><div class="card-title">📈 حاسبة العائد ROI</div></div>', unsafe_allow_html=True)
-        inv = st.number_input("قيمة الاستثمار", min_value=0, step=100000)
-        rt = st.number_input("الإيجار الشهري", min_value=0, step=1000)
-        if inv > 0 and rt > 0:
-            ann = rt * 12
-            roi = (ann / inv) * 100
-            st.markdown(f'<div style="background:#f59e0b; color:#000; padding:10px; border-radius:10px; text-align:center;"><h5>الدخل السنوي: {ann:,.0f}</h5><h4>العائد: {roi:.2f}%</h4></div>', unsafe_allow_html=True)
+    with col_r:
+        st.markdown("<div class='project-card'><h3>📝 صانع عرض السعر (Draft)</h3>", unsafe_allow_html=True)
+        st.text_input("اسم العميل")
+        st.selectbox("اختر المشروع المُرشح", df['Project Name'].unique())
+        st.button("تجهيز نص الواتساب 📱")
+        st.markdown("</div>", unsafe_allow_html=True)
 
