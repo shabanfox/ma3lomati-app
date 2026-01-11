@@ -1,178 +1,115 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="معلوماتي العقارية PRO", layout="wide", initial_sidebar_state="collapsed")
+# 1. إعدادات المتصفح
+st.set_page_config(page_title="معلوماتي العقارية PRO", layout="wide")
 
-# 2. هندسة التصميم (CSS) - اللون الأسود الفخم والذهبي
+# 2. تصميم الواجهة (CSS المبسط لضمان عدم تداخل الأكواد)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-    
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    html, body, [data-testid="stAppViewContainer"] {
         direction: RTL; text-align: right; font-family: 'Cairo', sans-serif;
-        background-color: #050505; color: white;
+        background-color: #0e1117; color: white;
     }
-    
-    /* تصميم أزرار التنقل العلوي */
-    .nav-container {
-        display: flex; justify-content: space-around; background: #111;
-        padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 25px;
-    }
-    
-    /* كروت المشاريع والمطورين */
-    .main-card {
-        background: linear-gradient(145deg, #111, #080808);
-        border: 1px solid #222; border-right: 5px solid #f59e0b;
-        border-radius: 12px; padding: 20px; margin-bottom: 20px;
-        transition: 0.3s;
-    }
-    .main-card:hover { border-color: #f59e0b; transform: translateY(-3px); }
-
-    .price-tag {
-        background: #f59e0b; color: #000; padding: 5px 15px;
-        border-radius: 8px; font-weight: 900; font-size: 1.2rem;
-    }
-
-    .info-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 10px; margin: 15px 0;
-    }
-
-    .info-item {
-        background: #1a1a1a; padding: 10px; border-radius: 8px;
-        text-align: center; border: 1px solid #333;
-    }
-
-    .info-label { color: #888; font-size: 11px; display: block; }
-    .info-value { color: #f59e0b; font-weight: 700; font-size: 13px; }
-
-    .desc-box {
-        background: rgba(245, 158, 11, 0.05); padding: 12px;
-        border-radius: 8px; border: 1px dashed #f59e0b; font-size: 13px;
-    }
+    .stButton>button { width: 100%; background-color: #f59e0b !important; color: black !important; font-weight: bold; }
+    .project-header { border-right: 5px solid #f59e0b; padding-right: 15px; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. محرك البيانات المباشر
-@st.cache_data(ttl=600)
-def get_clean_data():
+# 3. جلب البيانات وتنظيفها (تنظيف شامل)
+@st.cache_data
+def load_and_clean_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     df = pd.read_csv(url)
-    df.columns = df.columns.str.strip() # تنظيف الأعمدة من أي مسافات مخفية
+    # تنظيف أسماء الأعمدة من أي مسافات أو حروف غريبة
+    df.columns = df.columns.str.strip()
     return df
 
-try:
-    df = get_clean_data()
-except:
-    st.error("⚠️ خطأ في الاتصال بقاعدة البيانات. تأكد من تحديث الرابط.")
-    st.stop()
+df = load_and_clean_data()
 
-# 4. إدارة الصفحات (Navigation)
-if 'active_tab' not in st.session_state:
-    st.session_state.active_tab = "🏗️ المشاريع"
+# 4. الملاحة بالأزرار (Navigation)
+if 'menu' not in st.session_state:
+    st.session_state.menu = "🏗️ المشاريع"
 
-# أزرار التنقل الرئيسية
-t1, t2, t3 = st.columns(3)
-with t1:
-    if st.button("🏗️ المشاريع", use_container_width=True): st.session_state.active_tab = "🏗️ المشاريع"
-with t2:
-    if st.button("🏢 المطورين", use_container_width=True): st.session_state.active_tab = "🏢 المطورين"
-with t3:
-    if st.button("🛠️ الأدوات", use_container_width=True): st.session_state.active_tab = "🛠️ الأدوات"
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("🏗️ المشاريع"): st.session_state.menu = "🏗️ المشاريع"
+with col2:
+    if st.button("🏢 المطورين"): st.session_state.menu = "🏢 المطورين"
+with col3:
+    if st.button("🛠️ الأدوات"): st.session_state.menu = "🛠️ الأدوات"
 
 st.divider()
 
 # --- صفحة المشاريع ---
-if st.session_state.active_tab == "🏗️ المشاريع":
-    st.markdown("<h2 style='color:#f59e0b;'>🏗️ دليل المشاريع التفصيلي</h2>", unsafe_allow_html=True)
+if st.session_state.menu == "🏗️ المشاريع":
+    st.title("🏗️ دليل المشاريع")
     
-    c1, c2 = st.columns([3, 1])
-    with c1: search = st.text_input("🔍 ابحث (اسم، ميزة، استشاري...)", placeholder="اكتب للبحث في 345 نتيجة...")
-    with c2: 
-        area_list = ["الكل"] + sorted(df['Area'].dropna().unique().tolist())
-        sel_area = st.selectbox("📍 المنطقة", area_list)
+    # فلاتر البحث
+    f_col1, f_col2 = st.columns([3, 1])
+    with f_col1:
+        query = st.text_input("🔍 ابحث (اسم المشروع، المطور، الميزة...)", "")
+    with f_col2:
+        area_filter = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()))
 
-    # الفلترة
+    # منطق الفلترة
     dff = df.copy()
-    if search: dff = dff[dff.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
-    if sel_area != "الكل": dff = dff[dff['Area'] == sel_area]
+    if query:
+        mask = dff.apply(lambda row: query.lower() in row.astype(str).str.lower().values, axis=1)
+        dff = dff[mask]
+    if area_filter != "الكل":
+        dff = dff[dff['Area'] == area_filter]
 
-    # العرض
+    # عرض البيانات باستخدام Container لتجنب أخطاء HTML
     for _, row in dff.iterrows():
-        st.markdown(f"""
-        <div class="main-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="color:#f59e0b; margin:0;">{row.get('Projects', 'مشروع غير مسمى')}</h2>
-                <span class="price-tag">{row.get('Min_Val (Start Price)', '-')}</span>
-            </div>
-            <p style="color:#888;">المطور: {row.get('Developer', '-')}</p>
+        with st.container():
+            st.markdown(f"### {row.get('Projects', 'غير مسجل')}")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("💰 يبدأ من", row.get('Min_Val (Start Price)', '-'))
+            c2.metric("📍 المنطقة", row.get('Area', '-'))
+            c3.metric("💵 المقدم", row.get('Down_Payment', '-'))
+            c4.metric("⏳ التقسيط", row.get('Installments', '-'))
             
-            <div class="info-grid">
-                <div class="info-item"><span class="info-label">📍 المنطقة</span><span class="info-value">{row.get('Area', '-')}</span></div>
-                <div class="info-item"><span class="info-label">💵 المقدم</span><span class="info-value">{row.get('Down_Payment', '-')}</span></div>
-                <div class="info-item"><span class="info-label">⏳ التقسيط</span><span class="info-value">{row.get('Installments', '-')}</span></div>
-                <div class="info-item"><span class="info-label">📅 التسليم</span><span class="info-value">{row.get('Delivery', '-')}</span></div>
-            </div>
-            
-            <div class="desc-box">
-                <b>🌟 الميزة التنافسية:</b> {row.get('Description', 'لا يوجد وصف متاح')}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            with st.expander("🔍 الميزة التنافسية وتفاصيل المشروع"):
+                st.write(f"**🏠 النوع:** {row.get('Type', '-')}")
+                st.write(f"**📅 التسليم:** {row.get('Delivery', '-')}")
+                st.write(f"**🌟 الميزة:** {row.get('Description', '-')}")
+                st.info(f"المطور: {row.get('Developer', '-')}")
+            st.divider()
 
 # --- صفحة المطورين ---
-elif st.session_state.active_tab == "🏢 المطورين":
-    st.markdown("<h2 style='color:#f59e0b;'>🏢 سجل المطورين وسابقة الأعمال</h2>", unsafe_allow_html=True)
+elif st.session_state.menu == "🏢 المطورين":
+    st.title("🏢 سجل المطورين")
+    dev_query = st.text_input("🔍 ابحث عن مطور...")
     
-    dev_search = st.text_input("🔍 ابحث عن مطور معين...")
-    
-    dff_dev = df.copy()
-    if dev_search: dff_dev = dff_dev[dff_dev['Developer'].str.contains(dev_search, na=False, case=False)]
-    
-    # عرض المطورين بشكل فريد (Unique Developers)
-    unique_devs = dff_dev.drop_duplicates(subset=['Developer'])
-    
-    for _, row in unique_devs.iterrows():
-        st.markdown(f"""
-        <div class="main-card">
-            <h2 style="color:#f59e0b; margin:0;">{row.get('Developer', '-')}</h2>
-            <p style="color:#f59e0b;">👤 المالك: {row.get('Owner', '-')}</p>
-            <div style="margin-top:10px; line-height:1.6;">
-                <b>📜 سابقة الأعمال والتفاصيل:</b><br>
-                {row.get('Detailed_Info', 'لا توجد معلومات إضافية مسجلة')}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # عرض فريد للمطورين
+    dev_df = df.drop_duplicates(subset=['Developer']).copy()
+    if dev_query:
+        dev_df = dev_df[dev_df['Developer'].str.contains(dev_query, na=False, case=False)]
+
+    for _, row in dev_df.iterrows():
+        with st.expander(f"🏢 {row.get('Developer', 'اسم المطور')}"):
+            st.subheader(f"المالك: {row.get('Owner', '-')}")
+            st.write("**سابقة الأعمال والتفاصيل:**")
+            st.write(row.get('Detailed_Info', 'لا توجد تفاصيل إضافية'))
 
 # --- صفحة الأدوات ---
-elif st.session_state.active_tab == "🛠️ الأدوات":
-    st.markdown("<h2 style='color:#f59e0b;'>🛠️ أدوات العمل اليومية</h2>", unsafe_allow_html=True)
+elif st.session_state.menu == "🛠️ الأدوات":
+    st.title("🛠️ أدوات البروكر")
     
-    t_col1, t_col2 = st.columns(2)
+    tab1, tab2 = st.tabs(["💰 حاسبة القسط", "📱 عروض الواتساب"])
     
-    with t_col1:
-        st.subheader("💰 حاسبة القسط السريع")
-        u_price = st.number_input("سعر الوحدة", min_value=0, value=1000000, step=100000)
-        u_down = st.number_input("المقدم المدفوع", min_value=0, value=100000, step=10000)
-        u_years = st.slider("عدد سنوات التقسيط", 1, 15, 7)
-        
-        remaining = u_price - u_down
-        monthly = remaining / (u_years * 12)
-        st.metric("القسط الشهري", f"{monthly:,.0f} ج.م")
+    with tab1:
+        price = st.number_input("إجمالي السعر", value=1000000)
+        dp = st.number_input("المقدم المدفوع", value=100000)
+        years = st.slider("عدد السنوات", 1, 15, 7)
+        if price > dp:
+            monthly = (price - dp) / (years * 12)
+            st.metric("القسط الشهري المتوقع", f"{monthly:,.0f} ج.م")
 
-    with t_col2:
-        st.subheader("📝 مولد عروض واتساب")
-        p_name = st.selectbox("اختر المشروع", df['Projects'].dropna().unique())
-        p_data = df[df['Projects'] == p_name].iloc[0]
-        
-        wa_msg = f"🏢 *عرض خاص من معلوماتي العقارية*\n\n" \
-                 f"📌 المشروع: {p_name}\n" \
-                 f"📍 المنطقة: {p_data['Area']}\n" \
-                 f"💰 السعر يبدأ من: {p_data['Min_Val (Start Price)']}\n" \
-                 f"💳 المقدم: {p_data['Down_Payment']}\n" \
-                 f"⏳ التقسيط: {p_data['Installments']}\n" \
-                 f"🌟 المميزات: {p_data['Description']}\n\n" \
-                 f"للمعاينة والاستفسار تواصل معنا."
-        
-        st.text_area("النص الجاهز للنسخ:", wa_msg, height=200)
+    with tab2:
+        target_p = st.selectbox("اختر المشروع لتجهيز الرسالة", df['Projects'].dropna().unique())
+        p_row = df[df['Projects'] == target_p].iloc[0]
+        msg = f"🏢 *عرض مشروع: {target_p}*\n📍 المنطقة: {p_row['Area']}\n💰 المقدم: {p_row['Down_Payment']}\n⏳ التقسيط: {p_row['Installments']}\n🌟 الميزة: {p_row['Description']}"
+        st.text_area("رسالة الواتساب الجاهزة:", msg, height=150)
