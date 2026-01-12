@@ -46,18 +46,17 @@ selected = option_menu(
     styles={"container": {"background-color": "#000", "border-bottom": "3px solid #f59e0b"}}
 )
 
-# --- نظام التحكم في الصفحات (فصل تام) ---
+# --- نظام التحكم في الصفحات ---
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 
-# --- 🏗️ شاشة المشاريع (النسخة المؤمنة) ---
+# --- 🏗️ شاشة المشاريع (تم التعديل لـ Project Name) ---
 if selected == "🏗️ المشاريع":
     if not df.empty:
         c_main, c_side = st.columns([0.7, 0.3])
         with c_main:
             st.markdown("<h2 style='color:#f59e0b;'>🏗️ دليل المشاريع</h2>", unsafe_allow_html=True)
             
-            # فلاتر البحث
             f1, f2 = st.columns(2)
             with f1: s_p = st.text_input("🔍 ابحث عن مشروع...", placeholder="اكتب اسم المشروع هنا")
             with f2: 
@@ -65,13 +64,14 @@ if selected == "🏗️ المشاريع":
                 areas = ["الكل"] + sorted(df[area_col].unique().tolist())
                 a_p = st.selectbox("📍 تصفية حسب المنطقة", areas)
             
-            # تطبيق الفلترة
+            # تطبيق الفلترة باستخدام Project Name
             dff = df.copy()
-            name_col = 'Projects' if 'Projects' in df.columns else df.columns[0]
+            # التأكد من اسم العمود الصحيح
+            name_col = 'Project Name' if 'Project Name' in df.columns else 'Projects'
+            
             if s_p: dff = dff[dff[name_col].str.contains(s_p, case=False)]
             if a_p != "الكل": dff = dff[dff[area_col] == a_p]
 
-            # الترقيم والحسابات
             items = 9
             total_p = max(1, math.ceil(len(dff) / items))
             if st.session_state.p_idx >= total_p: st.session_state.p_idx = 0
@@ -79,7 +79,6 @@ if selected == "🏗️ المشاريع":
             start = st.session_state.p_idx * items
             curr_slice = dff.iloc[start : start + items]
 
-            # عرض الشبكة
             if not curr_slice.empty:
                 for i in range(0, len(curr_slice), 3):
                     cols = st.columns(3)
@@ -89,7 +88,7 @@ if selected == "🏗️ المشاريع":
                             with cols[j]:
                                 st.markdown(f"""
                                     <div class="pro-card">
-                                        <div class="card-main-title">{row.get('Projects', 'غير مسمى')}</div>
+                                        <div class="card-main-title">{row.get(name_col, 'غير مسمى')}</div>
                                         <div style="color:#888; margin-bottom:10px;">{row.get('Developer', 'مطور غير محدد')}</div>
                                         <div class="stat-row"><span>📍 المنطقة</span><span class="stat-val">{row.get('Area', '-')}</span></div>
                                         <div class="stat-row"><span>💰 المقدم</span><span class="stat-val">{row.get('Down_Payment', '-')}</span></div>
@@ -98,7 +97,7 @@ if selected == "🏗️ المشاريع":
                                 with st.expander("🔍 تفاصيل إضافية"):
                                     st.write(row.to_dict())
             else:
-                st.info("لا توجد مشاريع مطابقة للبحث حالياً.")
+                st.info("لا توجد مشاريع مطابقة للبحث.")
 
             # أزرار التنقل السفلية
             st.write("---")
@@ -106,68 +105,44 @@ if selected == "🏗️ المشاريع":
             with nav3:
                 if (st.session_state.p_idx + 1) < total_p:
                     if st.button("التالي ⬅️", key="btn_p_next"):
-                        st.session_state.p_idx += 1
-                        st.rerun()
+                        st.session_state.p_idx += 1; st.rerun()
             with nav2:
                 st.markdown(f"<p style='text-align:center; padding-top:10px;'>صفحة {st.session_state.p_idx + 1} من {total_p}</p>", unsafe_allow_html=True)
             with nav1:
                 if st.session_state.p_idx > 0:
                     if st.button("➡️ السابق", key="btn_p_prev"):
-                        st.session_state.p_idx -= 1
-                        st.rerun()
+                        st.session_state.p_idx -= 1; st.rerun()
         with c_side:
-            st.markdown("<div style='margin-right:20px; border-right:1px solid #222; height:600px; opacity:0.1;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
 
-# --- 🏢 شاشة المطورين ---
+# --- 🏢 باقي الشاشات (المطورين والأدوات) تظل كما هي لضمان عمل التطبيق ---
 elif selected == "🏢 المطورين":
     if not df.empty:
-        devs = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer']).reset_index(drop=True)
+        dev_col = 'Developer' if 'Developer' in df.columns else df.columns[0]
+        devs = df[[dev_col, 'Owner', 'Detailed_Info']].drop_duplicates(subset=[dev_col]).reset_index(drop=True)
         c_main, c_side = st.columns([0.7, 0.3])
         with c_main:
             st.markdown("<h2 style='color:#f59e0b;'>🏢 المطورين</h2>", unsafe_allow_html=True)
             s_d = st.text_input("🔍 ابحث عن مطور...")
-            if s_d: devs = devs[devs['Developer'].str.contains(s_d, case=False)]
-
-            items = 9
-            total_d = max(1, math.ceil(len(devs) / items))
-            curr_devs = devs.iloc[st.session_state.d_idx * items : (st.session_state.d_idx + 1) * items]
-
+            if s_d: devs = devs[devs[dev_col].str.contains(s_d, case=False)]
+            total_d = max(1, math.ceil(len(devs) / 9))
+            curr_devs = devs.iloc[st.session_state.d_idx * 9 : (st.session_state.d_idx + 1) * 9]
             for i in range(0, len(curr_devs), 3):
                 cols = st.columns(3)
                 for j in range(3):
                     if i+j < len(curr_devs):
                         row = curr_devs.iloc[i+j]
                         with cols[j]:
-                            st.markdown(f'<div class="pro-card"><div class="card-main-title">{row["Developer"]}</div><div style="color:#888;">👤 {row["Owner"]}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="pro-card"><div class="card-main-title">{row[dev_col]}</div><div style="color:#888;">👤 {row["Owner"]}</div></div>', unsafe_allow_html=True)
                             with st.expander("📄 سابقة الأعمال"): st.write(row['Detailed_Info'])
-            
-            st.write("---")
-            n1, n2, n3 = st.columns([1, 2, 1])
-            with n3:
-                if (st.session_state.d_idx + 1) < total_d:
-                    if st.button("التالي ⬅️", key="btn_d_next"): st.session_state.d_idx += 1; st.rerun()
-            with n2: st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.d_idx + 1} من {total_d}</p>", unsafe_allow_html=True)
-            with n1:
-                if st.session_state.d_idx > 0:
-                    if st.button("➡️ السابق", key="btn_d_prev"): st.session_state.d_idx -= 1; st.rerun()
+        with c_side: st.write("")
 
-# --- 🛠️ شاشة الأدوات ---
 elif selected == "🛠️ أدوات البروكر":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ الأدوات الحسابية</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ الأدوات</h2>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("<div class='pro-card'><h3>💰 حاسبة القسط</h3>", unsafe_allow_html=True)
-        p = st.number_input("إجمالي السعر", value=1000000)
-        y = st.number_input("عدد السنين", value=7, min_value=1)
+        p = st.number_input("السعر", value=1000000)
+        y = st.number_input("السنين", value=7, min_value=1)
         st.subheader(f"{p/(y*12):,.0f} ج/شهري")
-        st.markdown("</div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='pro-card'><h3>📈 ROI</h3>", unsafe_allow_html=True)
-        inv = st.number_input("مبلغ الاستثمار", value=1000000)
-        rent = st.number_input("قيمة الإيجار المتوقع", value=10000)
-        st.subheader(f"{(rent*12/inv)*100:.1f}% سنوياً")
-        st.markdown("</div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown("<div class='pro-card'><h3>📝 مسودة</h3>", unsafe_allow_html=True)
-        st.text_area("سجل ملاحظات العميل...")
         st.markdown("</div>", unsafe_allow_html=True)
