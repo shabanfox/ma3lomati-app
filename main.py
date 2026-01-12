@@ -6,7 +6,7 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. التنسيق (CSS)
+# 2. التنسيق (CSS) لتقليل الفراغات وضبط الشبكة المصغرة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -26,21 +26,23 @@ st.markdown("""
     }
     .header-title { font-weight: 900; font-size: 35px !important; color: #f59e0b; margin: 0; }
 
-    /* تنسيق الكروت الجانبية */
-    .dev-card {
+    /* كارت الشبكة الصغير جداً ليناسب الـ 30% */
+    .mini-card {
         background: #111;
-        border-right: 5px solid #f59e0b;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 12px;
         border: 1px solid #222;
-        border-right: 8px solid #f59e0b;
+        border-top: 3px solid #f59e0b;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        min-height: 140px;
+        text-align: center;
     }
-    .dev-title { color: #f59e0b; font-size: 22px !important; font-weight: 900; margin-bottom: 5px; }
-    .dev-owner { color: #fff; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    .mini-title { color: #f59e0b; font-size: 16px !important; font-weight: 900; margin-bottom: 5px; }
+    .mini-owner { color: #888; font-size: 12px; }
     
-    /* تنسيق الأزرار */
-    .stButton button { width: 100%; border-radius: 5px; }
+    /* تصغير أزرار التنقل والبحث */
+    .stButton button { width: 100%; font-size: 11px !important; height: 30px !important; }
+    .stTextInput input { height: 35px !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -66,21 +68,25 @@ selected = option_menu(
     styles={"container": {"background-color": "#000", "border-bottom": "3px solid #f59e0b"}}
 )
 
-# --- شاشة المطورين (30% يمين | 70% يسار) ---
+# --- شاشة المطورين (70% يمين فارغ | 30% يسار شبكة) ---
 if selected == "🏢 المطورين":
     if not df.empty:
         devs = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer']).reset_index(drop=True)
         
-        # هنا قمنا بعكس الترتيب: العمود الأول 0.3 (يمين) والثاني 0.7 (يسار)
-        col_cards, col_empty = st.columns([0.3, 0.7])
+        # التقسيم: العمود الأول (يمين) 70% فارغ، العمود الثاني (يسار) 30% للكروت
+        col_empty, col_grid = st.columns([0.7, 0.3])
         
-        with col_cards:
-            st.markdown("<h3 style='color:#f59e0b; border-bottom:1px solid #333;'>🏢 المطورين</h3>", unsafe_allow_html=True)
+        with col_empty:
+            # مساحة الـ 70% اليمين (فارغة)
+            st.markdown("<div style='margin-top:250px; text-align:center; opacity:0.05;'><h1>MANSETY PRO</h1></div>", unsafe_allow_html=True)
+
+        with col_grid:
+            st.markdown("<h4 style='color:#f59e0b; border-bottom:1px solid #333; padding-bottom:5px;'>🏢 شبكة المطورين (3x3)</h4>", unsafe_allow_html=True)
             search_d = st.text_input("🔍 بحث...")
             if search_d:
                 devs = devs[devs['Developer'].str.contains(search_d, case=False, na=False)]
 
-            # نظام الـ 9 كروت
+            # نظام الـ 9 كروت (شبكة 3 في 3)
             items_per_page = 9
             total_pages = math.ceil(len(devs) / items_per_page)
             if 'dev_page' not in st.session_state: st.session_state.dev_page = 1
@@ -88,41 +94,33 @@ if selected == "🏢 المطورين":
             start_idx = (st.session_state.dev_page - 1) * items_per_page
             current_devs = devs.iloc[start_idx : start_idx + items_per_page]
 
-            for _, row in current_devs.iterrows():
-                st.markdown(f"""
-                    <div class="dev-card">
-                        <div class="dev-title">{row['Developer']}</div>
-                        <div class="dev-owner">👤 {row['Owner']}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-                with st.expander("🔍 التفاصيل"):
-                    st.info(f"المالك: {row['Owner']}")
-                    st.write(row['Detailed_Info'])
+            # عرض الشبكة داخل عمود الـ 30% اليسار
+            for i in range(0, len(current_devs), 3):
+                inner_cols = st.columns(3)
+                for j in range(3):
+                    if i + j < len(current_devs):
+                        row = current_devs.iloc[i + j]
+                        with inner_cols[j]:
+                            st.markdown(f"""
+                                <div class="mini-card">
+                                    <div class="mini-title">{row['Developer']}</div>
+                                    <div class="mini-owner">👤 {row['Owner']}</div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            with st.expander("🔍 التفاصيل"):
+                                st.caption(f"المالك: {row['Owner']}")
+                                st.write(row['Detailed_Info'])
             
-            # أزرار التنقل
+            # أزرار التنقل صغيرة أسفل الشبكة
             st.write("---")
-            p1, p2 = st.columns(2)
-            with p1:
+            nav1, nav2, nav3 = st.columns([1,1,1])
+            with nav1:
                 if st.session_state.dev_page > 1:
-                    if st.button("➡️ السابقة"):
-                        st.session_state.dev_page -= 1
-                        st.rerun()
-            with p2:
+                    if st.button("السابق"): st.session_state.dev_page -= 1; st.rerun()
+            with nav2:
+                st.markdown(f"<p style='text-align:center; font-size:10px; padding-top:10px;'>{st.session_state.dev_page}/{total_pages}</p>", unsafe_allow_html=True)
+            with nav3:
                 if st.session_state.dev_page < total_pages:
-                    if st.button("التالية ⬅️"):
-                        st.session_state.dev_page += 1
-                        st.rerun()
+                    if st.button("التالي"): st.session_state.dev_page += 1; st.rerun()
 
-        with col_empty:
-            # الجانب الأيسر فارغ بنسبة 70%
-            st.markdown("<div style='margin-top:250px; text-align:center; opacity:0.1;'><h1>MANSETY PRO</h1></div>", unsafe_allow_html=True)
-
-# --- شاشة المشاريع ---
-elif selected == "🏗️ المشاريع":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏗️ دليل المشاريع</h2>", unsafe_allow_html=True)
-    # (باقي كود المشاريع يوضع هنا)
-
-# --- شاشة أدوات البروكر ---
-elif selected == "🛠️ أدوات البروكر":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
-    # (باقي كود الأدوات يوضع هنا)
+# (باقي كود شاشات المشاريع والأدوات)
