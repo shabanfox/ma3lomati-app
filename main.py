@@ -26,18 +26,21 @@ st.markdown("""
     }
     .header-title { font-weight: 900; font-size: 35px !important; color: #f59e0b; margin: 0; }
 
-    /* تنسيق الكروت لتناسب العمود الجانبي */
+    /* تنسيق الكروت الجانبية */
     .dev-card {
         background: #111;
         border-right: 5px solid #f59e0b;
         border-radius: 8px;
         padding: 15px;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         border: 1px solid #222;
-        border-right: 5px solid #f59e0b;
+        border-right: 8px solid #f59e0b;
     }
     .dev-title { color: #f59e0b; font-size: 22px !important; font-weight: 900; margin-bottom: 5px; }
     .dev-owner { color: #fff; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    
+    /* تنسيق الأزرار */
+    .stButton button { width: 100%; border-radius: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -56,39 +59,35 @@ def load_all_data():
 
 df = load_all_data()
 
-# 5. القائمة
+# 5. القائمة العلوية
 selected = option_menu(
     menu_title=None, options=["🛠️ أدوات البروكر", "🏗️ المشاريع", "🏢 المطورين"], 
     icons=["tools", "building", "person-badge"], orientation="horizontal",
     styles={"container": {"background-color": "#000", "border-bottom": "3px solid #f59e0b"}}
 )
 
-# --- شاشة المطورين (التصميم الجديد 30:70) ---
+# --- شاشة المطورين (30% يمين | 70% يسار) ---
 if selected == "🏢 المطورين":
     if not df.empty:
-        # تجهيز البيانات
         devs = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer']).reset_index(drop=True)
         
-        # تقسيم الصفحة: 30% يمين للكروت، 70% يسار فراغ
-        col_empty, col_cards = st.columns([0.7, 0.3])
+        # هنا قمنا بعكس الترتيب: العمود الأول 0.3 (يمين) والثاني 0.7 (يسار)
+        col_cards, col_empty = st.columns([0.3, 0.7])
         
         with col_cards:
-            st.markdown("<h3 style='color:#f59e0b; border-bottom:1px solid #f59e0b;'>🏢 قائمة المطورين</h3>", unsafe_allow_html=True)
-            search_d = st.text_input("🔍 بحث سريع...")
+            st.markdown("<h3 style='color:#f59e0b; border-bottom:1px solid #333;'>🏢 المطورين</h3>", unsafe_allow_html=True)
+            search_d = st.text_input("🔍 بحث...")
             if search_d:
                 devs = devs[devs['Developer'].str.contains(search_d, case=False, na=False)]
 
-            # نظام الترقيم (9 كروت لكل صفحة)
+            # نظام الـ 9 كروت
             items_per_page = 9
             total_pages = math.ceil(len(devs) / items_per_page)
-            
             if 'dev_page' not in st.session_state: st.session_state.dev_page = 1
             
             start_idx = (st.session_state.dev_page - 1) * items_per_page
-            end_idx = start_idx + items_per_page
-            current_devs = devs.iloc[start_idx:end_idx]
+            current_devs = devs.iloc[start_idx : start_idx + items_per_page]
 
-            # عرض الكروت في العمود الأيمن
             for _, row in current_devs.iterrows():
                 st.markdown(f"""
                     <div class="dev-card">
@@ -96,34 +95,34 @@ if selected == "🏢 المطورين":
                         <div class="dev-owner">👤 {row['Owner']}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                with st.expander("🔍 عرض التفاصيل الكاملة"):
+                with st.expander("🔍 التفاصيل"):
+                    st.info(f"المالك: {row['Owner']}")
                     st.write(row['Detailed_Info'])
             
-            # أزرار التنقل بين الصفحات
+            # أزرار التنقل
             st.write("---")
-            pg_col1, pg_col2 = st.columns(2)
-            with pg_col2:
-                if st.session_state.dev_page < total_pages:
-                    if st.button("الصفحة التالية ⬅️"):
-                        st.session_state.dev_page += 1
-                        st.rerun()
-            with pg_col1:
+            p1, p2 = st.columns(2)
+            with p1:
                 if st.session_state.dev_page > 1:
-                    if st.button("➡️ الصفحة السابقة"):
+                    if st.button("➡️ السابقة"):
                         st.session_state.dev_page -= 1
                         st.rerun()
-            st.caption(f"صفحة {st.session_state.dev_page} من {total_pages}")
+            with p2:
+                if st.session_state.dev_page < total_pages:
+                    if st.button("التالية ⬅️"):
+                        st.session_state.dev_page += 1
+                        st.rerun()
 
         with col_empty:
-            # مساحة الـ 70% الفارغة (يمكنك وضع لوجو أو خريطة هنا مستقبلاً)
-            st.markdown("<div style='margin-top:200px; text-align:center; color:#222;'><h1>MANSETY PRO</h1></div>", unsafe_allow_html=True)
+            # الجانب الأيسر فارغ بنسبة 70%
+            st.markdown("<div style='margin-top:250px; text-align:center; opacity:0.1;'><h1>MANSETY PRO</h1></div>", unsafe_allow_html=True)
 
-# --- شاشة المشاريع (العرض العادي) ---
+# --- شاشة المشاريع ---
 elif selected == "🏗️ المشاريع":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏗️ دليل المشاريع</h2>", unsafe_allow_html=True)
-    # (كود المشاريع السابق يوضع هنا)
+    # (باقي كود المشاريع يوضع هنا)
 
 # --- شاشة أدوات البروكر ---
 elif selected == "🛠️ أدوات البروكر":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
-    # (كود الأدوات السابق يوضع هنا)
+    # (باقي كود الأدوات يوضع هنا)
