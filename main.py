@@ -49,19 +49,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. جلب البيانات
+# 2. جلب البيانات من الرابط المرفق
 @st.cache_data(ttl=300)
 def load_all_data():
+    # استخدام رابط الـ CSV المباشر من الشيت المرفق
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
         data = pd.read_csv(url)
+        # تنظيف مسافات أسماء الأعمدة لتجنب الـ KeyError
         data.columns = [str(c).strip() for c in data.columns]
         return data
-    except: return pd.DataFrame()
+    except Exception as e:
+        st.error(f"حدث خطأ أثناء تحميل البيانات: {e}")
+        return pd.DataFrame()
 
 df = load_all_data()
 
-# 3. القائمة العلوية (أدوات -> مشاريع -> مطورين)
+# 3. القائمة العلوية
 selected = option_menu(
     menu_title=None, 
     options=["🛠️ أدوات البروكر", "🏗️ المشاريع", "🏢 المطورين"], 
@@ -88,7 +92,8 @@ if selected == "🛠️ أدوات البروكر":
         remain = p - dp_val
         st.write(f"المقدم: {dp_val:,.0f} | المتبقي: {remain:,.0f}")
         y = st.number_input("سنين القسط", value=7, min_value=1)
-        st.markdown(f"<h3 style='color:#f59e0b; text-align:center;'>{remain/(y*12):,.0f} ج.م/شهرياً</h3>", unsafe_allow_html=True)
+        monthly = remain/(y*12) if y > 0 else 0
+        st.markdown(f"<h3 style='color:#f59e0b; text-align:center;'>{monthly:,.0f} ج.م/شهرياً</h3>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with c2:
@@ -102,101 +107,107 @@ if selected == "🛠️ أدوات البروكر":
     with c3:
         st.markdown("<div style='background:#111; padding:20px; border-radius:15px; border-right:5px solid #fff;'><h3>📱 رسالة عرض</h3>", unsafe_allow_html=True)
         name = st.text_input("اسم العميل")
-        proj = st.selectbox("المشروع", df['Projects'].unique() if not df.empty else ["-"])
+        proj_options = df['Projects'].unique() if not df.empty and 'Projects' in df.columns else ["لا توجد مشاريع"]
+        proj = st.selectbox("المشروع", proj_options)
         if st.button("تجهيز النص"):
             st.code(f"أهلاً {name}، أرشح لك مشروع {proj}.. للتفاصيل تواصل معي.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 2. شاشة المشاريع (نظام الشبكة) ---
+# --- 2. شاشة المشاريع ---
 elif selected == "🏗️ المشاريع":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏗️ دليل المشاريع (شبكة ذكية)</h2>", unsafe_allow_html=True)
     
-    # الفلاتر
-    f1, f2, f3 = st.columns([2,1,1])
-    with f1: s_p = st.text_input("🔍 ابحث عن اسم المشروع...")
-    with f2: a_p = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()) if 'Area' in df.columns else ["الكل"])
-    with f3: t_p = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()) if 'Type' in df.columns else ["الكل"])
-    
-    dff_p = df.copy()
-    if s_p: dff_p = dff_p[dff_p['Projects'].str.contains(s_p, case=False, na=False)]
-    if a_p != "الكل": dff_p = dff_p[dff_p['Area'] == a_p]
-    if t_p != "الكل": dff_p = dff_p[dff_p['Type'] == t_p]
+    if not df.empty:
+        f1, f2, f3 = st.columns([2,1,1])
+        with f1: s_p = st.text_input("🔍 ابحث عن اسم المشروع...")
+        with f2: a_p = st.selectbox("📍 المنطقة", ["الكل"] + sorted(df['Area'].dropna().unique().tolist()) if 'Area' in df.columns else ["الكل"])
+        with f3: t_p = st.selectbox("🏠 النوع", ["الكل"] + sorted(df['Type'].dropna().unique().tolist()) if 'Type' in df.columns else ["الكل"])
+        
+        dff_p = df.copy()
+        if s_p and 'Projects' in dff_p.columns: dff_p = dff_p[dff_p['Projects'].str.contains(s_p, case=False, na=False)]
+        if a_p != "الكل" and 'Area' in dff_p.columns: dff_p = dff_p[dff_p['Area'] == a_p]
+        if t_p != "الكل" and 'Type' in dff_p.columns: dff_p = dff_p[dff_p['Type'] == t_p]
 
-    # Pagination
-    items_p = 9
-    pages_p = math.ceil(len(dff_p)/items_p)
-    if 'pg_p' not in st.session_state: st.session_state.pg_p = 1
-    
-    curr_p = dff_p.iloc[(st.session_state.pg_p-1)*items_p : st.session_state.pg_p*items_p]
+        items_p = 9
+        pages_p = max(1, math.ceil(len(dff_p)/items_p))
+        if 'pg_p' not in st.session_state: st.session_state.pg_p = 1
+        
+        curr_p = dff_p.iloc[(st.session_state.pg_p-1)*items_p : st.session_state.pg_p*items_p]
 
-    for i in range(0, len(curr_p), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i+j < len(curr_p):
-                row = curr_p.iloc[i+j]
-                with cols[j]:
-                    st.markdown(f"""
-                        <div class="grid-card">
-                            <div class="card-title">🏗️ {row.get('Projects','-')}</div>
-                            <div class="card-subtitle">🏢 {row.get('Developer','-')}</div>
-                            <div class="badge-gold">بدأ من: {row.get('Min_Val (Start Price)','0')}</div>
-                            <div class="stat-line"><span class="stat-label">📍 الموقع:</span><span class="stat-value">{row.get('Area','-')}</span></div>
-                            <div class="stat-line"><span class="stat-label">💰 المقدم:</span><span class="stat-value">{row.get('Down_Payment','-')}</span></div>
-                            <div class="stat-line"><span class="stat-label">⏳ التقسيط:</span><span class="stat-value">{row.get('Installments','-')}</span></div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    with st.expander("🔍 كافة تفاصيل المشروع"):
-                        st.write(row.to_dict())
+        for i in range(0, len(curr_p), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i+j < len(curr_p):
+                    row = curr_p.iloc[i+j]
+                    with cols[j]:
+                        st.markdown(f"""
+                            <div class="grid-card">
+                                <div class="card-title">🏗️ {row.get('Projects','-')}</div>
+                                <div class="card-subtitle">🏢 {row.get('Developer','-')}</div>
+                                <div class="badge-gold">بدأ من: {row.get('Min_Val (Start Price)','0')}</div>
+                                <div class="stat-line"><span class="stat-label">📍 الموقع:</span><span class="stat-value">{row.get('Area','-')}</span></div>
+                                <div class="stat-line"><span class="stat-label">💰 المقدم:</span><span class="stat-value">{row.get('Down_Payment','-')}</span></div>
+                                <div class="stat-line"><span class="stat-label">⏳ التقسيط:</span><span class="stat-value">{row.get('Installments','-')}</span></div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        with st.expander("🔍 كافة تفاصيل المشروع"):
+                            st.write(row.to_dict())
 
-    # أزرار التنقل
-    st.write("---")
-    b1, b2, b3 = st.columns([1,2,1])
-    with b1: 
-        if st.session_state.pg_p > 1:
-            if st.button("⬅️ السابق", key="p_prev"): st.session_state.pg_p -= 1; st.rerun()
-    with b2: st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.pg_p} من {pages_p}</p>", unsafe_allow_html=True)
-    with b3:
-        if st.session_state.pg_p < pages_p:
-            if st.button("التالي ➡️", key="p_next"): st.session_state.pg_p += 1; st.rerun()
+        st.write("---")
+        b1, b2, b3 = st.columns([1,2,1])
+        with b1: 
+            if st.session_state.pg_p > 1:
+                if st.button("⬅️ السابق", key="p_prev"): st.session_state.pg_p -= 1; st.rerun()
+        with b2: st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.pg_p} من {pages_p}</p>", unsafe_allow_html=True)
+        with b3:
+            if st.session_state.pg_p < pages_p:
+                if st.button("التالي ➡️", key="p_next"): st.session_state.pg_p += 1; st.rerun()
 
-# --- 3. شاشة المطورين (نظام الشبكة) ---
+# --- 3. شاشة المطورين ---
 elif selected == "🏢 المطورين":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🏢 سجل المطورين العقاريين</h2>", unsafe_allow_html=True)
     
-    devs = df[['Developer', 'Owner', 'Detailed_Info']].drop_duplicates(subset=['Developer']).reset_index(drop=True)
-    s_d = st.text_input("🔍 ابحث عن اسم المطور...")
-    if s_d: devs = devs[devs['Developer'].str.contains(s_d, case=False, na=False)]
+    if not df.empty:
+        # استخراج المطورين مع تأمين وجود الأعمدة
+        cols_to_use = [c for c in ['Developer', 'Owner', 'Detailed_Info'] if c in df.columns]
+        if 'Developer' in df.columns:
+            devs = df[cols_to_use].drop_duplicates(subset=['Developer']).reset_index(drop=True)
+            
+            s_d = st.text_input("🔍 ابحث عن اسم المطور...")
+            if s_d: devs = devs[devs['Developer'].str.contains(s_d, case=False, na=False)]
 
-    items_d = 9
-    pages_d = math.ceil(len(devs)/items_d)
-    if 'pg_d' not in st.session_state: st.session_state.pg_d = 1
-    
-    curr_d = devs.iloc[(st.session_state.pg_d-1)*items_d : st.session_state.pg_d*items_d]
+            items_d = 9
+            pages_d = max(1, math.ceil(len(devs)/items_d))
+            if 'pg_d' not in st.session_state: st.session_state.pg_d = 1
+            
+            curr_d = devs.iloc[(st.session_state.pg_d-1)*items_d : st.session_state.pg_d*items_d]
 
-    for i in range(0, len(curr_d), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i+j < len(curr_d):
-                row = curr_d.iloc[i+j]
-                with cols[j]:
-                    st.markdown(f"""
-                        <div class="grid-card">
-                            <div class="card-title">🏢 {row['Developer']}</div>
-                            <div class="card-subtitle">👤 المالك: {row['Owner']}</div>
-                            <div style="font-size:12px; color:#bbb; flex-grow:1; overflow:hidden;">
-                                <b>نبذة:</b><br>{str(row['Detailed_Info'])[:150]}...
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    with st.expander("📄 سابقة الأعمال الكاملة"):
-                        st.write(row['Detailed_Info'])
+            for i in range(0, len(curr_d), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    if i+j < len(curr_d):
+                        row = curr_d.iloc[i+j]
+                        with cols[j]:
+                            st.markdown(f"""
+                                <div class="grid-card">
+                                    <div class="card-title">🏢 {row.get('Developer', '-')}</div>
+                                    <div class="card-subtitle">👤 المالك: {row.get('Owner', 'غير مسجل')}</div>
+                                    <div style="font-size:12px; color:#bbb; flex-grow:1; overflow:hidden;">
+                                        <b>نبذة:</b><br>{str(row.get('Detailed_Info', 'لا توجد تفاصيل'))[:150]}...
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            with st.expander("📄 سابقة الأعمال"):
+                                st.write(row.get('Detailed_Info', 'لا توجد بيانات إضافية'))
 
-    st.write("---")
-    d1, d2, d3 = st.columns([1,2,1])
-    with d1:
-        if st.session_state.pg_d > 1:
-            if st.button("⬅️ السابق", key="d_prev"): st.session_state.pg_d -= 1; st.rerun()
-    with d2: st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.pg_d} من {pages_d}</p>", unsafe_allow_html=True)
-    with d3:
-        if st.session_state.pg_d < pages_d:
-            if st.button("التالي ➡️", key="d_next"): st.session_state.pg_d += 1; st.rerun()
+            st.write("---")
+            d1, d2, d3 = st.columns([1,2,1])
+            with d1:
+                if st.session_state.pg_d > 1:
+                    if st.button("⬅️ السابق", key="d_prev"): st.session_state.pg_d -= 1; st.rerun()
+            with d2: st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.pg_d} من {pages_d}</p>", unsafe_allow_html=True)
+            with d3:
+                if st.session_state.pg_d < pages_d:
+                    if st.button("التالي ➡️", key="d_next"): st.session_state.pg_d += 1; st.rerun()
+        else:
+            st.warning("لم يتم العثور على عمود المطورين في البيانات.")
