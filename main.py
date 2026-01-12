@@ -6,7 +6,7 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. التنسيق (CSS) المحسن لعرض البيانات الكثيرة
+# 2. التنسيق (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -18,12 +18,12 @@ st.markdown("""
     .pro-card { 
         background: #111; border: 1px solid #222; border-top: 4px solid #f59e0b; 
         border-radius: 12px; padding: 18px; margin-bottom: 10px; 
-        min-height: 320px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;
+        min-height: 300px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;
     }
     .card-main-title { color: #f59e0b; font-size: 19px !important; font-weight: 900; margin-bottom: 5px; }
     .dev-label { color: #888; font-size: 14px; margin-bottom: 12px; }
     .stat-row { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; color: #ccc; border-bottom: 1px solid #1a1a1a; padding-bottom: 4px; }
-    .stat-val { color: #f59e0b; font-weight: bold; text-align: left; padding-left: 5px; }
+    .stat-val { color: #f59e0b; font-weight: bold; text-align: left; }
     .advantage-box { background: #1a150b; color: #f59e0b; font-size: 12px; padding: 8px; border-radius: 5px; margin-top: 10px; border: 1px dashed #f59e0b; }
     .stButton button { width: 100%; border-radius: 8px; font-weight: bold; height: 40px; }
     </style>
@@ -48,19 +48,19 @@ selected = option_menu(None, ["🛠️ أدوات البروكر", "🏗️ ال
 
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 
-# --- 🏗️ شاشة المشاريع ---
+# --- 🏗️ شاشة المشاريع (بدون زر عرض التفاصيل) ---
 if selected == "🏗️ المشاريع":
     if not df.empty:
         c_main, c_side = st.columns([0.7, 0.3])
         with c_main:
-            st.markdown("<h2 style='color:#f59e0b;'>🏗️ دليل المشاريع التفصيلي</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='color:#f59e0b;'>🏗️ دليل المشاريع</h2>", unsafe_allow_html=True)
             
             f1, f2 = st.columns(2)
             with f1: s_p = st.text_input("🔍 ابحث عن اسم المشروع...")
             with f2: 
                 area_col = 'Area' if 'Area' in df.columns else df.columns[0]
                 areas = ["الكل"] + sorted(df[area_col].unique().tolist())
-                a_p = st.selectbox("📍 تصفية حسب المنطقة", areas)
+                a_p = st.selectbox("📍 المنطقة", areas)
             
             dff = df.copy()
             name_col = 'Project Name' if 'Project Name' in df.columns else 'Projects'
@@ -80,33 +80,24 @@ if selected == "🏗️ المشاريع":
                         if i+j < len(curr_slice):
                             row = curr_slice.iloc[i+j]
                             with cols[j]:
-                                # استخراج البيانات المطلوبة
-                                p_name = row.get(name_col, 'غير مسمى')
-                                dev = row.get('Developer', 'مطور غير محدد')
-                                consultant = row.get('Consultant', 'غير محدد')
-                                size = row.get('Size (Acres)', 'غير محدد')
-                                units = row.get('شقق/فيلات', 'غير محدد')
-                                advantage = row.get('Competitive Advantage', 'لا يوجد تفاصيل')
-
+                                # عرض البيانات مباشرة داخل الكارت
                                 st.markdown(f"""
                                     <div class="pro-card">
                                         <div>
-                                            <div class="card-main-title">{p_name}</div>
-                                            <div class="dev-label">{dev}</div>
-                                            <div class="stat-row"><span>👷 الاستشاري:</span><span class="stat-val">{consultant}</span></div>
-                                            <div class="stat-row"><span>📏 المساحة:</span><span class="stat-val">{size} فدان</span></div>
-                                            <div class="stat-row"><span>🏠 النوع:</span><span class="stat-val">{units}</span></div>
-                                            <div class="stat-row"><span>📍 المنطقة:</span><span class="stat-val">{row.get('Area', '-')}</span></div>
+                                            <div class="card-main-title">{row.get(name_col, 'غير مسمى')}</div>
+                                            <div class="dev-label">{row.get('Developer', '-')}</div>
+                                            <div class="stat-row"><span>👷 الاستشاري:</span><span class="stat-val">{row.get('Consultant', '-')}</span></div>
+                                            <div class="stat-row"><span>📏 المساحة:</span><span class="stat-val">{row.get('Size (Acres)', '-')} فدان</span></div>
+                                            <div class="stat-row"><span>🏠 النوع:</span><span class="stat-val">{row.get('شقق/فيلات', '-')}</span></div>
+                                            <div class="stat-row"><span>📍 الموقع:</span><span class="stat-val">{row.get('Area', '-')}</span></div>
                                         </div>
                                         <div class="advantage-box">
-                                            <b>⭐ الميزة التنافسية:</b><br>{advantage[:80]}...
+                                            <b>⭐ الميزة التنافسية:</b><br>{row.get('Competitive Advantage', 'لا يوجد تفاصيل')[:100]}
                                         </div>
                                     </div>
                                 """, unsafe_allow_html=True)
-                                with st.expander("🔍 عرض كل البيانات"):
-                                    st.write(row.to_dict())
             
-            # أزرار التنقل
+            # أزرار التنقل السفلية
             st.write("---")
             nav1, nav2, nav3 = st.columns([1, 2, 1])
             with nav3:
@@ -119,8 +110,8 @@ if selected == "🏗️ المشاريع":
         
         with c_side: st.write("")
 
-# --- باقي الشاشات تظل كما هي لضمان استقرار التطبيق ---
+# --- باقي الأجزاء (المطورين والأدوات) تظل كما هي ---
 elif selected == "🏢 المطورين":
-    st.info("شاشة المطورين تعمل بنظام الـ 70/30 والشبكة.")
+    st.info("شاشة المطورين قيد العمل.")
 elif selected == "🛠️ أدوات البروكر":
-    st.info("أدوات الحساب (القسط و ROI) جاهزة.")
+    st.info("أدوات الحساب جاهزة.")
