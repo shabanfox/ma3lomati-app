@@ -6,120 +6,138 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منصة معلوماتي PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. التنسيق الجمالي (CSS)
+# 2. التنسيق الجمالي (CSS) - تحسين شكل الفلاتر
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     .block-container { padding-top: 0rem !important; }
     #MainMenu, footer, header, [data-testid="stHeader"] {visibility: hidden; display: none;}
     [data-testid="stAppViewContainer"] { background-color: #050505; direction: RTL; text-align: right; font-family: 'Cairo', sans-serif; }
-    .stButton > button[key="logout_btn"] { background-color: #ff4b4b !important; color: white !important; border: none !important; padding: 5px 20px !important; border-radius: 8px !important; }
+    
     .main-header { background: linear-gradient(90deg, #111 0%, #000 100%); padding: 20px; border-radius: 0 0 20px 20px; border-right: 15px solid #f59e0b; text-align: center; margin-bottom: 25px; }
     .header-title { font-weight: 900; font-size: 32px !important; color: #f59e0b; margin: 0; }
-    .pro-card { background: #111; border: 1px solid #222; border-top: 5px solid #f59e0b; border-radius: 15px; padding: 20px; margin-bottom: 15px; text-align: center; height: 100%; }
+
+    /* استايل الفلاتر المحدث */
+    .stSelectbox label, .stTextInput label { color: #f59e0b !important; font-weight: bold !important; margin-bottom: 8px !important; }
+    div[data-baseweb="select"] { background-color: #111 !important; border: 1px solid #333 !important; border-radius: 10px !important; }
+    div[data-baseweb="select"]:hover { border-color: #f59e0b !important; }
+    input { background-color: #111 !important; color: white !important; border-radius: 10px !important; }
+
+    .pro-card { background: #111; border: 1px solid #222; border-top: 5px solid #f59e0b; border-radius: 15px; padding: 20px; margin-bottom: 15px; text-align: center; height: 100%; transition: 0.3s; }
+    .pro-card:hover { border-color: #f59e0b; transform: translateY(-5px); }
+    .stat-label { color: #888; font-size: 13px; }
     .stat-value { color: #f59e0b; font-weight: bold; }
-    .stSelectbox div[data-baseweb="select"] { background-color: #111 !important; }
-    .stTextInput input { background-color: #111 !important; color: white !important; }
+    .stButton button { background: #1a1a1a !important; color: #f59e0b !important; border: 1px solid #333 !important; font-weight: bold; border-radius: 8px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. جلب البيانات مع تنظيف أسماء الأعمدة
+# 3. جلب البيانات
 @st.cache_data(ttl=300)
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
         data = pd.read_csv(url)
-        # تنظيف أسماء الأعمدة من المسافات المخفية
         data.columns = [str(c).strip() for c in data.columns]
         return data.fillna("غير متوفر").astype(str)
     except: return pd.DataFrame()
 
 df = load_data()
 
-# وظيفة مساعدة للحصول على القيمة حتى لو اسم العمود اختلف
-def get_val(row, target_names, default="غير متوفر"):
-    for name in target_names:
+# دوال مساعدة للبحث الآمن عن الأعمدة
+def find_column(df, possible_names):
+    for name in possible_names:
+        if name in df.columns: return name
+    return None
+
+def get_row_val(row, possible_names):
+    for name in possible_names:
         if name in row: return row[name]
-    return default
+    return "غير متوفر"
 
-# 4. واجهة المستخدم
-t_c1, t_c2 = st.columns([10, 1.5])
-with t_c2:
-    if st.button("تسجيل الخروج", key="logout_btn"):
-        st.session_state.clear()
-        st.rerun()
-
+# 4. الواجهة الرئيسية
 st.markdown('<div class="main-header"><h1 class="header-title">🏢 مـنـصـة مـعـلـومـاتـي PRO</h1></div>', unsafe_allow_html=True)
 
-selected = option_menu(None, ["🛠️ الأدوات", "🏗️ المشاريع", "🏢 المطورين"], icons=["tools", "building", "person-vcard"], orientation="horizontal", 
+selected = option_menu(None, ["🛠️ الأدوات", "🏗️ المشاريع", "🏢 المطورين"], 
+                       icons=["tools", "building", "person-vcard"], 
+                       orientation="horizontal", 
                        styles={"container": {"background-color": "#000", "border-bottom": "3px solid #f59e0b"}})
 
 if 'p_page' not in st.session_state: st.session_state.p_page = 0
 
 # --- 🏗️ شاشة المشاريع ---
 if selected == "🏗️ المشاريع":
-    st.markdown("<h2 style='color:#f59e0b;'>🏗️ دليل المشاريع</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#f59e0b; margin-bottom:20px;'>🏗️ دليل المشاريع العقارية</h3>", unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
-    search_q = col1.text_input("🔍 ابحث عن مشروع أو مطور...")
+    # تحديد عمود المنطقة
+    area_col = find_column(df, ['Area', 'المنطقة', 'الموقع', 'Location'])
     
-    # التأكد من وجود عمود المنطقة
-    area_col = 'Area' if 'Area' in df.columns else (df.columns[0] if not df.empty else None)
-    areas = ["كل المناطق"] + sorted(df[area_col].unique().tolist()) if area_col else ["الكل"]
-    area_f = col2.selectbox("📍 المنطقة", areas)
+    # صف البحث والفلاتر
+    f_col1, f_col2 = st.columns([2, 1])
+    with f_col1:
+        search_q = st.text_input("🔍 ابحث باسم المشروع أو المطور...", placeholder="اكتب للبحث...")
+    
+    with f_col2:
+        if area_col:
+            unique_areas = ["الكل"] + sorted(df[area_col].unique().tolist())
+            area_choice = st.selectbox("📍 تصفية حسب المنطقة", unique_areas)
+        else:
+            area_choice = "الكل"
+            st.warning("عمود المنطقة غير موجود")
 
+    # تطبيق الفلترة
     filtered_df = df.copy()
     if search_q:
-        # بحث مرن في كل الأعمدة المتاحة
         filtered_df = filtered_df[filtered_df.apply(lambda r: search_q.lower() in r.astype(str).str.lower().values, axis=1)]
-    if area_f != "كل المناطق" and area_col:
-        filtered_df = filtered_df[filtered_df[area_col] == area_f]
+    if area_choice != "الكل" and area_col:
+        filtered_df = filtered_df[filtered_df[area_col] == area_choice]
 
-    # عرض الكروت
-    items = 6
-    total_pages = max(1, math.ceil(len(filtered_df) / items))
-    if st.session_state.p_page >= total_pages: st.session_state.p_page = 0
+    # عرض النتائج
+    items_per_page = 6
+    total_pages = max(1, math.ceil(len(filtered_df) / items_per_page))
     
-    curr = filtered_df.iloc[st.session_state.p_page * items : (st.session_state.p_page + 1) * items]
+    # تصفير الصفحة عند تغيير الفلتر
+    if st.session_state.p_page >= total_pages: st.session_state.p_page = 0
 
-    for i in range(0, len(curr), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i+j < len(curr):
-                row = curr.iloc[i+j]
-                with cols[j]:
-                    # جلب القيم بأمان بغض النظر عن اسم العمود في الشيت
-                    p_name = get_val(row, ['Project Name', 'Project', 'المشروع', 'Projects'])
-                    dev_name = get_val(row, ['Developer', 'المطور', 'Company'])
-                    area_name = get_val(row, ['Area', 'المنطقة', 'Location'])
-                    unit_type = get_val(row, ['شقق/فيلات', 'Type', 'النوع', 'unit type'])
-                    size = get_val(row, ['Size (Acres)', 'المساحة', 'Size'])
+    curr_items = filtered_df.iloc[st.session_state.p_page * items_per_page : (st.session_state.p_page + 1) * items_per_page]
 
-                    st.markdown(f"""
-                        <div class="pro-card">
-                            <h3 style="color:#f59e0b;">{p_name}</h3>
-                            <p style="color:#888;">{dev_name}</p>
-                            <hr style="border-color:#222">
-                            <div style="text-align:right; font-size:14px;">
-                                <p>📍 المنطقة: <span class="stat-value">{area_name}</span></p>
-                                <p>🏠 النوع: <span class="stat-value">{unit_type}</span></p>
-                                <p>📏 المساحة: <span class="stat-value">{size}</span></p>
+    if not curr_items.empty:
+        for i in range(0, len(curr_items), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i+j < len(curr_items):
+                    row = curr_items.iloc[i+j]
+                    with cols[j]:
+                        p_name = get_row_val(row, ['Project Name', 'Project', 'المشروع'])
+                        dev_name = get_row_val(row, ['Developer', 'المطور'])
+                        loc_name = get_row_val(row, ['Area', 'المنطقة'])
+                        type_name = get_row_val(row, ['شقق/فيلات', 'النوع', 'Type'])
+                        
+                        st.markdown(f"""
+                            <div class="pro-card">
+                                <h3 style="color:#f59e0b; margin-bottom:5px;">{p_name}</h3>
+                                <p style="color:#666; font-size:14px;">{dev_name}</p>
+                                <hr style="border-color:#222">
+                                <div style="text-align:right;">
+                                    <p><span class="stat-label">📍 المنطقة:</span> <span class="stat-value">{loc_name}</span></p>
+                                    <p><span class="stat-label">🏠 النوع:</span> <span class="stat-value">{type_name}</span></p>
+                                </div>
                             </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-    # التنقل
-    st.write("---")
-    n1, n2, n3 = st.columns([1, 2, 1])
-    if n3.button("الصفحة التالية ⬅️") and st.session_state.p_page < total_pages -1:
-        st.session_state.p_page += 1
-        st.rerun()
-    n2.markdown(f"<p style='text-align:center;'>{st.session_state.p_page + 1} / {total_pages}</p>", unsafe_allow_html=True)
-    if n1.button("➡️ الصفحة السابقة") and st.session_state.p_page > 0:
-        st.session_state.p_page -= 1
-        st.rerun()
+                        """, unsafe_allow_html=True)
+        
+        # أزرار التنقل
+        st.write("---")
+        n1, n2, n3 = st.columns([1, 2, 1])
+        if n3.button("التالي ⬅️"): 
+            st.session_state.p_page += 1
+            st.rerun()
+        n2.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.p_page + 1} من {total_pages}</p>", unsafe_allow_html=True)
+        if n1.button("➡️ السابق") and st.session_state.p_page > 0: 
+            st.session_state.p_page -= 1
+            st.rerun()
+    else:
+        st.error("❌ لا توجد نتائج تطابق بحثك.")
 
 elif selected == "🏢 المطورين":
     st.info("قسم المطورين جاهز.")
 elif selected == "🛠️ الأدوات":
-    st.info("الأدوات جاهزة.")
+    st.info("قسم الأدوات جاهز.")
