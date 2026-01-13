@@ -16,13 +16,13 @@ ui = {
         'title': "منصة معلوماتي العقارية", 'projects': "🏗️ المشاريع", 'devs': "🏢 المطورين", 
         'tools': "🛠️ الأدوات", 'logout': "🚪 خروج", 'search': "🔍 بحث...", 
         'filter_area': "📍 المنطقة", 'details': "🔎 التفاصيل", 'next': "التالي ⬅️", 'prev': "➡️ السابق", 
-        'dir': "rtl", 'align': "right"
+        'dir': "rtl", 'align': "right", 'area_size': "📐 مساحة المشروع"
     },
     'English': {
         'title': "Ma3lomati Real Estate", 'projects': "🏗️ Projects", 'devs': "🏢 Developers", 
         'tools': "🛠️ Tools", 'logout': "🚪 Logout", 'search': "🔍 Search...", 
         'filter_area': "📍 Area", 'details': "🔎 Details", 'next': "Next ➡️", 'prev': "⬅️ Prev", 
-        'dir': "ltr", 'align': "left"
+        'dir': "ltr", 'align': "left", 'area_size': "📐 Project Area"
     }
 }
 T = ui[st.session_state.lang]
@@ -45,20 +45,18 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 4. وظيفة جلب البيانات الذكية
+# 4. جلب البيانات
 @st.cache_data(ttl=60)
 def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        df_p = pd.read_csv(u_p)
-        df_d = pd.read_csv(u_d)
-        # تنظيف أسماء الأعمدة من المسافات
+        df_p = pd.read_csv(u_p).fillna("").astype(str)
+        df_d = pd.read_csv(u_d).fillna("").astype(str)
         df_p.columns = df_p.columns.str.strip()
         df_d.columns = df_d.columns.str.strip()
-        return df_p.fillna("").astype(str), df_d.fillna("").astype(str)
-    except Exception as e:
-        st.error(f"خطأ في تحميل الشيت: {e}")
+        return df_p, df_d
+    except:
         return pd.DataFrame(), pd.DataFrame()
 
 df_p, df_d = load_data()
@@ -71,7 +69,7 @@ if not st.session_state.auth:
         if pwd == "2026": st.session_state.auth = True; st.rerun()
     st.stop()
 
-# --- الهيدر والتحكم ---
+# التحكم العلوي
 c1, c2 = st.columns([1, 1])
 with c1:
     if st.button(T['logout']): st.session_state.auth = False; st.rerun()
@@ -83,12 +81,11 @@ with c2:
 st.markdown(f'<div class="oval-header"><h1 class="header-title">{T["title"]}</h1></div>', unsafe_allow_html=True)
 menu = option_menu(None, [T['tools'], T['projects'], T['devs']], icons=["tools", "building", "person-vcard"], orientation="horizontal")
 
-# توزيع المساحة 70%
 if st.session_state.lang == 'Arabic': main_col, _ = st.columns([0.7, 0.3])
 else: _, main_col = st.columns([0.3, 0.7])
 
 with main_col:
-    # --- قسم المشاريع ---
+    # --- قسم المشاريع (مع خانة المساحة) ---
     if menu == T['projects']:
         st.markdown(f"<h2 style='color:#f59e0b;'>{T['projects']}</h2>", unsafe_allow_html=True)
         st.markdown("<div class='filter-box'>", unsafe_allow_html=True)
@@ -100,8 +97,8 @@ with main_col:
         st.markdown("</div>", unsafe_allow_html=True)
 
         dff_p = df_p.copy()
-        if s_p and 'Project Name' in dff_p.columns: dff_p = dff_p[dff_p['Project Name'].str.contains(s_p, case=False)]
-        if sel_a != "الكل" and 'Area' in dff_p.columns: dff_p = dff_p[dff_p['Area'] == sel_a]
+        if s_p: dff_p = dff_p[dff_p['Project Name'].str.contains(s_p, case=False)]
+        if sel_a != "الكل": dff_p = dff_p[dff_p['Area'] == sel_a]
 
         if not dff_p.empty:
             grid_limit = 9
@@ -115,47 +112,51 @@ with main_col:
                     if i+j < len(curr_p):
                         row = curr_p.iloc[i+j]
                         with cols[j]:
-                            st.markdown(f"<div class='grid-card'><h3 style='color:#f59e0b; font-size:16px;'>{row.get('Project Name', 'N/A')}</h3><p style='font-size:13px;'>🏢 {row.get('Developer', 'N/A')}</p><p style='color:#888;'>📍 {row.get('Area', 'N/A')}</p></div>", unsafe_allow_html=True)
+                            st.markdown(f"""
+                                <div class='grid-card'>
+                                    <h3 style='color:#f59e0b; font-size:16px;'>{row.get('Project Name', 'N/A')}</h3>
+                                    <p style='font-size:13px;'>🏢 {row.get('Developer', 'N/A')}</p>
+                                    <p style='color:#888;'>📍 {row.get('Area', 'N/A')}</p>
+                                </div>
+                            """, unsafe_allow_html=True)
                             with st.expander(T['details']):
-                                for col in ['Consultant', 'Project Features', 'Project Flaws']:
-                                    if col in row: st.write(f"**{col}:** {row[col]}")
+                                # عرض مساحة المشروع هنا
+                                area_val = row.get('Project Area', 'غير مسجل')
+                                st.markdown(f"**{T['area_size']}:** {area_val}")
+                                st.divider()
+                                st.write(f"👷 **الاستشاري:** {row.get('Consultant', 'N/A')}")
+                                st.info(f"✅ **المميزات:** {row.get('Project Features', 'N/A')}")
+                                st.warning(f"⚠️ **العيوب:** {row.get('Project Flaws', 'N/A')}")
             
+            # أزرار التنقل
             st.write("---")
             b1, b2, _ = st.columns([0.2, 0.2, 0.6])
             if b1.button(T['next']) and st.session_state.idx_p < total_pages-1: st.session_state.idx_p += 1; st.rerun()
             if b2.button(T['prev']) and st.session_state.idx_p > 0: st.session_state.idx_p -= 1; st.rerun()
-        else: st.warning("لا توجد بيانات مشاريع للعرض.")
 
     # --- قسم المطورين ---
     elif menu == T['devs']:
         st.markdown(f"<h2 style='color:#f59e0b;'>{T['devs']}</h2>", unsafe_allow_html=True)
-        s_d = st.text_input("🔍 بحث عن مطور...", key='s_d')
+        s_d = st.text_input("🔍 بحث عن مطور...")
         dff_d = df_d.copy()
-        
-        # البحث في عمود Developer Name أو Developer حسب المتاح
-        dev_col = 'Developer Name' if 'Developer Name' in dff_d.columns else ('Developer' if 'Developer' in dff_d.columns else None)
-        
-        if dev_col and s_d: dff_d = dff_d[dff_d[dev_col].str.contains(s_d, case=False)]
+        dev_col = 'Developer Name' if 'Developer Name' in dff_d.columns else 'Developer'
+        if s_d and dev_col in dff_d.columns: dff_d = dff_d[dff_d[dev_col].str.contains(s_d, case=False)]
 
-        if not dff_d.empty:
-            for i in range(0, len(dff_d), 3):
-                cols = st.columns(3)
-                for j in range(3):
-                    if i + j < len(dff_d):
-                        row = dff_d.iloc[i + j]
-                        with cols[j]:
-                            st.markdown(f"<div class='grid-card'><h4 style='color:#f59e0b;'>{row.get(dev_col, 'N/A')}</h4><p>👤 المالك: {row.get('Owner', 'N/A')}</p></div>", unsafe_allow_html=True)
-                            with st.expander("📖 تفاصيل المطور"):
-                                for col in ['Detailed_Info', 'History', 'Previous Work']:
-                                    if col in row:
-                                        st.markdown(f"**{col}:**")
-                                        st.write(row[col])
-                                        st.divider()
-        else: st.warning("لا توجد بيانات مطورين للعرض.")
+        for i in range(0, len(dff_d), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i + j < len(dff_d):
+                    row = dff_d.iloc[i + j]
+                    with cols[j]:
+                        st.markdown(f"<div class='grid-card'><h4 style='color:#f59e0b;'>{row.get(dev_col, 'N/A')}</h4><p>👤 المالك: {row.get('Owner', 'N/A')}</p></div>", unsafe_allow_html=True)
+                        with st.expander("📖 تفاصيل المطور"):
+                            st.write(f"📝 **History:** {row.get('History', 'N/A')}")
+                            st.write(f"🏗️ **Previous Work:** {row.get('Previous Work', 'N/A')}")
+                            st.write(f"ℹ️ **معلومات:** {row.get('Detailed_Info', 'N/A')}")
 
     # --- أدوات البروكر ---
     elif menu == T['tools']:
         st.markdown(f"<h2 style='color:#f59e0b;'>{T['tools']}</h2>", unsafe_allow_html=True)
-        price = st.number_input("سعر الوحدة", 1000000)
-        years = st.slider("السنوات", 1, 15, 8)
-        st.metric("القسط الشهري التقديري", f"{price/(years*12):,.0f} ج.م")
+        p = st.number_input("سعر الوحدة", 1000000)
+        y = st.slider("السنوات", 1, 15, 8)
+        st.metric("القسط الشهري", f"{p/(y*12):,.0f} ج.م")
