@@ -15,14 +15,14 @@ ui = {
     'Arabic': {
         'title': "منصة معلوماتي العقارية", 'projects': "🏗️ المشاريع", 'devs': "🏢 المطورين", 
         'tools': "🛠️ الأدوات", 'logout': "🚪 خروج", 'search': "🔍 بحث...", 
-        'filter_area': "📍 المنطقة", 'details': "🔎 التفاصيل", 'next': "التالي ⬅️", 'prev': "➡️ السابق", 
-        'dir': "rtl", 'align': "right", 'area_size': "📐 مساحة المشروع"
+        'filter_area': "📍 تصفية بالمنطقة", 'details': "🔎 التفاصيل", 'next': "التالي ⬅️", 'prev': "➡️ السابق", 
+        'dir': "rtl", 'align': "right", 'area_label': "📍 المنطقة", 'size_label': "📐 المساحة"
     },
     'English': {
         'title': "Ma3lomati Real Estate", 'projects': "🏗️ Projects", 'devs': "🏢 Developers", 
         'tools': "🛠️ Tools", 'logout': "🚪 Logout", 'search': "🔍 Search...", 
-        'filter_area': "📍 Area", 'details': "🔎 Details", 'next': "Next ➡️", 'prev': "⬅️ Prev", 
-        'dir': "ltr", 'align': "left", 'area_size': "📐 Project Area"
+        'filter_area': "📍 Area Filter", 'details': "🔎 Details", 'next': "Next ➡️", 'prev': "⬅️ Prev", 
+        'dir': "ltr", 'align': "left", 'area_label': "📍 Area", 'size_label': "📐 Size"
     }
 }
 T = ui[st.session_state.lang]
@@ -37,9 +37,9 @@ st.markdown(f"""
         background-color: #050505; direction: {T['dir']} !important; 
         text-align: {T['align']} !important; font-family: 'Cairo', sans-serif; 
     }}
-    .oval-header {{ background-color: #000; border: 3px solid #f59e0b; border-radius: 50px; padding: 10px 30px; width: fit-content; margin: 10px auto 20px auto; text-align: center; }}
-    .header-title {{ color: #f59e0b; font-weight: 900; font-size: 26px !important; margin: 0; }}
-    .grid-card {{ background: #111; border: 1px solid #222; border-top: 4px solid #f59e0b; border-radius: 12px; padding: 15px; min-height: 160px; margin-bottom: 10px; }}
+    .oval-header {{ background-color: #000; border: 3px solid #f59e0b; border-radius: 50px; padding: 10px 30px; width: fit-content; margin: 10px auto 10px auto; text-align: center; }}
+    .header-title {{ color: #f59e0b; font-weight: 900; font-size: 24px !important; margin: 0; }}
+    .grid-card {{ background: #111; border: 1px solid #222; border-top: 4px solid #f59e0b; border-radius: 12px; padding: 15px; min-height: 150px; margin-bottom: 10px; }}
     .filter-box {{ background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px; }}
     .stButton button {{ background-color: #1a1a1a !important; color: #f59e0b !important; border: 1px solid #333 !important; width: 100% !important; }}
     </style>
@@ -70,10 +70,10 @@ if not st.session_state.auth:
     st.stop()
 
 # التحكم العلوي
-c1, c2 = st.columns([1, 1])
-with c1:
+top_c1, top_c2 = st.columns([1, 1])
+with top_c1:
     if st.button(T['logout']): st.session_state.auth = False; st.rerun()
-with c2:
+with top_c2:
     if st.button("🇺🇸 EN / 🇪🇬 AR"):
         st.session_state.lang = 'English' if st.session_state.lang == 'Arabic' else 'Arabic'
         st.rerun()
@@ -85,15 +85,15 @@ if st.session_state.lang == 'Arabic': main_col, _ = st.columns([0.7, 0.3])
 else: _, main_col = st.columns([0.3, 0.7])
 
 with main_col:
-    # --- قسم المشاريع (مع خانة المساحة) ---
+    # --- قسم المشاريع ---
     if menu == T['projects']:
         st.markdown(f"<h2 style='color:#f59e0b;'>{T['projects']}</h2>", unsafe_allow_html=True)
         st.markdown("<div class='filter-box'>", unsafe_allow_html=True)
         f1, f2 = st.columns(2)
         with f1: s_p = st.text_input(T['search'], key='s_p')
         with f2: 
-            areas = ["الكل"] + sorted(df_p['Area'].unique().tolist()) if 'Area' in df_p.columns else ["الكل"]
-            sel_a = st.selectbox(T['filter_area'], areas)
+            areas_list = ["الكل"] + sorted(df_p['Area'].unique().tolist()) if 'Area' in df_p.columns else ["الكل"]
+            sel_a = st.selectbox(T['filter_area'], areas_list)
         st.markdown("</div>", unsafe_allow_html=True)
 
         dff_p = df_p.copy()
@@ -112,23 +112,16 @@ with main_col:
                     if i+j < len(curr_p):
                         row = curr_p.iloc[i+j]
                         with cols[j]:
-                            st.markdown(f"""
-                                <div class='grid-card'>
-                                    <h3 style='color:#f59e0b; font-size:16px;'>{row.get('Project Name', 'N/A')}</h3>
-                                    <p style='font-size:13px;'>🏢 {row.get('Developer', 'N/A')}</p>
-                                    <p style='color:#888;'>📍 {row.get('Area', 'N/A')}</p>
-                                </div>
-                            """, unsafe_allow_html=True)
+                            st.markdown(f"<div class='grid-card'><h3 style='color:#f59e0b; font-size:16px;'>{row.get('Project Name', 'N/A')}</h3><p style='font-size:13px;'>🏢 {row.get('Developer', 'N/A')}</p></div>", unsafe_allow_html=True)
                             with st.expander(T['details']):
-                                # عرض مساحة المشروع هنا
-                                area_val = row.get('Project Area', 'غير مسجل')
-                                st.markdown(f"**{T['area_size']}:** {area_val}")
+                                # إضافة Area و Project Area هنا
+                                st.write(f"{T['area_label']}: {row.get('Area', 'غير محدد')}")
+                                st.write(f"{T['size_label']}: {row.get('Project Area', 'غير مسجل')}")
                                 st.divider()
-                                st.write(f"👷 **الاستشاري:** {row.get('Consultant', 'N/A')}")
-                                st.info(f"✅ **المميزات:** {row.get('Project Features', 'N/A')}")
-                                st.warning(f"⚠️ **العيوب:** {row.get('Project Flaws', 'N/A')}")
+                                st.write(f"👷 الاستشاري: {row.get('Consultant', 'N/A')}")
+                                st.info(f"✅ المميزات: {row.get('Project Features', 'N/A')}")
+                                st.warning(f"⚠️ العيوب: {row.get('Project Flaws', 'N/A')}")
             
-            # أزرار التنقل
             st.write("---")
             b1, b2, _ = st.columns([0.2, 0.2, 0.6])
             if b1.button(T['next']) and st.session_state.idx_p < total_pages-1: st.session_state.idx_p += 1; st.rerun()
@@ -150,9 +143,9 @@ with main_col:
                     with cols[j]:
                         st.markdown(f"<div class='grid-card'><h4 style='color:#f59e0b;'>{row.get(dev_col, 'N/A')}</h4><p>👤 المالك: {row.get('Owner', 'N/A')}</p></div>", unsafe_allow_html=True)
                         with st.expander("📖 تفاصيل المطور"):
-                            st.write(f"📝 **History:** {row.get('History', 'N/A')}")
+                            st.write(f"📝 **عن الشركة:** {row.get('Detailed_Info', 'N/A')}")
+                            st.write(f"⏳ **History:** {row.get('History', 'N/A')}")
                             st.write(f"🏗️ **Previous Work:** {row.get('Previous Work', 'N/A')}")
-                            st.write(f"ℹ️ **معلومات:** {row.get('Detailed_Info', 'N/A')}")
 
     # --- أدوات البروكر ---
     elif menu == T['tools']:
