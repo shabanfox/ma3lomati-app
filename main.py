@@ -1,109 +1,98 @@
 import streamlit as st
 import pandas as pd
-import math
-import urllib.parse
-from datetime import datetime
-from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة الأساسية
-st.set_page_config(
-    page_title="Ma3lomati PRO 2026",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+# إعدادات الصفحة
+st.set_page_config(page_title="معلوماتي العقارية - Dashboard", layout="wide", page_icon="🏢")
 
-# 2. وظيفة جلب البيانات (تخزين مؤقت)
-@st.cache_data(ttl=600)
-def load_full_data():
-    # روابط البيانات (جوجل شيت)
-    u_projects = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_developers = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
-    try:
-        p = pd.read_csv(u_projects).fillna("غير متوفر").astype(str)
-        d = pd.read_csv(u_developers).fillna("غير متوفر").astype(str)
-        return p, d
-    except Exception as e:
-        return pd.DataFrame(), pd.DataFrame()
-
-df_p, df_d = load_full_data()
-
-# 3. محرك التصميم الفاخر (CSS)
+# إضافة CSS مخصص لتحسين المظهر (RTL لدعم اللغة العربية)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;900&display=swap');
-    
-    /* الخلفية العامة */
-    body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #050505 !important;
-        color: white !important;
-        direction: rtl !important;
-        text-align: right !important;
-        font-family: 'Cairo', sans-serif !important;
-    }
-    
-    .block-container { padding-top: 1rem !important; }
-    
-    /* الهيدر العلوي */
-    .luxury-header {
-        background: linear-gradient(90deg, #111, #1a1a1a);
-        border-bottom: 2px solid #f59e0b;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 0 0 20px 20px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
-    }
-    
-    .logo-text { color: #f59e0b; font-weight: 900; font-size: 28px; letter-spacing: 1px; }
-    
-    /* الكروت والحاويات */
-    .grid-card {
-        background: #111;
-        border: 1px solid #222;
-        border-right: 5px solid #f59e0b;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        transition: 0.3s ease;
-    }
-    .grid-card:hover { transform: translateY(-5px); border-color: #f59e0b; }
-    
-    .ai-box {
-        background: linear-gradient(145deg, #1e1e1e, #0a0a0a);
-        border: 1px solid #f59e0b;
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-    
-    /* القائمة الجانبية (الاستلام الفوري) */
-    .ready-sidebar {
-        background: #0d0d0d;
-        border: 1px solid #222;
-        border-radius: 15px;
-        padding: 15px;
-        max-height: 85vh;
-        overflow-y: auto;
-        border-top: 5px solid #10b981;
-    }
-    
-    /* تخصيص التابات */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #111;
-        border-radius: 10px 10px 0 0;
-        padding: 10px 20px;
-        color: #aaa;
-    }
-    .stTabs [aria-selected="true"] { background-color: #f59e0b !important; color: black !important; font-weight: bold; }
+    .main { text-align: right; direction: rtl; }
+    .stMarkdown { text-align: right; }
+    .css-10trblm { text-align: right; direction: rtl; }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# 4. نظام الحماية بصمة دخول
-if 'auth' not in st.session_state: st.session_state.auth = False
+# 1. قاعدة البيانات (Dictionary تحتوي على الوصف التسويقي)
+area_info = {
+    "القاهرة الجديدة": {
+        "title": "التجمع الخامس.. وجهة السكن الراقي",
+        "desc": "تعتبر القلب النابض لشرق القاهرة، حيث تجمع بين الحيوية والخصوصية. تتميز بوجود الجولدن سكوير ومنطقة بيت الوطن الواعدة.",
+        "projects_count": 225,
+        "highlight": "منطقة بيت الوطن والفيو زون"
+    },
+    "العاصمة الإدارية": {
+        "title": "العاصمة الإدارية.. مدينة المستقبل",
+        "desc": "بنية تحتية ذكية، قطار مونوريل، وأكبر حديقة مركزية (النهر الأخضر). الاستثمار هنا هو رهان على المستقبل الرقمي لمصر.",
+        "projects_count": 135,
+        "highlight": "الحي السكني R7 و R8"
+    },
+    "الساحل الشمالي": {
+        "title": "الساحل الشمالي الجديد.. مالديف المتوسط",
+        "desc": "من العلمين إلى رأس الحكمة، الوجهة السياحية الأولى والآن وجهة سكنية تعمل طوال العام بفضل رأس الحكمة وساوث ميد.",
+        "projects_count": 85,
+        "highlight": "رأس الحكمة وسيدي حنيش"
+    },
+    "مدينة المستقبل": {
+        "title": "مدينة المستقبل.. العيش في قلب الطبيعة",
+        "desc": "أول مدينة خضراء متكاملة (Gated Communities) تربط بين التجمع الخامس والعاصمة الإدارية بطريقة انسيابية.",
+        "projects_count": 48,
+        "highlight": "هاب تاون وبلوم فيلدز"
+    },
+    "الشيخ زايد": {
+        "title": "الشيخ زايد ونيو زايد.. هدوء الغرب",
+        "desc": "توسعات الحزام الأخضر ونيو زايد توفر أعلى مستويات الخصوصية للفيلات والمجتمعات العمرانية الراقية.",
+        "projects_count": 105,
+        "highlight": "سوديك ويست ونيو زايد"
+    }
+}
+
+# --- واجهة التطبيق ---
+
+st.title("🚀 لوحة تحكم معلوماتي العقارية 2026")
+st.subheader("دليلك الشامل للمشاريع السكنية الجديدة في مصر")
+
+st.divider()
+
+# القائمة المنسدلة لاختيار المنطقة
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    selected_area = st.selectbox("📌 اختر المنطقة لاستعراض التفاصيل:", list(area_info.keys()))
+    
+    # عرض إحصائيات سريعة
+    st.metric(label="إجمالي المشاريع التقريبي", value=area_info[selected_area]["projects_count"])
+    st.info(f"📍 أهم المعالم: {area_info[selected_area]['highlight']}")
+
+with col2:
+    # عرض الوصف (رقم 5 الذي طلبته)
+    st.header(area_info[selected_area]["title"])
+    st.write(area_info[selected_area]["desc"])
+    
+    # إضافة زر تفاعلي
+    if st.button(f"تحميل شيت مشاريع {selected_area}"):
+        st.success(f"يتم الآن تحضير ملف Excel لمشاريع {selected_area}...")
+
+st.divider()
+
+# 2. عرض الجدول (الشيت الذي جمعناه سابقاً)
+st.subheader("📊 جدول المشاريع المقترحة")
+
+# بيانات تجريبية للشيت (يمكنك استبدالها بالشيتات الكاملة التي أرسلتها لك)
+data = {
+    "اسم المشروع": ["ميفيدا", "سولاري", "باديا", "المقصد", "بلوم فيلدز"],
+    "المطور": ["إعمار مصر", "مصر إيطاليا", "بالم هيلز", "سيتي إيدج", "تطوير مصر"],
+    "المنطقة": ["القاهرة الجديدة", "الساحل الشمالي", "6 أكتوبر", "العاصمة الإدارية", "مدينة المستقبل"]
+}
+df = pd.DataFrame(data)
+
+# عرض الجدول مع خاصية الفلترة حسب اختيار المستخدم
+filtered_df = df[df["المنطقة"] == selected_area] if selected_area in df["المنطقة"].values else df
+
+st.dataframe(filtered_df, use_container_width=True)
+
+# تذييل الصفحة
+st.caption("تم التطوير بواسطة 'معلوماتي العقارية' - 2026")
 
 if not st.session_state.auth:
     c1, c2, c3 = st.columns([1,2,1])
@@ -276,3 +265,4 @@ with col_main:
 # 7. التذييل
 st.markdown("---")
 st.markdown("<p style='text-align:center; color:#444;'>Ma3lomati PRO © 2026 | Developed for Real Estate Leaders</p>", unsafe_allow_html=True)
+
