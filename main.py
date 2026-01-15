@@ -1,109 +1,146 @@
-import streamlit as st
-import pandas as pd
-import math
-import feedparser
-import urllib.parse
-from datetime import datetime
-from streamlit_option_menu import option_menu
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, Award, ChevronRight, RefreshCw, Search, MapPin, Filter, Menu, Bell } from 'lucide-react';
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sidebar_state="collapsed")
+// --- المكون الفرعي: قائمة أقوى 10 مطورين (The 30% Side) ---
+const TopDevelopersSidebar = () => {
+  const [loading, setLoading] = useState(true);
+  const [developers, setDevelopers] = useState([]);
 
-# 2. إدارة الحالة (الدخول + الصفحات)
-if 'auth' not in st.session_state: st.session_state.auth = False
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
-if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
-if 'ready_idx' not in st.session_state: st.session_state.ready_idx = 0
+  useEffect(() => {
+    // محاكاة جلب البيانات المتجددة
+    setTimeout(() => {
+      setDevelopers([
+        { id: 1, name: "طلعت مصطفى (TMG)", sales: "140B EGP", growth: "+25%" },
+        { id: 2, name: "بالم هيلز (Palm Hills)", sales: "95B EGP", growth: "+18%" },
+        { id: 3, name: "أورا (Ora Developers)", sales: "88B EGP", growth: "+30%" },
+        { id: 4, name: "ماونتن فيو (DMG)", sales: "72B EGP", growth: "+15%" },
+        { id: 5, name: "إعمار مصر (Emaar)", sales: "65B EGP", growth: "+10%" },
+        { id: 6, name: "سوديك (SODIC)", sales: "60B EGP", growth: "+12%" },
+        { id: 7, name: "مدينة مصر", sales: "45B EGP", growth: "+22%" },
+        { id: 8, name: "سيتي إيدج", sales: "42B EGP", growth: "+8%" },
+        { id: 9, name: "لافيستا (La Vista)", sales: "38B EGP", growth: "+5%" },
+        { id: 10, name: "هايد بارك", sales: "35B EGP", growth: "+9%" },
+      ]);
+      setLoading(false);
+    }, 800);
+  }, []);
 
-# 3. جلب الأخبار
-@st.cache_data(ttl=1800)
-def get_real_news():
-    try:
-        rss_url = "https://www.youm7.com/rss/SectionRss?SectionID=297" 
-        feed = feedparser.parse(rss_url)
-        return "  •  ".join([item.title for item in feed.entries[:10]])
-    except: return "سوق العقارات المصري 2026: متابعة مستمرة."
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col">
+      <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+        <div>
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <Award className="text-amber-500 w-5 h-5" />
+            تصنيف المطورين 2026
+          </h3>
+        </div>
+        <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+        {loading ? (
+          [...Array(8)].map((_, i) => <div key={i} className="h-14 bg-slate-50 animate-pulse m-2 rounded-lg" />)
+        ) : (
+          developers.map((dev, index) => (
+            <div key={dev.id} className="group flex items-center justify-between p-3 hover:bg-slate-50 transition-all cursor-pointer rounded-xl border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3">
+                <span className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-bold 
+                  ${index < 3 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                  {index + 1}
+                </span>
+                <div>
+                  <h4 className="font-bold text-slate-700 text-sm group-hover:text-blue-600 transition-colors">{dev.name}</h4>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-400 font-medium">{dev.sales}</span>
+                    <span className="text-[10px] text-green-500 font-bold">{dev.growth}</span>
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transform group-hover:translate-x-1 transition-all" />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
 
-news_text = get_real_news()
+// --- المكون الرئيسي: المنصة بالكامل ---
+export default function RealEstatePlatform() {
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-right" dir="rtl">
+      
+      {/* 1. Header / Navigation */}
+      <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-8">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tighter">ESTATE<span className="text-blue-600">PRO</span></h1>
+            <div className="hidden md:flex items-center gap-6 text-slate-600 font-medium">
+              <a href="#" className="hover:text-blue-600">المشاريع</a>
+              <a href="#" className="hover:text-blue-600">الخريطة الذكية</a>
+              <a href="#" className="hover:text-blue-600">تحليل السوق</a>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="w-5 h-5 absolute right-3 top-2.5 text-slate-400" />
+              <input type="text" placeholder="بحث عن مطور أو مشروع..." className="bg-slate-100 pr-10 pl-4 py-2 rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+            </div>
+            <button className="p-2 bg-slate-100 rounded-full text-slate-600"><Bell size={20}/></button>
+            <div className="w-10 h-10 bg-blue-600 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white font-bold">A</div>
+          </div>
+        </div>
+      </nav>
 
-# 4. التنسيق الجمالي (CSS المطور)
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    body, [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
-    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
-    .block-container { padding-top: 0rem !important; }
+      {/* 2. Main Content Area */}
+      <main className="max-w-[1600px] mx-auto p-6 flex flex-col lg:flex-row gap-6 h-[calc(100vh-85px)]">
+        
+        {/* الجزء الـ 70% (Content Area) */}
+        <div className="lg:w-[70%] flex flex-col gap-6">
+          {/* Welcome & Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-600 p-6 rounded-2xl text-white shadow-lg shadow-blue-100">
+              <p className="text-blue-100 text-sm">إجمالي مبيعات السوق اليوم</p>
+              <h2 className="text-3xl font-bold mt-1">2.4B <span className="text-lg font-normal">EGP</span></h2>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-sm">المشاريع الجديدة (2026)</p>
+              <h2 className="text-3xl font-bold text-slate-800 mt-1">128</h2>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-sm">مؤشر نمو العقارات</p>
+              <h2 className="text-3xl font-bold text-green-500 mt-1">+14.2%</h2>
+            </div>
+          </div>
 
-    /* الهيدر */
-    .luxury-header {
-        background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
-        border-bottom: 2px solid #f59e0b; padding: 15px 30px;
-        display: flex; justify-content: space-between; align-items: center;
-        position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 15px;
-    }
-    .logo-text { color: #f59e0b; font-weight: 900; font-size: 24px; }
-    
-    /* شريط الأخبار */
-    .ticker-wrap { width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }
-    .ticker { display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }
-    @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+          {/* Main Visual/Map Placeholder */}
+          <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
+            <div className="absolute inset-0 bg-[url('https://www.google.com/maps/about/images/home/home-map-visual.jpg')] bg-cover opacity-20 group-hover:scale-105 transition-transform duration-700"></div>
+            <div className="relative z-10 p-8 flex flex-col h-full">
+              <div className="flex justify-between items-start">
+                <h2 className="text-2xl font-bold text-slate-800">الخريطة العقارية التفاعلية</h2>
+                <button className="bg-white p-2 rounded-lg shadow-sm border border-slate-100 flex items-center gap-2 text-sm font-bold"><Filter size={16}/> تصفية النتائج</button>
+              </div>
+              <div className="mt-auto flex gap-4">
+                 <div className="bg-white/90 backdrop-blur p-4 rounded-xl border border-white shadow-xl max-w-xs">
+                    <p className="text-xs text-blue-600 font-bold mb-1 italic">أحدث طرح</p>
+                    <h4 className="font-bold text-slate-800">نور سيتي - طلعت مصطفى</h4>
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><MapPin size={10}/> حدائق العاصمة</p>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    /* الكروت الرئيسية */
-    .grid-card { 
-        background: #111; border: 1px solid #222; border-right: 4px solid #f59e0b; 
-        border-radius: 12px; padding: 15px; margin-bottom: 15px; min-height: 180px; 
-    }
-    
-    /* خانة استلام فوري */
-    .ready-sidebar-container { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px; margin-bottom: 10px; }
-    .ready-card { background: #161616; border-right: 3px solid #10b981; padding: 8px; border-radius: 8px; margin-bottom: 6px; }
-    .ready-title { color: #f59e0b; font-size: 13px; font-weight: bold; }
-    .ready-loc { color: #888; font-size: 10px; }
+        {/* الجزء الـ 30% (Developers Ranking) */}
+        <div className="lg:w-[30%]">
+          <TopDevelopersSidebar />
+        </div>
 
-    /* تحسين شكل التابات والأدوات */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] { background-color: #111; border-radius: 10px; padding: 10px 20px; color: #fff; }
-    .stTabs [aria-selected="true"] { background-color: #f59e0b !important; color: #000 !important; }
-    </style>
-""", unsafe_allow_html=True)
-
-# 5. الدخول
-if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1,1.2,1])
-    with c2:
-        if st.text_input("Passcode", type="password") == "2026": st.session_state.auth = True; st.rerun()
-    st.stop()
-
-# بناء الواجهة
-now = datetime.now().strftime("%H:%M")
-st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">⌚ {now}</div></div>', unsafe_allow_html=True)
-st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
-
-menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], icons=["tools", "building", "person-vcard"], default_index=1, orientation="horizontal",
-    styles={"container": {"background-color": "#0a0a0a"}, "nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
-
-# جلب البيانات
-@st.cache_data(ttl=60)
-def load_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
-    try:
-        p = pd.read_csv(u_p).fillna("").astype(str)
-        d = pd.read_csv(u_d).fillna("").astype(str)
-        p.columns = p.columns.str.strip(); d.columns = d.columns.str.strip()
-        return p, d
-    except: return pd.DataFrame(), pd.DataFrame()
-
-df_p, df_d = load_data()
-
-# توزيع المساحة 75/25
-main_col, side_col = st.columns([0.75, 0.25])
-
-# --- الجانب الأيمن: استلام فوري (8 عناصر + Pagination) ---
-with side_col:
-    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold; font-size:14px;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
-    ready_df = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
+      </main>
+    </div>
+  );
+}
     
     r_limit = 8
     r_start = st.session_state.ready_idx * r_limit
@@ -183,3 +220,4 @@ with main_col:
             st.button("حفظ الملاحظات")
 
 if st.button("🚪 خروج"): st.session_state.auth = False; st.rerun()
+
