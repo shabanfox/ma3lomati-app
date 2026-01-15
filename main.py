@@ -1,90 +1,92 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
-import numpy as np
 
-# إعداد الصفحة
-st.set_page_config(page_title="BrokerEdge Dashboard", layout="wide")
+# إعداد الصفحة لجعلها عريضة وشيك
+st.set_page_config(page_title="BrokerEdge | لوحة التحكم", layout="wide")
 
-# 1. تصميم الواجهة (CSS & HTML)
-html_header = """
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+# 1. تصميم الـ UI الاحترافي باستخدام Tailwind داخل كود بايثون
+def local_css():
+    st.markdown("""
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
-        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+    /* إخفاء عناصر streamlit الافتراضية لزيادة الشياكة */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        height: 3em;
+        background-color: #1e3a8a;
+        color: white;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #3b82f6;
+        border: none;
+    }
     </style>
-</head>
-<body>
-    <nav class="bg-white shadow-sm py-4 px-8 flex justify-between items-center">
-        <div class="text-2xl font-bold text-blue-900">Broker<span class="text-blue-500">Edge</span></div>
-        <div class="flex gap-4">
-            <span class="text-gray-500 text-sm">مرحباً، يا بروكر! 👋</span>
-        </div>
-    </nav>
-    <div class="gradient-bg py-10 px-6 text-white text-center">
-        <h1 class="text-3xl font-bold">لوحة تحكم الزتونة 🚀</h1>
-        <p class="opacity-80">بيانات السوق اللحظية بين يديك</p>
-    </div>
-</body>
-</html>
+    """, unsafe_allow_html=True)
+
+local_css()
+
+# هيدر المنصة بتصميم عصري
+html_header = """
+<div dir="rtl" style="font-family: 'Cairo', sans-serif; background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%); padding: 40px; border-radius: 20px; text-align: center; color: white; margin-bottom: 30px;">
+    <h1 style="font-size: 35px; font-weight: bold; margin-bottom: 10px;">BrokerEdge Dashboard</h1>
+    <p style="font-size: 18px; opacity: 0.8;">أداة المساعد الذكي للبروكر المحترف - بيانات السوق لحظة بلحظة</p>
+</div>
 """
+st.markdown(html_header, unsafe_allow_html=True)
 
-# عرض الهيدر
-components.html(html_header, height=250)
+# 2. منطقة الفلاتر العلوية (Horizontal Filters)
+col_f1, col_f2, col_f3 = st.columns(3)
+with col_f1:
+    st.selectbox("📍 المنطقة", ["كل المناطق", "التجمع الخامس", "الشيخ زايد", "العاصمة الإدارية", "الساحل الشمالي"])
+with col_f2:
+    st.selectbox("🏗️ المطور", ["كل المطورين", "إعمار", "سوديك", "ماونتن فيو", "بالم هيلز"])
+with col_f3:
+    st.select_slider("💰 نطاق السعر (مليون)", options=[5, 10, 15, 20, 50], value=(5, 20))
 
-# 2. قسم الإحصائيات (الرسوم البيانية)
-st.subheader("📊 نبض السوق (متوسط سعر المتر 2026)")
-
-# بيانات تجريبية للرسم البياني
-chart_data = pd.DataFrame({
-    'المنطقة': ['التجمع الخامس', 'الشيخ زايد', 'العاصمة الإدارية', 'المستقبل سيتي', 'الساحل الشمالي'],
-    'سعر المتر (جنيه)': [45000, 42000, 35000, 31000, 55000]
-})
-st.bar_chart(chart_data.set_index('المنطقة'))
-
-# 3. قسم جدول المشاريع الذكي
 st.markdown("---")
-st.subheader("🏢 قاعدة بيانات المشاريع الحالية")
 
-# بيانات تجريبية للجداول
-data = {
-    "المشروع": ["Mountain View iCity", "Badya", "The Waterway", "Zed East", "Oia Residence"],
-    "المطور": ["Mountain View", "Palm Hills", "Waterway", "Ora Developers", "Edge Stone"],
-    "المنطقة": ["التجمع الخامس", "أكتوبر", "التجمع الخامس", "التجمع الخامس", "العاصمة الإدارية"],
-    "أقل مقدم": ["10%", "0%", "15%", "5%", "10%"],
-    "سنوات القسط": [8, 10, 5, 8, 9],
-    "حالة السعر": ["📈 مرتفع", "🟢 ثابت", "📈 مرتفع", "🟡 تذبذب", "🟢 ثابت"]
-}
+# 3. عرض المشاريع بنظام الـ Cards (هنا الزتونة في الشكل)
+st.subheader("🏢 أهم المشاريع المتاحة الآن")
 
-df = pd.DataFrame(data)
+# مصفوفة بيانات تجريبية (التي ستستبدلها لاحقاً بالإكسيل)
+projects = [
+    {"name": "Mountain View iCity", "dev": "MV", "loc": "التجمع الخامس", "price": "7.2M", "comm": "4%", "img": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80"},
+    {"name": "Marassi", "dev": "Emaar", "loc": "الساحل الشمالي", "price": "15.5M", "comm": "3.5%", "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80"},
+    {"name": "Badya", "dev": "Palm Hills", "loc": "أكتوبر الجديدة", "price": "6.1M", "comm": "5%", "img": "https://images.unsplash.com/photo-1515263487990-61b0082665d1?w=400&q=80"},
+    {"name": "Zed East", "dev": "Ora Developers", "loc": "القاهرة الجديدة", "price": "9.8M", "comm": "4%", "img": "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&q=80"},
+]
 
-# إضافة فلاتر في الجنب (Sidebar)
-st.sidebar.header("تصفية البحث")
-selected_region = st.sidebar.multiselect("اختر المنطقة", df["المنطقة"].unique(), default=df["المنطقة"].unique())
-selected_dev = st.sidebar.selectbox("اختر المطور", ["الكل"] + list(df["المطور"].unique()))
+# تقسيم العرض لـ 2 كروت في كل صف
+cols = st.columns(2)
 
-# تصفية البيانات بناءً على الاختيار
-filtered_df = df[df["المنطقة"].isin(selected_region)]
-if selected_dev != "الالكل":
-    filtered_df = filtered_df[filtered_df["المطور"] == selected_dev]
+for i, project in enumerate(projects):
+    with cols[i % 2]:
+        card_html = f"""
+        <div dir="rtl" style="background: white; border-radius: 15px; padding: 0px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f0f0f0; transition: 0.3s;">
+            <img src="{project['img']}" style="width: 100%; height: 200px; object-fit: cover;">
+            <div style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">{project['loc']}</span>
+                    <span style="color: #059669; font-weight: bold; font-size: 14px;">عمولة: {project['comm']}</span>
+                </div>
+                <h3 style="margin: 0; font-size: 20px; color: #1e293b; font-weight: bold;">{project['name']}</h3>
+                <p style="color: #64748b; font-size: 14px; margin: 5px 0 15px 0;">المطور: {project['dev']}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 15px; padding-top: 10px;">
+                    <div style="font-size: 18px; color: #1e3a8a; font-weight: bold;">{project['price']}</div>
+                    <a href="#" style="text-decoration: none; background: #f1f5f9; color: #475569; padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: bold;">تفاصيل الزتونة ←</a>
+                </div>
+            </div>
+        </div>
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
 
-# عرض الجدول بشكل احترافي
-st.table(filtered_df)
-
-# 4. ميزة "زرار الزتونة" للبروكر
-st.markdown("---")
-st.subheader("🛠️ أدوات البروكر السريعة")
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("📄 إنشاء بروشور باسمي (Coming Soon)"):
-        st.info("هذه الميزة ستقوم بربط بيانات المشروع بلوجو مكتبك تلقائياً.")
-
-with col2:
-    if st.button("💰 حاسبة القسط السريع"):
-        st.write("حاسبة مخصصة لأنظمة سداد المطورين المعقدة.")
+# 4. زرار "أدوات البروكر" السريع في الجنب
+st.sidebar.markdown("### 🛠️ أدوات سريعة")
+st.sidebar.button("🖨️ تحميل عرض سعر PDF")
+st.sidebar.button("🔗 مشاركة للواتساب")
+st.sidebar.button("📉 مقارنة بين مشروعين")
