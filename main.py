@@ -1,92 +1,117 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# إعداد الصفحة لجعلها عريضة وشيك
-st.set_page_config(page_title="BrokerEdge | لوحة التحكم", layout="wide")
+# إعدادات الصفحة - الأفضل هو العرض الكامل (Wide Mode)
+st.set_page_config(page_title="BrokerEdge Pro", layout="wide", initial_sidebar_state="expanded")
 
-# 1. تصميم الـ UI الاحترافي باستخدام Tailwind داخل كود بايثون
-def local_css():
-    st.markdown("""
-    <style>
-    /* إخفاء عناصر streamlit الافتراضية لزيادة الشياكة */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+# 1. تخصيص الـ CSS للوصول لأعلى جودة تصميم
+st.markdown("""
+<style>
+    /* الخط والخلفية العامة */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Cairo', sans-serif;
+        text-align: right;
+        direction: rtl;
+    }
+
+    /* إخفاء الهيدر والفوتر بتوع streamlit */
+    header, footer {visibility: hidden;}
+
+    /* تجميل الأزرار الجانبية */
     .stButton>button {
-        width: 100%;
-        border-radius: 12px;
-        height: 3em;
-        background-color: #1e3a8a;
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         color: white;
+        border-radius: 10px;
         border: none;
-        transition: 0.3s;
+        padding: 10px 20px;
+        font-weight: bold;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .stButton>button:hover {
-        background-color: #3b82f6;
-        border: none;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
-local_css()
-
-# هيدر المنصة بتصميم عصري
-html_header = """
-<div dir="rtl" style="font-family: 'Cairo', sans-serif; background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%); padding: 40px; border-radius: 20px; text-align: center; color: white; margin-bottom: 30px;">
-    <h1 style="font-size: 35px; font-weight: bold; margin-bottom: 10px;">BrokerEdge Dashboard</h1>
-    <p style="font-size: 18px; opacity: 0.8;">أداة المساعد الذكي للبروكر المحترف - بيانات السوق لحظة بلحظة</p>
+# 2. الهيدر الاحترافي (Hero Section)
+header_html = """
+<div dir="rtl" style="background: #0f172a; padding: 30px; border-radius: 20px; margin-bottom: 25px; border-right: 8px solid #3b82f6;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="color: white; margin: 0; font-size: 28px;">BrokerEdge <span style="color: #3b82f6;">Pro</span></h1>
+            <p style="color: #94a3b8; margin: 5px 0 0 0;">مرحباً بك في المركز الذكي لإدارة بيانات السوق</p>
+        </div>
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 10px 20px; border-radius: 12px; border: 1px solid #3b82f6;">
+            <span style="color: #3b82f6; font-weight: bold;">حالة السوق اليوم: 📈 نشط جداً</span>
+        </div>
+    </div>
 </div>
 """
-st.markdown(html_header, unsafe_allow_html=True)
+st.markdown(header_html, unsafe_allow_html=True)
 
-# 2. منطقة الفلاتر العلوية (Horizontal Filters)
-col_f1, col_f2, col_f3 = st.columns(3)
-with col_f1:
-    st.selectbox("📍 المنطقة", ["كل المناطق", "التجمع الخامس", "الشيخ زايد", "العاصمة الإدارية", "الساحل الشمالي"])
-with col_f2:
-    st.selectbox("🏗️ المطور", ["كل المطورين", "إعمار", "سوديك", "ماونتن فيو", "بالم هيلز"])
-with col_f3:
-    st.select_slider("💰 نطاق السعر (مليون)", options=[5, 10, 15, 20, 50], value=(5, 20))
+# 3. شريط الأدوات السريع (Quick Actions)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.info("**أحدث أسعار المتر**\n\nالتجمع: 48,000 ج.م")
+with col2:
+    st.success("**أعلى عمولة حالية**\n\nمشروع بادية: 5.5%")
+with col3:
+    st.warning("**موعد زيادة الأسعار**\n\nإعمار: بعد 3 أيام")
+with col4:
+    st.error("**وحدات إعادة بيع لقطة**\n\nعدد 4 وحدات متوفرة")
 
 st.markdown("---")
 
-# 3. عرض المشاريع بنظام الـ Cards (هنا الزتونة في الشكل)
-st.subheader("🏢 أهم المشاريع المتاحة الآن")
+# 4. محرك البحث (The Engine)
+st.subheader("🔍 البحث الذكي عن الوحدات والمشاريع")
+c1, c2, c3 = st.columns([2, 1, 1])
+with c1:
+    search_term = st.text_input("بحث بالاسم أو الكلمة الدلالية (مثلاً: استلام فوري)...")
+with c2:
+    region = st.selectbox("المنطقة", ["الكل", "التجمع الخامس", "العاصمة الإدارية", "الشيخ زايد", "المستقبل"])
+with c3:
+    st.button("بدء البحث المتقدم")
 
-# مصفوفة بيانات تجريبية (التي ستستبدلها لاحقاً بالإكسيل)
+# 5. عرض المشاريع (النسخة الأفضل للكروت)
+st.markdown("### 🏢 المشاريع المقترحة للعملاء حالياً")
+
+# بيانات تجريبية (مجهزة للربط مع الإكسيل لاحقاً)
 projects = [
-    {"name": "Mountain View iCity", "dev": "MV", "loc": "التجمع الخامس", "price": "7.2M", "comm": "4%", "img": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80"},
-    {"name": "Marassi", "dev": "Emaar", "loc": "الساحل الشمالي", "price": "15.5M", "comm": "3.5%", "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80"},
-    {"name": "Badya", "dev": "Palm Hills", "loc": "أكتوبر الجديدة", "price": "6.1M", "comm": "5%", "img": "https://images.unsplash.com/photo-1515263487990-61b0082665d1?w=400&q=80"},
-    {"name": "Zed East", "dev": "Ora Developers", "loc": "القاهرة الجديدة", "price": "9.8M", "comm": "4%", "img": "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&q=80"},
+    {"name": "Mountain View iCity", "dev": "MV", "type": "شقق وفيلات", "start_price": "8.5M", "plan": "10% / 9 Yrs", "img": "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=500&q=80"},
+    {"name": "IL Bosco City", "dev": "Misr Italia", "type": "شقق", "start_price": "6.2M", "plan": "5% / 8 Yrs", "img": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80"},
+    {"name": "The Waterway", "dev": "Waterway", "type": "تجاري وسكني", "start_price": "14.0M", "plan": "Cash / Short term", "img": "https://images.unsplash.com/photo-1554435493-93422e8220c8?w=500&q=80"}
 ]
 
-# تقسيم العرض لـ 2 كروت في كل صف
-cols = st.columns(2)
-
-for i, project in enumerate(projects):
-    with cols[i % 2]:
-        card_html = f"""
-        <div dir="rtl" style="background: white; border-radius: 15px; padding: 0px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f0f0f0; transition: 0.3s;">
-            <img src="{project['img']}" style="width: 100%; height: 200px; object-fit: cover;">
+cols = st.columns(3)
+for i, p in enumerate(projects):
+    with cols[i]:
+        card = f"""
+        <div dir="rtl" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 20px;">
+            <img src="{p['img']}" style="width: 100%; height: 180px; object-fit: cover;">
             <div style="padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">{project['loc']}</span>
-                    <span style="color: #059669; font-weight: bold; font-size: 14px;">عمولة: {project['comm']}</span>
+                    <span style="font-size: 12px; color: #64748b; font-weight: bold;">{p['dev']}</span>
+                    <span style="background: #f0fdf4; color: #16a34a; padding: 2px 10px; border-radius: 10px; font-size: 11px;">متوفر داتا الأسعار</span>
                 </div>
-                <h3 style="margin: 0; font-size: 20px; color: #1e293b; font-weight: bold;">{project['name']}</h3>
-                <p style="color: #64748b; font-size: 14px; margin: 5px 0 15px 0;">المطور: {project['dev']}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt: 15px; padding-top: 10px;">
-                    <div style="font-size: 18px; color: #1e3a8a; font-weight: bold;">{project['price']}</div>
-                    <a href="#" style="text-decoration: none; background: #f1f5f9; color: #475569; padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: bold;">تفاصيل الزتونة ←</a>
+                <h4 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: bold;">{p['name']}</h4>
+                <p style="color: #64748b; font-size: 13px; margin: 8px 0;">نوع الوحدات: {p['type']}</p>
+                <div style="background: #f8fafc; border-radius: 10px; padding: 10px; margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                        <span style="color: #64748b;">أقل مقدم</span>
+                        <span style="color: #1e3a8a; font-weight: bold;">{p['plan']}</span>
+                    </div>
                 </div>
+                <button style="width: 100%; background: #1e3a8a; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Cairo';">عرض الزتونة كاملة</button>
             </div>
         </div>
         """
-        st.markdown(card_html, unsafe_allow_html=True)
+        st.markdown(card, unsafe_allow_html=True)
 
-# 4. زرار "أدوات البروكر" السريع في الجنب
-st.sidebar.markdown("### 🛠️ أدوات سريعة")
-st.sidebar.button("🖨️ تحميل عرض سعر PDF")
-st.sidebar.button("🔗 مشاركة للواتساب")
-st.sidebar.button("📉 مقارنة بين مشروعين")
+# 6. الـ Sidebar (أدوات البروكر)
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/609/609036.png", width=80)
+    st.title("أدواتي")
+    st.button("🔄 تحديث داتا السوق")
+    st.button("📊 تقرير مقارنة للعميل")
+    st.button("📱 إرسال واتساب مباشر")
+    st.markdown("---")
+    st.info("إصدار التجريبي v2.0 - 2026")
