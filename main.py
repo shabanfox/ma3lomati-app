@@ -1,108 +1,107 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعداد الصفحة (إخفاء كل عناصر ستريمليت)
+# 1. إعدادات الصفحة والستايل
 st.set_page_config(page_title="BrokerEdge | ابحث عن منزلك", layout="wide")
 
 st.markdown("""
     <style>
-    /* إخفاء القوائم والماركات الخاصة بـ Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .block-container {padding-top: 0rem; padding-bottom: 0rem;}
+    .block-container {padding-top: 0rem;}
     
-    /* تصميم الخط والخلفية */
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Cairo', sans-serif;
-        direction: rtl;
-        background-color: #ffffff;
-    }
-
-    /* تصميم الـ Header */
-    .nawy-header {
-        background: white;
-        padding: 15px 50px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #f0f0f0;
-        position: sticky;
-        top: 0;
-        z-index: 999;
-    }
-
-    /* الـ Hero Section */
-    .hero {
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-        background-size: cover;
-        background-position: center;
-        height: 450px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        text-align: center;
-    }
-
-    /* شريط البحث النظيف */
-    .search-container {
-        background: white;
-        padding: 10px;
-        border-radius: 50px;
-        display: flex;
-        width: 70%;
-        margin-top: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Cairo', sans-serif; direction: rtl; }
+    
+    /* تصميم الـ Card الخاص بناوي */
+    .nawy-card {
+        background: white; 
+        border-radius: 12px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+        border: 1px solid #eee;
+        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. الهيدر (Navigation) ---
+# --- 2. الهيدر ---
 st.markdown("""
-    <div class="nawy-header">
+    <div style="background: white; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0;">
         <div style="font-size: 24px; font-weight: bold; color: #00416b;">Broker<span style="color: #ed1c24;">Edge</span></div>
-        <div style="display: flex; gap: 30px; color: #333; font-weight: 600;">
-            <span>المشاريع</span>
-            <span>المطورين</span>
-            <span>الاستلام الفوري</span>
+        <div style="display: flex; gap: 20px; color: #333; font-weight: 600;">
+            <span>المشاريع</span> | <span>المطورين</span> | <span>الزتونة</span>
         </div>
-        <button style="background: #00416b; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer;">دخول</button>
     </div>
     """, unsafe_allow_html=True)
 
 # --- 3. الـ Hero Section ---
 st.markdown("""
-    <div class="hero">
-        <h1 style="font-size: 45px; font-weight: 700;">دليلك الأول لكل مشاريع مصر</h1>
-        <p style="font-size: 20px;">احصل على "الزتونة" فوراً وشاركها مع عميلك</p>
+    <div style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1500&q=80'); 
+         background-size: cover; height: 350px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
+        <h1 style="font-size: 40px; margin-bottom: 10px;">كل مشاريع مصر في مكان واحد</h1>
+        <p style="font-size: 18px; opacity: 0.9;">أداة البروكر الذكية للوصول لأدق البيانات</p>
     </div>
     """, unsafe_allow_html=True)
 
-# --- 4. منطقة البحث الحقيقية (بأدوات ستريمليت لكن داخل حاوية) ---
-col_s1, col_s2, col_s3 = st.columns([3, 1, 1])
-with col_s1:
-    search_q = st.text_input("", placeholder="ابحث عن مشروع، منطقة، أو مطور...")
-with col_s2:
-    st.selectbox("", ["كل المناطق", "التجمع الخامس", "الشيخ زايد", "العاصمة"])
-with col_s3:
-    if st.button("ابحث"):
-        pass
+# --- 4. محرك البحث الذكي ---
+st.markdown("<br>", unsafe_allow_html=True)
+col_search, col_filter = st.columns([3, 1])
 
-# --- 5. عرض المشاريع (Nawy Cards) ---
-st.markdown('<h2 style="padding: 20px 50px;">أحدث المشاريع</h2>', unsafe_allow_html=True)
+with col_search:
+    search_q = st.text_input("", placeholder="ابحث باسم المشروع، المطور، أو المنطقة...")
+with col_filter:
+    region_filter = st.selectbox("", ["كل المناطق", "التجمع الخامس", "الشيخ زايد", "العاصمة الإدارية"])
 
-# بيانات تجريبية (تستبدلها بملف الإكسيل لاحقاً)
-dummy_data = [
-    {"title": "Oia Residence", "dev": "Edge Stone", "loc": "New Capital", "price": "6,500,000", "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&q=80"},
-    {"title": "Mountain View", "dev": "MV", "loc": "New Cairo", "price": "8,200,000", "img": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500&q=80"},
-    {"title": "The Waterway", "dev": "Waterway", "loc": "New Cairo", "price": "12,000,000", "img": "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=500&q=80"}
-]
+# --- 5. منطق الداتا (رفع الملف وعرض الكروت) ---
+if 'master_data' not in st.session_state:
+    st.session_state['master_data'] = None
 
-c_cols = st.columns(3)
-for i, item in enumerate(dummy_data):
-    with c_cols[i % 3]:
-        st.markdown(f"""
-            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border
+# زر مخفي للمدير لرفع الملف
+with st.expander("⚙️ لوحة التحكم (لرفع الإكسيل)"):
+    pw = st.text_input("كلمة المرور", type="password")
+    if pw == "123":
+        uploaded_file = st.file_uploader("ارفع ملف الإكسيل المحدث", type=['xlsx'])
+        if uploaded_file:
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
+            st.session_state['master_data'] = df
+            st.success("تم تحديث البيانات بنجاح!")
+
+# عرض البيانات
+if st.session_state['master_data'] is not None:
+    df = st.session_state['master_data']
+    
+    # فلترة البحث
+    if search_q:
+        df = df[df.astype(str).apply(lambda x: x.str.contains(search_q, case=False)).any(axis=1)]
+    
+    st.markdown(f'<h3 style="padding: 20px 0;">تم العثور على {len(df)} مشروع</h3>', unsafe_allow_html=True)
+    
+    # رسم الكروت (Grid 3 columns)
+    cols = st.columns(3)
+    for idx, row in df.iterrows():
+        with cols[idx % 3]:
+            # استخراج البيانات مع قيم افتراضية
+            p_name = row.get('المشروع', 'مشروع جديد')
+            p_dev = row.get('المطور', 'مطور عقاري')
+            p_loc = row.get('المنطقة', 'موقع مميز')
+            p_price = row.get('السعر', 'اتصل بنا')
+            p_img = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80" # صورة افتراضية شيك
+            
+            st.markdown(f"""
+                <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 25px;">
+                    <img src="{p_img}" style="width: 100%; height: 180px; object-fit: cover;">
+                    <div style="padding: 15px;">
+                        <div style="font-size: 12px; color: #ed1c24; font-weight: bold; margin-bottom: 5px;">{p_loc}</div>
+                        <h4 style="margin: 0; color: #333; font-size: 18px;">{p_name}</h4>
+                        <p style="color: #777; font-size: 13px; margin: 5px 0 15px 0;">المطور: {p_dev}</p>
+                        <div style="border-top: 1px solid #f5f5f5; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; font-weight: bold; color: #00416b;">{p_price}</span>
+                            <span style="color: #ed1c24; font-size: 12px; font-weight: bold; cursor: pointer;">التفاصيل ←</span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+else:
+    st.info("👋 مرحباً بك! يرجى رفع ملف الداتا من لوحة التحكم بالأسفل للبدء.")
