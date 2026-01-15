@@ -1,117 +1,81 @@
 import streamlit as st
+import pandas as pd
 import streamlit.components.v1 as components
 
-# إعدادات الصفحة - الأفضل هو العرض الكامل (Wide Mode)
-st.set_page_config(page_title="BrokerEdge Pro", layout="wide", initial_sidebar_state="expanded")
+# إعدادات الصفحة
+st.set_page_config(page_title="BrokerEdge Admin", layout="wide")
 
-# 1. تخصيص الـ CSS للوصول لأعلى جودة تصميم
-st.markdown("""
-<style>
-    /* الخط والخلفية العامة */
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap');
+# 1. نظام التبويبات (Tabs) لراحة المستخدم
+tab1, tab2 = st.tabs(["🌐 واجهة البروكر", "⚙️ إدارة البيانات (الخلفية)"])
+
+# ---------------------------------------------------------
+# Tab 2: إدارة البيانات (دي ليك أنت)
+# ---------------------------------------------------------
+with tab2:
+    st.header("تحديث بيانات المنصة")
+    st.info("ارفع ملف الإكسيل اللي سحبته من Nawy أو أي مصدر آخر هنا.")
     
-    html, body, [class*="css"] {
-        font-family: 'Cairo', sans-serif;
-        text-align: right;
-        direction: rtl;
-    }
+    uploaded_file = st.file_uploader("اختر ملف Excel أو CSV", type=['xlsx', 'csv'])
+    
+    if uploaded_file:
+        # قراءة البيانات
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
+            
+        st.success("تم تحميل البيانات بنجاح!")
+        st.write("معاينة البيانات المرفوعة:")
+        st.dataframe(df.head()) # عرض أول 5 سطور للتأكد
+        
+        # حفظ البيانات في "الجلسة" عشان تظهر في التبويب التاني
+        st.session_state['master_data'] = df
 
-    /* إخفاء الهيدر والفوتر بتوع streamlit */
-    header, footer {visibility: hidden;}
-
-    /* تجميل الأزرار الجانبية */
-    .stButton>button {
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        color: white;
-        border-radius: 10px;
-        border: none;
-        padding: 10px 20px;
-        font-weight: bold;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 2. الهيدر الاحترافي (Hero Section)
-header_html = """
-<div dir="rtl" style="background: #0f172a; padding: 30px; border-radius: 20px; margin-bottom: 25px; border-right: 8px solid #3b82f6;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h1 style="color: white; margin: 0; font-size: 28px;">BrokerEdge <span style="color: #3b82f6;">Pro</span></h1>
-            <p style="color: #94a3b8; margin: 5px 0 0 0;">مرحباً بك في المركز الذكي لإدارة بيانات السوق</p>
-        </div>
-        <div style="background: rgba(59, 130, 246, 0.1); padding: 10px 20px; border-radius: 12px; border: 1px solid #3b82f6;">
-            <span style="color: #3b82f6; font-weight: bold;">حالة السوق اليوم: 📈 نشط جداً</span>
-        </div>
+# ---------------------------------------------------------
+# Tab 1: واجهة البروكر (اللي البروكر بيشوفها)
+# ---------------------------------------------------------
+with tab1:
+    # الهيدر الاحترافي
+    header_html = """
+    <div dir="rtl" style="background: #0f172a; padding: 30px; border-radius: 20px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 28px;">BrokerEdge <span style="color: #3b82f6;">Pro</span></h1>
+        <p style="opacity: 0.8;">محرك البحث العقاري الأقوى للبروكر المصري</p>
     </div>
-</div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
 
-# 3. شريط الأدوات السريع (Quick Actions)
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.info("**أحدث أسعار المتر**\n\nالتجمع: 48,000 ج.م")
-with col2:
-    st.success("**أعلى عمولة حالية**\n\nمشروع بادية: 5.5%")
-with col3:
-    st.warning("**موعد زيادة الأسعار**\n\nإعمار: بعد 3 أيام")
-with col4:
-    st.error("**وحدات إعادة بيع لقطة**\n\nعدد 4 وحدات متوفرة")
+    # التحقق من وجود بيانات
+    if 'master_data' in st.session_state:
+        data = st.session_state['master_data']
+        
+        # فلاتر البحث
+        st.markdown("### 🔍 ابحث في السوق")
+        col_s1, col_s2 = st.columns([3, 1])
+        with col_s1:
+            search = st.text_input("ابحث باسم المشروع أو المطور...")
+        with col_s2:
+            region = st.selectbox("تصفية بالمنطقة", ["الكل"] + list(data['المنطقة'].unique() if 'المنطقة' in data.columns else []))
 
-st.markdown("---")
-
-# 4. محرك البحث (The Engine)
-st.subheader("🔍 البحث الذكي عن الوحدات والمشاريع")
-c1, c2, c3 = st.columns([2, 1, 1])
-with c1:
-    search_term = st.text_input("بحث بالاسم أو الكلمة الدلالية (مثلاً: استلام فوري)...")
-with c2:
-    region = st.selectbox("المنطقة", ["الكل", "التجمع الخامس", "العاصمة الإدارية", "الشيخ زايد", "المستقبل"])
-with c3:
-    st.button("بدء البحث المتقدم")
-
-# 5. عرض المشاريع (النسخة الأفضل للكروت)
-st.markdown("### 🏢 المشاريع المقترحة للعملاء حالياً")
-
-# بيانات تجريبية (مجهزة للربط مع الإكسيل لاحقاً)
-projects = [
-    {"name": "Mountain View iCity", "dev": "MV", "type": "شقق وفيلات", "start_price": "8.5M", "plan": "10% / 9 Yrs", "img": "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=500&q=80"},
-    {"name": "IL Bosco City", "dev": "Misr Italia", "type": "شقق", "start_price": "6.2M", "plan": "5% / 8 Yrs", "img": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80"},
-    {"name": "The Waterway", "dev": "Waterway", "type": "تجاري وسكني", "start_price": "14.0M", "plan": "Cash / Short term", "img": "https://images.unsplash.com/photo-1554435493-93422e8220c8?w=500&q=80"}
-]
-
-cols = st.columns(3)
-for i, p in enumerate(projects):
-    with cols[i]:
-        card = f"""
-        <div dir="rtl" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 20px;">
-            <img src="{p['img']}" style="width: 100%; height: 180px; object-fit: cover;">
-            <div style="padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 12px; color: #64748b; font-weight: bold;">{p['dev']}</span>
-                    <span style="background: #f0fdf4; color: #16a34a; padding: 2px 10px; border-radius: 10px; font-size: 11px;">متوفر داتا الأسعار</span>
-                </div>
-                <h4 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: bold;">{p['name']}</h4>
-                <p style="color: #64748b; font-size: 13px; margin: 8px 0;">نوع الوحدات: {p['type']}</p>
-                <div style="background: #f8fafc; border-radius: 10px; padding: 10px; margin: 15px 0;">
-                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                        <span style="color: #64748b;">أقل مقدم</span>
-                        <span style="color: #1e3a8a; font-weight: bold;">{p['plan']}</span>
+        # عرض البيانات بنظام الكروت (Cards)
+        st.markdown("---")
+        
+        # تحويل البيانات لكروت
+        cols = st.columns(3)
+        for index, row in data.iterrows():
+            # البحث والتصفية
+            if search.lower() in str(row).lower():
+                with cols[index % 3]:
+                    # تصميم كارت احترافي لكل سطر في الإكسيل
+                    st.markdown(f"""
+                    <div dir="rtl" style="background: white; border: 1px solid #e2e8f0; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <h4 style="color: #1e3a8a; margin: 0;">{row.get('المشروع', 'اسم المشروع')}</h4>
+                        <p style="color: #64748b; font-size: 14px; margin: 10px 0;">المطور: {row.get('المطور', 'غير معروف')}</p>
+                        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-weight: bold; color: #059669;">السعر: {row.get('السعر', 'اتصل بنا')}</span>
+                            <span style="font-size: 12px; background: #f1f5f9; padding: 2px 8px; border-radius: 5px;">{row.get('المنطقة', 'مصر')}</span>
+                        </div>
                     </div>
-                </div>
-                <button style="width: 100%; background: #1e3a8a; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Cairo';">عرض الزتونة كاملة</button>
-            </div>
-        </div>
-        """
-        st.markdown(card, unsafe_allow_html=True)
-
-# 6. الـ Sidebar (أدوات البروكر)
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/609/609036.png", width=80)
-    st.title("أدواتي")
-    st.button("🔄 تحديث داتا السوق")
-    st.button("📊 تقرير مقارنة للعميل")
-    st.button("📱 إرسال واتساب مباشر")
-    st.markdown("---")
-    st.info("إصدار التجريبي v2.0 - 2026")
+                    """, unsafe_allow_html=True)
+    else:
+        st.warning("⚠️ لا توجد بيانات حالياً. يرجى الذهاب لتبويب 'إدارة البيانات' ورفع ملف الإكسيل أولاً.")
