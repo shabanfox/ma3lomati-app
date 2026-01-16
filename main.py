@@ -1,17 +1,38 @@
-# 4. التنسيق الجمالي (CSS المطور لدمج الأزرار)
-# لاحظ استخدام {{ }} بدلاً من { } داخل الـ f-string
+import streamlit as st
+import pandas as pd
+import math
+import feedparser
+from datetime import datetime
+from streamlit_option_menu import option_menu
+
+# 1. إعدادات الصفحة (يجب أن تكون أول أمر من Streamlit)
+st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sidebar_state="collapsed")
+
+# 2. إدارة الحالة
+if 'auth' not in st.session_state: st.session_state.auth = False
+if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
+if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+
+# 3. جلب الأخبار
+@st.cache_data(ttl=1800)
+def get_real_news():
+    try:
+        rss_url = "https://www.youm7.com/rss/SectionRss?SectionID=297" 
+        feed = feedparser.parse(rss_url)
+        news = [item.title for item in feed.entries[:10]]
+        return "  •  ".join(news) if news else "جاري تحديث الأخبار العقارية..."
+    except: return "سوق العقارات المصري: متابعة مستمرة لآخر المستجدات."
+
+news_text = get_real_news()
+
+# 4. التنسيق الجمالي (CSS المطور مع مضاعفة الأقواس {{ }} لتجنب الـ SyntaxError)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
     .block-container {{ padding-top: 0rem !important; }}
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    [data-testid="stAppViewContainer"] {{ 
-        background-color: #050505; 
-        direction: rtl !important; 
-        text-align: right !important; 
-        font-family: 'Cairo', sans-serif; 
-    }}
+    [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
     
     .luxury-header {{
         background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
@@ -41,8 +62,8 @@ st.markdown(f"""
         padding: 20px !important;
         transition: 0.3s !important;
         text-align: right !important;
+        white-space: pre-wrap !important; /* للسماح بنزول السطر في الاسم */
     }}
-    
     div.stButton > button[key*="card_"]:hover {{
         background-color: #1a1a1a !important;
         border-color: #f59e0b !important;
@@ -57,7 +78,10 @@ st.markdown(f"""
     
     div.stButton > button[key="logout_btn"] {{
         background-color: #ef4444 !important; color: white !important;
-        height: 30px !important; width: 60px !important; font-size: 11px !important; border: none !important;
+        height: 30px !important; width: 70px !important; font-size: 11px !important; border: none !important;
     }}
     </style>
 """, unsafe_allow_html=True)
+
+# باقي الكود (الدخول، جلب البيانات، العرض) يكمل هنا بنفس الترتيب...
+# تأكد أنك وضعت import streamlit as st في أول سطر في ملف main.py
