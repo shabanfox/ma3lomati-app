@@ -26,7 +26,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS)
+# 4. التنسيق الجمالي المحسن (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -79,7 +79,7 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# الهيدر وزر الخروج
+# بناء الهيدر وزر الخروج
 h_col1, h_col2 = st.columns([0.85, 0.15])
 with h_col1:
     st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">📅 {datetime.now().strftime("%Y-%m-%d")}</div></div>', unsafe_allow_html=True)
@@ -95,12 +95,18 @@ def load_all_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        # استخدام .fillna("") لاستبدال أي None بنص فارغ
-        p = pd.read_csv(u_p).fillna("جاري التحديث...").astype(str)
-        d = pd.read_csv(u_d).fillna("جاري التحديث...").astype(str)
-        # تنظيف إضافي لكلمة "nan" التي قد تظهر من Pandas
-        p = p.replace("nan", "جاري التحديث...")
-        d = d.replace("nan", "جاري التحديث...")
+        # تحسين: استبدال القيم الفارغة و None و nan فوراً بنص "غير متوفر"
+        p = pd.read_csv(u_p).fillna("غير متوفر").astype(str)
+        d = pd.read_csv(u_d).fillna("غير متوفر").astype(str)
+        
+        # تنظيف إضافي للنصوص لضمان عدم ظهور None
+        def clean_val(val):
+            if val.lower() in ["none", "nan", "", "null"]:
+                return "جاري تحديث البيانات..."
+            return val
+            
+        p = p.applymap(clean_val)
+        d = d.applymap(clean_val)
         return p, d
     except: return pd.DataFrame(), pd.DataFrame()
 
@@ -113,7 +119,7 @@ menu = option_menu(None, ["الأدوات", "المشاريع", "المطوري�
 
 main_col, side_col = st.columns([0.75, 0.25])
 
-# --- القائمة الجانبية ---
+# --- القائمة الجانبية (6 عناصر استلام فوري) ---
 with side_col:
     st.markdown("<p style='color:#10b981; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
     if not df_p.empty:
@@ -132,7 +138,7 @@ with side_col:
 with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
-        if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
+        if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
         
         st.markdown('<div class="detail-card">', unsafe_allow_html=True)
         if 'Project Name' in item:
