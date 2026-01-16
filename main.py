@@ -25,15 +25,13 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (الشكل المطلوب)
+# 4. التنسيق الجمالي
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
     .block-container {{ padding-top: 0rem !important; }}
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
-    
     .luxury-header {{
         background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
         border-bottom: 2px solid #f59e0b; padding: 15px 30px;
@@ -41,7 +39,6 @@ st.markdown(f"""
         position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 15px;
     }}
     .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; }}
-    
     .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }}
     .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
     @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
@@ -68,18 +65,13 @@ st.markdown(f"""
         transform: translateY(-5px) !important;
         box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2) !important;
     }}
-
     .ready-sidebar-container {{
         background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px;
         max-height: 80vh; overflow-y: auto; border-top: 3px solid #10b981;
     }}
     .ready-card {{ background: #161616; border-right: 3px solid #10b981; padding: 10px; border-radius: 8px; margin-bottom: 8px; }}
     .ready-title {{ color: #f59e0b; font-size: 14px; font-weight: bold; }}
-
-    /* ستايل صفحة التفاصيل */
-    .detail-box {{
-        background:#111; padding:30px; border-radius:15px; border-right:5px solid #f59e0b; color:white;
-    }}
+    .detail-box {{ background:#111; padding:30px; border-radius:15px; border-right:5px solid #f59e0b; color:white; }}
     .info-label {{ color: #f59e0b; font-weight: bold; }}
     </style>
 """, unsafe_allow_html=True)
@@ -87,7 +79,7 @@ st.markdown(f"""
 # 5. شاشة الدخول
 if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1,1.5,1])
+    _, c2, _ = st.columns([1,1.5,1])
     with c2:
         if st.text_input("Passcode", type="password") == "2026": 
             st.session_state.auth = True; st.rerun()
@@ -125,114 +117,53 @@ with side_col:
     if not df_p.empty:
         ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
         for _, row in ready_items.head(15).iterrows():
-            st.markdown(f'<div class="ready-card"><div class="ready-title">{row.get("Project Name")}</div><div style="color:#888; font-size:11px;">📍 {row.get("Area")}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ready-card"><div class="ready-title">{row.get("Project Name", "مشروع")}</div><div style="color:#888; font-size:11px;">📍 {row.get("Area", "منطقة")}</div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
     if st.button("🚪 خروج آمن", use_container_width=True):
         st.session_state.auth = False; st.rerun()
 
 with main_col:
-    # --- عرض التفاصيل ---
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
-        if st.button("⬅️ عودة للقائمة", key="back"):
+        if st.button("⬅️ عودة لقائمة"):
             st.session_state.selected_item = None; st.rerun()
         
-        # إذا كان المختار مشروع
         if 'Project Name' in item:
-            st.markdown(f"""
-                <div class="detail-box">
-                    <h1 style="color:#f59e0b; margin-bottom:5px;">{item.get('Project Name')}</h1>
-                    <h4 style="color:#aaa; margin-bottom:20px;">📍 {item.get('Area')}</h4>
-                    <hr style="opacity:0.1;">
-                    <p><span class="info-label">📍 الموقع بالتفصيل:</span> {item.get('Detailed Location')}</p>
-                    <p><span class="info-label">🏗️ المطور:</span> {item.get('Developer')}</p>
-                    <p><span class="info-label">📐 مساحة المشروع:</span> {item.get('Project Area')}</p>
-                    <p><span class="info-label">🏢 الإدارة والتشغيل:</span> {item.get('Management')}</p>
-                    <p><span class="info-label">📋 الماستر بلان:</span> {item.get('Master Plan')}</p>
-                    <div style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">
-                        <h4 style="color:#f59e0b;">✨ مميزات المشروع:</h4>
-                        <p>{item.get('Project Features')}</p>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-        # إذا كان المختار مطور
+            st.markdown(f"""<div class="detail-box"><h1>{item.get('Project Name')}</h1><p>📍 {item.get('Area')}</p><hr style="opacity:0.1;"><p><span class="info-label">📍 الموقع بالتفصيل:</span> {item.get('Detailed Location')}</p><p><span class="info-label">🏗️ المطور:</span> {item.get('Developer')}</p><p><span class="info-label">📐 مساحة المشروع:</span> {item.get('Project Area')}</p><p><span class="info-label">🏢 الإدارة:</span> {item.get('Management')}</p><div style="margin-top:20px; border-top:1px solid #333; padding-top:15px;"><h4>✨ مميزات المشروع:</h4><p>{item.get('Project Features')}</p></div></div>""", unsafe_allow_html=True)
         else:
-            st.markdown(f"""
-                <div class="detail-box">
-                    <h1 style="color:#f59e0b;">{item.get('Developer')}</h1>
-                    <p><span class="info-label">👑 المالك:</span> {item.get('Owner')}</p>
-                    <p><span class="info-label">⭐ الفئة:</span> {item.get('Developer Category')}</p>
-                    <p><span class="info-label">🏢 عدد المشاريع:</span> {item.get('Number of Projects')}</p>
-                    <p><span class="info-label">📍 منطقة النشاط:</span> {item.get('Main Region of Activity')}</p>
-                    <p><span class="info-label">🏠 العنوان:</span> {item.get('Headquarters Address')}</p>
-                    <hr style="opacity:0.1;">
-                    <h4 style="color:#f59e0b;">📖 سابقة الأعمال:</h4>
-                    <p>{item.get('Previous Projects')}</p>
-                    <h4 style="color:#f59e0b; margin-top:15px;">ℹ️ معلومات إضافية:</h4>
-                    <p>{item.get('Detailed_Info')}</p>
-                    <div style="text-align:center; margin-top:20px;">
-                        <a href="{item.get('Company Website / Portfolio')}" target="_blank" style="color:#f59e0b; text-decoration:none; font-weight:bold; border:1px solid #f59e0b; padding:10px 20px; border-radius:10px;">🌐 زيارة الموقع الإلكتروني</a>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="detail-box"><h1>{item.get('Developer')}</h1><p><span class="info-label">👑 المالك:</span> {item.get('Owner')}</p><p><span class="info-label">📍 النشاط:</span> {item.get('Main Region of Activity')}</p><hr style="opacity:0.1;"><h4>📖 سابقة الأعمال:</h4><p>{item.get('Previous Projects')}</p><div style="text-align:center; margin-top:20px;"><a href="{item.get('Company Website / Portfolio', '#')}" target="_blank" style="color:#f59e0b; text-decoration:none; font-weight:bold; border:1px solid #f59e0b; padding:10px 20px; border-radius:10px;">🌐 زيارة الموقع</a></div></div>""", unsafe_allow_html=True)
 
     elif menu == "المشاريع":
         s_p = st.text_input("🔍 ابحث عن مشروع...")
         dff_p = df_p.copy()
         if s_p: dff_p = dff_p[dff_p.apply(lambda r: r.astype(str).str.contains(s_p, case=False).any(), axis=1)]
-        
         limit = 6
         curr_page = dff_p.iloc[st.session_state.p_idx*limit : (st.session_state.p_idx+1)*limit]
-
         for i in range(0, len(curr_page), 2):
             cols = st.columns(2)
             for j in range(2):
                 if i+j < len(curr_page):
                     row = curr_page.iloc[i+j]
                     with cols[j]:
-                        label = (
-                            f"🏢 {row.get('Project Name')}\n"
-                            f"📍 {row.get('Area')}\n"
-                            f"━━━━━━━━━━━━━━\n"
-                            f"📐 المساحة: {row.get('Project Area')}\n"
-                            f"🏗️ المطور: {row.get('Developer')}\n"
-                            f"🏢 الإدارة: {row.get('Management')}\n"
-                            f"💰 عرض كامل التفاصيل"
-                        )
-                        if st.button(label, key=f"card_p_{i+j}"):
-                            st.session_state.selected_item = row; st.rerun()
-        
-        # أزرار التنقل
-        st.markdown("---")
-        b1, b2 = st.columns(2)
-        if st.session_state.p_idx > 0:
-            if b1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
-        if (st.session_state.p_idx + 1) * limit < len(dff_p):
-            if b2.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
+                        label = f"🏢 {row.get('Project Name')}\n📍 {row.get('Area')}\n━━━━━━━━━━━━━━\n📐 المساحة: {row.get('Project Area')}\n🏗️ المطور: {row.get('Developer')}\n💰 عرض كامل التفاصيل"
+                        if st.button(label, key=f"card_p_{i+j}"): st.session_state.selected_item = row; st.rerun()
 
     elif menu == "المطورين":
         s_d = st.text_input("🔍 ابحث عن مطور عقاري...")
         dff_d = df_d.copy()
         if s_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(s_d, case=False).any(), axis=1)]
-
         for i in range(0, len(dff_d), 2):
             cols = st.columns(2)
             for j in range(2):
                 if i+j < len(dff_d):
                     row = dff_d.iloc[i+j]
                     with cols[j]:
-                        label = (
-                            f"🏗️ {row.get('Developer')}\n"
-                            f"⭐ الفئة: {row.get('Developer Category')}\n"
-                            f"━━━━━━━━━━━━━━\n"
-                            f"👤 المالك: {row.get('Owner')}\n"
-                            f"🏢 عدد المشاريع: {row.get('Number of Projects')}\n"
-                            f"📍 المقر: {row.get('Headquarters Address')[:30]}...\n"
-                            f"📖 عرض سابقة الأعمال"
-                        )
-                        if st.button(label, key=f"card_d_{i+j}"):
-                            st.session_state.selected_item = row; st.rerun()
+                        # حل مشكلة TypeError بتأمين النصوص الفارغة
+                        addr = str(row.get('Headquarters Address', 'غير مسجل'))
+                        addr_display = (addr[:30] + '..') if len(addr) > 30 else addr
+                        label = f"🏗️ {row.get('Developer')}\n⭐ الفئة: {row.get('Developer Category')}\n━━━━━━━━━━━━━━\n👤 المالك: {row.get('Owner')}\n🏢 مشاريع: {row.get('Number of Projects')}\n📍 المقر: {addr_display}\n📖 عرض سابقة الأعمال"
+                        if st.button(label, key=f"card_d_{i+j}"): st.session_state.selected_item = row; st.rerun()
 
     elif menu == "الأدوات":
         st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات المساعدة</h3>", unsafe_allow_html=True)
