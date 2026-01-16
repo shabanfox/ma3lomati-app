@@ -1,203 +1,147 @@
 import streamlit as st
 import pandas as pd
-import math
 import feedparser
-import urllib.parse
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة الأساسية
 st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. إدارة الحالة
-if 'auth' not in st.session_state: st.session_state.auth = False
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
-if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
-
-# 3. جلب الأخبار (RSS)
-@st.cache_data(ttl=1800)
-def get_real_news():
-    try:
-        rss_url = "https://www.youm7.com/rss/SectionRss?SectionID=297" 
-        feed = feedparser.parse(rss_url)
-        news = [item.title for item in feed.entries[:10]]
-        return "  •  ".join(news) if news else "جاري تحديث الأخبار العقارية..."
-    except: return "سوق العقارات المصري: متابعة مستمرة لآخر المستجدات."
-
-news_text = get_real_news()
-
-# 4. التنسيق الجمالي (CSS المطور)
-st.markdown(f"""
+# 2. حقن Tailwind CSS وخط Cairo في قلب Streamlit
+st.markdown("""
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    .block-container {{ padding-top: 0rem !important; }}
-    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
+    /* تطبيق الخط على كل العناصر */
+    html, body, [class*="css"], .stMarkdown {
+        font-family: 'Cairo', sans-serif !important;
+        direction: rtl !important;
+        text-align: right !important;
+    }
     
-    /* الهيدر */
-    .luxury-header {{
-        background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
-        border-bottom: 2px solid #f59e0b; padding: 15px 30px;
-        display: flex; justify-content: space-between; align-items: center;
-        position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 15px;
-    }}
-    .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }}
+    /* إخفاء واجهة ستريمليت الافتراضية */
+    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
+    .block-container { padding-top: 0rem !important; background-color: #f9fafb; }
     
-    /* شريط الأخبار */
-    .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }}
-    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
-    @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
-
-    /* كروت الشبكة الرئيسية */
-    .grid-card {{ 
-        background: #111; border: 1px solid #222; 
-        border-right: 4px solid #f59e0b; border-radius: 12px; padding: 15px; margin-bottom: 15px;
-        min-height: 180px; transition: 0.3s;
-    }}
-    .grid-card:hover {{ border-color: #f59e0b; background: #161616; }}
-
-    /* --- تنسيق خانة استلام فوري الجديد --- */
-    .ready-sidebar-container {{
-        background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px;
-        max-height: 80vh; overflow-y: auto; border-top: 3px solid #10b981;
-    }}
-    .ready-card {{
-        background: #161616; border-right: 3px solid #10b981; padding: 10px; 
-        border-radius: 8px; margin-bottom: 8px; transition: 0.2s;
-    }}
-    .ready-card:hover {{ background: #1f1f1f; }}
-    .ready-title {{ color: #f59e0b; font-size: 14px; font-weight: bold; margin-bottom: 2px; }}
-    .ready-loc {{ color: #888; font-size: 11px; }}
-    /* ------------------------------------- */
-
-    .tier-badge {{ background: #f59e0b; color: #000; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }}
+    /* تصميم كارت المشاريع بأسلوب Tailwind */
+    .custom-card {
+        background: white;
+        border-radius: 1rem;
+        border-right: 5px solid #2563eb;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        padding: 1.5rem;
+        transition: 0.3s;
+    }
+    .custom-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
     </style>
 """, unsafe_allow_html=True)
 
-# 5. شاشة الدخول
-if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1,1.5,1])
-    with c2:
-        if st.text_input("Passcode", type="password") == "2026": 
-            st.session_state.auth = True; st.rerun()
-    st.stop()
+# 3. وظائف جلب البيانات (الأخبار وجوجل شيت)
+@st.cache_data(ttl=1800)
+def get_real_news():
+    try:
+        feed = feedparser.parse("https://www.youm7.com/rss/SectionRss?SectionID=297")
+        news = [item.title for item in feed.entries[:10]]
+        return "  •  ".join(news) if news else "متابعة مستمرة لآخر مستجدات العقارات"
+    except: return "سوق العقارات المصري: تحديثات يناير 2026"
 
-# بناء الهيدر
-now = datetime.now().strftime("%Y-%m-%d | %H:%M")
-st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div><div style="color:#aaa; font-size:12px; text-align:left;">📅 {now}</div></div>', unsafe_allow_html=True)
-st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("").astype(str)
+        return p
+    except: return pd.DataFrame()
+
+# 4. بناء الهيدر بأسلوب Tailwind (HTML داخل st.markdown)
+st.markdown("""
+    <nav style="background: white; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 1.5rem; font-weight: 800; color: #1e3a8a;">Broker<span style="color: #3b82f6;">Edge</span></div>
+        <div style="background: #3b82f6; color: white; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">دخول البروكر</div>
+    </nav>
+    <header style="background: #1e3a8a; padding: 4rem 1rem; text-align: center; color: white;">
+        <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem;">كل داتا السوق في جيبك</h1>
+        <p style="color: #bfdbfe; margin-bottom: 2rem;">ابحث عن المشاريع، قارن المطورين، واحصل على الزتونة فوراً</p>
+    </header>
+""", unsafe_allow_html=True)
+
+# شريط الأخبار
+st.markdown(f"""
+    <div style="background: #f1f5f9; padding: 5px 0; overflow: hidden; border-bottom: 1px solid #e2e8f0;">
+        <marquee scrollamount="5" direction="right" style="color: #475569; font-size: 14px;">🔥 {get_real_news()}</marquee>
+    </div>
+""", unsafe_allow_html=True)
+
+# 5. محرك البحث والتبويبات
+df_p = load_data()
+
+with st.container():
+    st.markdown("<div style='max-width: 900px; margin: -30px auto 30px auto;'>", unsafe_allow_html=True)
+    search_q = st.text_input("", placeholder="🔍 ابحث عن اسم المشروع أو المطور...", label_visibility="collapsed")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
     icons=["tools", "building", "person-vcard"], 
     default_index=1, orientation="horizontal",
-    styles={"container": {"background-color": "#0a0a0a", "padding": "0"}, "nav-link-selected": {"background-color": "#f59e0b", "color": "black"}}
+    styles={
+        "container": {"background-color": "white", "padding": "5px", "border-radius": "10px", "box-shadow": "0 2px 4px rgba(0,0,0,0.05)"},
+        "nav-link-selected": {"background-color": "#1e3a8a", "color": "white"}
+    }
 )
 
-# جلب البيانات
-@st.cache_data(ttl=60)
-def load_all_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
-    try:
-        p = pd.read_csv(u_p).fillna("").astype(str)
-        d = pd.read_csv(u_d).fillna("").astype(str)
-        p.columns = p.columns.str.strip()
-        d.columns = d.columns.str.strip()
-        return p, d
-    except: return pd.DataFrame(), pd.DataFrame()
+# 6. عرض النتائج بأسلوب الـ Grid الاحترافي
+if menu == "المشاريع":
+    dff = df_p.copy()
+    if search_q:
+        dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search_q, case=False).any(), axis=1)]
 
-df_p, df_d = load_all_data()
+    # توزيع المشاريع في كروت
+    main_col, side_col = st.columns([0.75, 0.25])
+    
+    with main_col:
+        cols = st.columns(2)
+        for i, (idx, row) in enumerate(dff.head(10).iterrows()):
+            with cols[i % 2]:
+                st.markdown(f"""
+                    <div class="custom-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <h3 style="color: #1e3a8a; font-size: 1.2rem; font-weight: 800; margin:0;">{row.get('Project Name', 'مشروع')}</h3>
+                            <span style="background: #dcfce7; color: #166534; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold;">محدث</span>
+                        </div>
+                        <p style="color: #64748b; font-size: 13px; margin: 10px 0;">📍 {row.get('Area', 'الموقع')}</p>
+                        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 14px; font-weight: 700; color: #1e40af;">{row.get('Developer', 'المطور')}</span>
+                            <span style="color: #3b82f6; font-size: 12px; cursor: pointer;">التفاصيل ←</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                with st.expander("فتح الزتونة"):
+                    st.write(f"✨ **المميزات:** {row.get('Project Features', 'N/A')}")
+                    st.info(f"📐 **المساحة:** {row.get('Project Area', 'N/A')}")
 
-# --- توزيع المساحة 70/30 ---
-main_col, side_col = st.columns([0.75, 0.25])
-
-# --- الجانب الأيمن (استلام فوري) معدل ---
-with side_col:
-    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold; font-size:15px; margin-bottom:10px;'>🔑 استلام فوري فقط</p>", unsafe_allow_html=True)
-    st.markdown("<div class='ready-sidebar-container'>", unsafe_allow_html=True)
-    # فلترة الاستلام الفوري
-    ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
-    if not ready_items.empty:
-        for _, row in ready_items.iterrows():
+    with side_col:
+        st.markdown("""
+            <div style="background: white; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0;">
+                <h4 style="color: #16a34a; font-size: 15px; font-weight: 800; margin-bottom: 1rem;">🔑 استلام فوري</h4>
+            </div>
+        """, unsafe_allow_html=True)
+        # هنا يمكن وضع فلترة الاستلام الفوري بنفس أسلوب الكود الأول
+        ready_df = dff[dff.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
+        for _, r in ready_df.head(5).iterrows():
             st.markdown(f"""
-                <div class="ready-card">
-                    <div class="ready-title">{row.get('Project Name', 'مشروع')}</div>
-                    <div class="ready-loc">📍 {row.get('Area', 'الموقع')}</div>
+                <div style="background: #f0fdf4; border-right: 3px solid #16a34a; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: bold; color: #166534;">{r.get('Project Name')}</div>
+                    <div style="font-size: 11px; color: #15803d;">📍 {r.get('Area')}</div>
                 </div>
             """, unsafe_allow_html=True)
-    else:
-        st.markdown("<p style='color:#555; font-size:11px; text-align:center;'>لا توجد وحدات فورية حالياً</p>", unsafe_allow_html=True)
+
+# 7. الأدوات
+elif menu == "الأدوات":
+    st.markdown("<div style='background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);'>", unsafe_allow_html=True)
+    st.subheader("🧮 حاسبة الأقساط السريعة")
+    c1, c2 = st.columns(2)
+    with c1: price = st.number_input("سعر الوحدة", 1000000)
+    with c2: years = st.slider("عدد السنوات", 1, 15, 8)
+    st.metric("القسط الشهري التقريبي", f"{price/(years*12):,.0f} ج.م")
     st.markdown("</div>", unsafe_allow_html=True)
-
-# --- الجانب الرئيسي (المشاريع والمطورين) ---
-with main_col:
-    if menu == "المشاريع":
-        s_p = st.text_input("🔍 بحث سـريع...")
-        dff_p = df_p.copy()
-        if s_p: dff_p = dff_p[dff_p.apply(lambda r: r.astype(str).str.contains(s_p, case=False).any(), axis=1)]
-        
-        limit = 6
-        curr_page = dff_p.iloc[st.session_state.p_idx*limit : (st.session_state.p_idx+1)*limit]
-
-        for i in range(0, len(curr_page), 2):
-            cols = st.columns(2)
-            for j in range(2):
-                if i+j < len(curr_page):
-                    row = curr_page.iloc[i+j]
-                    with cols[j]:
-                        st.markdown(f"""
-                            <div class='grid-card'>
-                                <h3 style='color:#f59e0b; font-size:18px; margin-bottom:10px;'>{row.get('Project Name')}</h3>
-                                <p style='font-size:13px;'>📍 <b>الموقع:</b> {row.get('Area')}</p>
-                                <p style='font-size:13px; color:#aaa;'>🏢 <b>المطور:</b> {row.get('Developer')}</p>
-                                <div style='font-size:11px; color:#666; border-top:1px solid #222; margin-top:10px; padding-top:5px;'>📐 {row.get('Project Area')}</div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        with st.expander("تفاصيل المشروع"):
-                            st.info(f"🎨 **Master Plan:** {row.get('Master Plan', 'N/A')}")
-                            st.success(f"⚙️ **إدارة المشروع:** {row.get('Management', 'N/A')}")
-                            st.write(f"✨ **المميزات:** {row.get('Project Features')}")
-
-        st.write("---")
-        c1, c2 = st.columns(2)
-        if c1.button("التالي ⬅️"): st.session_state.p_idx += 1; st.rerun()
-        if c2.button("➡️ السابق"): st.session_state.p_idx = max(0, st.session_state.p_idx-1); st.rerun()
-
-    elif menu == "المطورين":
-        s_d = st.text_input("🔍 ابحث عن مطور...")
-        dff_d = df_d.copy()
-        if s_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(s_d, case=False).any(), axis=1)]
-
-        for i in range(0, len(dff_d), 2):
-            cols = st.columns(2)
-            for j in range(2):
-                if i+j < len(dff_d):
-                    row = dff_d.iloc[i+j]
-                    with cols[j]:
-                        st.markdown(f"""
-                            <div class='grid-card'>
-                                <div style="display:flex; justify-content:space-between;">
-                                    <h3 style='color:#f59e0b; font-size:17px;'>{row.get('Developer')}</h3>
-                                    <span class="tier-badge">{row.get('Developer Category', 'N/A')}</span>
-                                </div>
-                                <p style='font-size:13px; margin-top:5px;'>👤 المالك: {row.get('Owner')}</p>
-                                <p style='color:#10b981; font-weight:bold; font-size:13px;'>🏗️ المشاريع: {row.get('Number of Projects')}</p>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        with st.expander("📖 سابقة الأعمال"):
-                            st.write(row.get('Detailed_Info'))
-
-    elif menu == "الأدوات":
-        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات</h3>", unsafe_allow_html=True)
-        t1, t2 = st.tabs(["🧮 القسط", "📐 المساحة"])
-        with t1:
-            price = st.number_input("السعر", 1000000); y = st.slider("السنين", 1, 15, 8)
-            st.metric("القسط الشهري", f"{price/(y*12):,.0f}")
-        with t2:
-            sq = st.number_input("متر", 100.0); st.write(f"قدم: {sq*10.76:,.2f}")
-
-if st.button("🚪 خروج"):
-    st.session_state.auth = False
-    st.rerun()
