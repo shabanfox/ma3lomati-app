@@ -2,128 +2,120 @@ import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة والستايل
-st.set_page_config(page_title="BrokerEdge Pro 2026", layout="wide", initial_sidebar_state="collapsed")
+# 1. إعدادات الصفحة
+st.set_page_config(page_title="BrokerEdge Pro", layout="wide")
 
-# إدارة الحالة (Pagination & Auth)
+# إدارة الحالة
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'auth' not in st.session_state: st.session_state.auth = True
 
-# 2. التنسيق الجمالي (CSS) - ألوان واضحة وخطوط عريضة
+# 2. التنسيق الجمالي (CSS) - ألوان صارخة وواضحة جداً
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Cairo', sans-serif !important; direction: rtl; text-align: right; background-color: #F1F5F9; }
-    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
-    .block-container { padding-top: 0rem !important; }
-
+    html, body, [class*="css"] { font-family: 'Cairo', sans-serif !important; direction: rtl; text-align: right; background-color: #F8FAFC; }
+    
     /* الهيدر */
     .main-header {
-        background: #1E293B; color: #F59E0B; padding: 30px; text-align: center;
-        border-radius: 0 0 30px 30px; border-bottom: 5px solid #F59E0B; margin-bottom: 20px;
+        background: #0F172A; color: #F59E0B; padding: 25px; text-align: center;
+        border-bottom: 5px solid #F59E0B; border-radius: 0 0 20px 20px; margin-bottom: 20px;
     }
 
     /* الكروت الشبكية */
     .grid-card {
-        background: white; border-radius: 15px; border: 2px solid #E2E8F0;
+        background: white; border-radius: 15px; border: 2px solid #CBD5E1;
         padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: 0.3s; min-height: 220px;
+        min-height: 200px;
     }
-    .grid-card:hover { border-color: #3B82F6; transform: translateY(-5px); }
-    .card-title { color: #1E3A8A; font-size: 20px; font-weight: 900; margin-bottom: 5px; }
-    .card-loc { color: #EF4444; font-weight: bold; font-size: 14px; }
-    .card-detail { color: #64748B; font-size: 13px; margin: 5px 0; }
+    .card-title { color: #1E3A8A; font-size: 22px; font-weight: 900; }
+    .card-price { color: #EF4444; font-size: 18px; font-weight: bold; }
     
     /* أزرار التنقل */
     .stButton>button {
-        background-color: #3B82F6 !important; color: white !important;
-        border-radius: 10px !important; font-weight: bold !important; width: 100%;
+        background-color: #F59E0B !important; color: #0F172A !important;
+        font-weight: 900 !important; border-radius: 10px !important; height: 50px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظيفة جلب البيانات من Google Sheets
-@st.cache_data(ttl=60)
-def load_sheet_data(url):
+# 3. وظيفة جلب البيانات (مع معالجة الأخطاء)
+def load_data():
+    # الرابط الذي أرسلته مع تحويله لصيغة البرمجة (CSV)
+    raw_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     try:
-        # تحويل رابط pubhtml إلى رابط تحميل CSV مباشر
-        csv_url = url.replace('/pubhtml', '/export?format=csv')
-        df = pd.read_csv(csv_url).fillna("غير متوفر").astype(str)
+        df = pd.read_csv(raw_url).fillna("غير متوفر")
         return df
     except:
-        return pd.DataFrame()
+        # بيانات احتياطية في حال فشل الرابط لتجربة الكود
+        data = {
+            'Project Name': ['مشروع تجريبي 1', 'مشروع تجريبي 2', 'مشروع تجريبي 3'],
+            'Area': ['التجمع الخامس', 'الشيخ زايد', 'العاصمة الإدارية'],
+            'Developer': ['مطور 1', 'مطور 2', 'مطور 3'],
+            'Price': ['5,000,000', '4,200,000', '7,500,000']
+        }
+        return pd.DataFrame(data)
 
-# روابط الشيتات الخاصة بك
-sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pubhtml"
+df = load_data()
 
-df_data = load_sheet_data(sheet_url)
+# 4. الهيدر
+st.markdown('<div class="main-header"><h1>BrokerEdge PRO 2026</h1></div>', unsafe_allow_html=True)
 
-# 4. بناء الواجهة الرئيسية
-st.markdown("""
-    <div class="main-header">
-        <h1 style="margin:0; font-size:35px;">BrokerEdge PRO</h1>
-        <p style="color:white; margin:0; opacity:0.8;">المنصة المتكاملة لإدارة المشاريع والمطورين</p>
-    </div>
-""", unsafe_allow_html=True)
-
-# قائمة الاختيارات العلويّة
+# 5. المنيو الرئيسي
 menu = option_menu(None, ["المشاريع", "المطورين", "الأدوات", "خروج"], 
     icons=["building", "person-badge", "tools", "door-open"], 
     default_index=0, orientation="horizontal",
     styles={
-        "container": {"background-color": "white", "padding": "10px", "border-radius": "15px", "border": "1px solid #E2E8F0"},
-        "nav-link-selected": {"background-color": "#1E293B", "color": "#F59E0B"}
+        "container": {"background-color": "white", "border": "2px solid #CBD5E1"},
+        "nav-link-selected": {"background-color": "#0F172A", "color": "#F59E0B"}
     }
 )
 
+# ----------------- قائمة الخروج -----------------
 if menu == "خروج":
-    st.session_state.auth = False
-    st.warning("تم تسجيل الخروج. يرجى إعادة تحميل الصفحة.")
+    st.info("تم تسجيل الخروج بنجاح. أغلق المتصفح للخصوصية.")
     st.stop()
 
-# 5. محرك البحث والترقيم (Pagination)
-search_q = st.text_input("", placeholder="🔍 ابحث في كامل البيانات (اسم المشروع، المطور، المنطقة)...", label_visibility="collapsed")
+# ----------------- قائمة الأدوات -----------------
+elif menu == "الأدوات":
+    st.markdown("<div style='background:white; padding:30px; border-radius:15px; border:2px solid #CBD5E1;'>", unsafe_allow_html=True)
+    st.header("🧮 حاسبة الأقساط")
+    price = st.number_input("سعر الوحدة", value=5000000)
+    years = st.slider("سنوات التقسيط", 1, 15, 8)
+    monthly = price / (years * 12)
+    st.metric("القسط الشهري التقريبي", f"{monthly:,.0f} ج.م")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# تصفية البيانات بناءً على البحث
-dff = df_data.copy()
-if search_q:
-    dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search_q, case=False).any(), axis=1)]
-    st.session_state.page_num = 0
-
-# إعداد الترقيم (6 عناصر في الصفحة)
-limit = 6
-total_pages = (len(dff) // limit) + (1 if len(dff) % limit > 0 else 0)
-start_idx = st.session_state.page_num * limit
-end_idx = start_idx + limit
-current_items = dff.iloc[start_idx:end_idx]
-
-# 6. عرض المحتوى بناءً على القائمة
-if menu in ["المشاريع", "المطورين"]:
-    st.markdown(f"<h3>قائمة {menu} ({len(dff)} عنصر)</h3>", unsafe_allow_html=True)
+# ----------------- قائمة المشاريع والمطورين -----------------
+else:
+    # محرك البحث
+    q = st.text_input("", placeholder="🔍 ابحث هنا عن أي شيء...")
     
-    # توزيع العناصر في شبكة (Grid)
-    cols = st.columns(2) # عمودين في كل صف
+    dff = df.copy()
+    if q:
+        dff = dff[dff.apply(lambda r: r.astype(str).str.contains(q, case=False).any(), axis=1)]
+
+    # نظام الترتيب (6 في الصفحة)
+    limit = 6
+    total_pages = max(1, (len(dff) // limit) + (1 if len(dff) % limit > 0 else 0))
+    start_idx = st.session_state.page_num * limit
+    current_items = dff.iloc[start_idx : start_idx + limit]
+
+    # العرض الشبكي (2 في كل صف)
+    cols = st.columns(2)
     for i, (idx, row) in enumerate(current_items.iterrows()):
         with cols[i % 2]:
-            # تخصيص عرض الكارت بناءً على المنيو (مشروع أو مطور)
-            title = row.get('Project Name') if 'Project Name' in row else row.iloc[0]
-            subtitle = row.get('Area') if 'Area' in row else "معلومات إضافية"
-            extra = row.get('Developer') if 'Developer' in row else "التصنيف"
-
             st.markdown(f"""
                 <div class="grid-card">
-                    <div class="card-title">{title}</div>
-                    <div class="card-loc">📍 {subtitle}</div>
-                    <div class="card-detail">🏢 المطور: <b>{extra}</b></div>
-                    <div style="background:#F8FAFC; padding:10px; border-radius:10px; font-size:12px; margin-top:10px; border:1px solid #F1F5F9;">
-                        {row.iloc[3] if len(row)>3 else ""}
-                    </div>
+                    <div class="card-title">{row.iloc[0]}</div>
+                    <div style="color:#64748B;">📍 {row.iloc[1] if len(row)>1 else ""}</div>
+                    <div style="margin-top:10px;">🏢 المطور: <b>{row.iloc[2] if len(row)>2 else ""}</b></div>
+                    <hr>
+                    <div class="card-price">السعر: {row.iloc[3] if len(row)>3 else "اتصل بنا"}</div>
                 </div>
             """, unsafe_allow_html=True)
-            with st.expander("شاهد التفاصيل الكاملة للزتونة"):
-                st.table(row) # عرض كل بيانات السطر عند الضغط
+            with st.expander("كل البيانات"):
+                st.write(row)
 
-    # أزرار التالي والسابق
+    # أزرار التنقل
     st.write("---")
     c1, c2, c3 = st.columns([1, 2, 1])
     with c1:
@@ -132,31 +124,9 @@ if menu in ["المشاريع", "المطورين"]:
                 st.session_state.page_num -= 1
                 st.rerun()
     with c2:
-        st.markdown(f"<p style='text-align:center; font-weight:bold;'>صفحة {st.session_state.page_num + 1} من {total_pages}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.page_num + 1} من {total_pages}</p>", unsafe_allow_html=True)
     with c3:
-        if end_idx < len(dff):
+        if (start_idx + limit) < len(dff):
             if st.button("التالي ➡️"):
                 st.session_state.page_num += 1
                 st.rerun()
-
-elif menu == "الأدوات":
-    st.markdown("<div style='background:white; padding:40px; border-radius:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
-    st.title("🧮 حاسبة البروكر الذكية")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        price = st.number_input("سعر الوحدة الإجمالي", value=5000000, step=100000)
-        down_payment_pct = st.slider("المقدم (%)", 0, 50, 10)
-    with col_b:
-        years = st.slider("عدد سنوات التقسيط", 1, 15, 8)
-        
-    dp_amount = price * (down_payment_pct / 100)
-    remaining = price - dp_amount
-    monthly = remaining / (years * 12)
-    
-    st.markdown("---")
-    res_1, res_2 = st.columns(2)
-    res_1.metric("قيمة المقدم (ج.م)", f"{dp_amount:,.0f}")
-    res_2.metric("القسط الشهري (ج.م)", f"{monthly:,.0f}")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
