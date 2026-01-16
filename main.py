@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import feedparser
+import time
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
@@ -26,7 +27,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي المحسن (CSS)
+# 4. التنسيق الجمالي (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -79,7 +80,7 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# بناء الهيدر وزر الخروج
+# الهيدر وزر الخروج
 h_col1, h_col2 = st.columns([0.85, 0.15])
 with h_col1:
     st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">📅 {datetime.now().strftime("%Y-%m-%d")}</div></div>', unsafe_allow_html=True)
@@ -89,28 +90,31 @@ with h_col2:
 
 st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 
-# 6. جلب البيانات (تحديث تلقائي كل 200 ثانية)
+# 6. جلب البيانات (تحديث تلقائي كل 200 ثانية + كسر التخزين المؤقت)
 @st.cache_data(ttl=200)
-def load_all_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+def load_all_data(timestamp):
+    # إضافة الوقت للرابط لضمان عدم سحب نسخة قديمة من جوجل
+    u_p = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv&t={timestamp}"
+    u_d = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv&t={timestamp}"
     try:
-        # تحسين: استبدال القيم الفارغة و None و nan فوراً بنص "غير متوفر"
-        p = pd.read_csv(u_p).fillna("غير متوفر").astype(str)
-        d = pd.read_csv(u_d).fillna("غير متوفر").astype(str)
+        p = pd.read_csv(u_p).fillna("جاري تحديث البيانات...").astype(str)
+        d = pd.read_csv(u_d).fillna("جاري تحديث البيانات...").astype(str)
         
-        # تنظيف إضافي للنصوص لضمان عدم ظهور None
-        def clean_val(val):
-            if val.lower() in ["none", "nan", "", "null"]:
+        # تنظيف شامل لكل أنواع الـ None المحتملة
+        def clean(val):
+            v = str(val).strip()
+            if v.lower() in ["none", "nan", "", "null", "undefined"]:
                 return "جاري تحديث البيانات..."
-            return val
+            return v
             
-        p = p.applymap(clean_val)
-        d = d.applymap(clean_val)
+        p = p.applymap(clean)
+        d = d.applymap(clean)
         return p, d
-    except: return pd.DataFrame(), pd.DataFrame()
+    except Exception as e:
+        return pd.DataFrame(), pd.DataFrame()
 
-df_p, df_d = load_all_data()
+# نستخدم الوقت الحالي كمفتاح للتحديث
+df_p, df_d = load_all_data(int(time.time() / 200))
 
 menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
     icons=["tools", "building", "person-vcard"], default_index=1, orientation="horizontal",
@@ -162,7 +166,9 @@ with main_col:
         s_area = f1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
         s_dev = f2.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()))
         s_search = f3.text_input("🔍 اسم المشروع")
-        if f4.button("🔄", key="refresh_btn"): st.cache_data.clear(); st.rerun()
+        if f4.button("🔄", key="refresh_btn"):
+            st.cache_data.clear()
+            st.rerun()
 
         dff_p = df_p.copy()
         if s_area != "الكل": dff_p = dff_p[dff_p['Area'] == s_area]
