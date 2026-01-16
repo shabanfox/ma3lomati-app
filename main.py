@@ -31,10 +31,6 @@ st.markdown("""
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
     [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
     
-    /* ستايل الفلاتر */
-    .stSelectbox label, .stTextInput label { color: #f59e0b !important; font-weight: bold !important; }
-    div[data-baseweb="select"] { background-color: #111 !important; border-radius: 10px !important; }
-
     .luxury-header {
         background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
         border-bottom: 2px solid #f59e0b; padding: 15px 30px;
@@ -65,15 +61,25 @@ if not st.session_state.auth:
 # الهيدر
 st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">📅 {datetime.now().strftime("%Y-%m-%d")}</div></div>', unsafe_allow_html=True)
 
-# جلب البيانات
+# جلب البيانات مع تأمين الأعمدة (Fix KeyError)
 @st.cache_data(ttl=60)
 def load_all_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        p = pd.read_csv(u_p).fillna("---"); d = pd.read_csv(u_d).fillna("---")
+        p = pd.read_csv(u_p); d = pd.read_csv(u_d)
         p.columns = p.columns.str.strip(); d.columns = d.columns.str.strip()
-        return p, d
+        
+        # التأكد من وجود الأعمدة المطلوبة لتجنب انهيار التطبيق
+        required_p = ['Project Name', 'Area', 'Developer', 'Project Area', 'Project Features']
+        required_d = ['Developer', 'Developer Category', 'Owner', 'Number of Projects', 'Detailed_Info']
+        
+        for col in required_p: 
+            if col not in p.columns: p[col] = "---"
+        for col in required_d: 
+            if col not in d.columns: d[col] = "---"
+            
+        return p.fillna("---").astype(str), d.fillna("---").astype(str)
     except: return pd.DataFrame(), pd.DataFrame()
 
 df_p, df_d = load_all_data()
@@ -86,9 +92,10 @@ main_col, side_col = st.columns([0.75, 0.25])
 
 with side_col:
     st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
-    ready = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(10)
-    for _, row in ready.iterrows():
-        st.markdown(f'<div style="background:#161616; border-right:3px solid #10b981; padding:8px; border-radius:8px; margin-bottom:5px; color:#ddd; font-size:12px;">{row.get("Project Name")}</div>', unsafe_allow_html=True)
+    if not df_p.empty:
+        ready = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(10)
+        for _, row in ready.iterrows():
+            st.markdown(f'<div style="background:#161616; border-right:3px solid #10b981; padding:8px; border-radius:8px; margin-bottom:5px; color:#ddd; font-size:12px;">{row.get("Project Name")}</div>', unsafe_allow_html=True)
 
 with main_col:
     if st.session_state.selected_item is not None:
@@ -97,16 +104,15 @@ with main_col:
         st.markdown(f"<div style='background:#111; padding:30px; border-radius:15px; border-right:5px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr>{item.get('Project Features', item.get('Detailed_Info', 'لا توجد تفاصيل'))}</div>", unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        # صف الفلاتر الجميل
         f1, f2, f3 = st.columns(3)
-        search_txt = f1.text_input("🔍 بحث بالاسم", "")
+        search_txt = f1.text_input("🔍 بحث بالاسم")
         area_list = ["الكل"] + sorted(df_p['Area'].unique().tolist())
         area_filter = f2.selectbox("📍 تصفية بالمنطقة", area_list)
         dev_list = ["الكل"] + sorted(df_p['Developer'].unique().tolist())
         dev_filter = f3.selectbox("🏗️ تصفية بالمطور", dev_list)
 
         dff = df_p.copy()
-        if search_txt: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search_txt, case=False).any(), axis=1)]
+        if search_txt: dff = dff[dff['Project Name'].str.contains(search_txt, case=False)]
         if area_filter != "الكل": dff = dff[dff['Area'] == area_filter]
         if dev_filter != "الكل": dff = dff[dff['Developer'] == dev_filter]
 
@@ -122,7 +128,6 @@ with main_col:
                     label = f"🏢 {row.get('Project Name')}\n📍 {row.get('Area')}\n🏗️ {row.get('Developer')}\n💰 عرض التفاصيل"
                     if cols[j].button(label, key=f"card_p_{start+i+j}"): st.session_state.selected_item = row; st.rerun()
         
-        # أزرار التنقل
         st.markdown("---")
         c1, _, c3 = st.columns([1,2,1])
         if st.session_state.p_idx > 0:
@@ -132,12 +137,12 @@ with main_col:
 
     elif menu == "المطورين":
         f1_d, f2_d = st.columns(2)
-        search_d = f1_d.text_input("🔍 بحث عن مطور", "")
+        search_d = f1_d.text_input("🔍 بحث عن مطور")
         cat_list = ["الكل"] + sorted(df_d['Developer Category'].unique().tolist())
         cat_filter = f2_d.selectbox("⭐ تصفية بالفئة", cat_list)
 
         dff_d = df_d.copy()
-        if search_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(search_d, case=False).any(), axis=1)]
+        if search_d: dff_d = dff_d[dff_d['Developer'].str.contains(search_d, case=False)]
         if cat_filter != "الكل": dff_d = dff_d[dff_d['Developer Category'] == cat_filter]
 
         limit_d = 6
