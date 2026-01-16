@@ -14,24 +14,21 @@ if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-# 3. جلب الأخبار الحقيقية (RSS من سكاي نيوز اقتصاد/عقارات)
-@st.cache_data(ttl=1800)
+# 3. جلب الأخبار الحقيقية
+@st.cache_data(ttl=600)
 def get_real_news():
     try:
-        # استخدام مصدر أخبار موثوق (اقتصاد)
+        # استخدام مصدر أخبار اقتصادية سريع التحديث
         rss_url = "https://www.skynewsarabia.com/rss/v1/business.xml" 
         feed = feedparser.parse(rss_url)
-        # جلب أول 15 خبر
-        news = [item.title for item in feed.entries[:15]]
-        if news:
-            return "   •   ".join(news)
-        return "جاري اتصال بمصادر الأخبار العالمية..."
+        news = [item.title for item in feed.entries[:20]]
+        return "  •  ".join(news) if news else "جاري تحديث الأخبار..."
     except:
-        return "سوق العقارات: استقرار في أسعار الوحدات الإدارية • العاصمة الإدارية تشهد إقبالاً كبيراً • استمرار العمل في مشروعات العلمين الجديدة."
+        return "العاصمة الإدارية الجديدة تشهد طفرة في المبيعات • ارتفاع الطلب على الوحدات التجارية • استقرار أسعار مواد البناء."
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS مع تعديل سرعة شريط الأخبار)
+# 4. التنسيق الجمالي (تعديل شريط الأخبار ليكون أسرع وأوضح)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -40,40 +37,39 @@ st.markdown(f"""
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
     
-    /* الهيدر */
     .luxury-header {{
-        background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
+        background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
         border-bottom: 2px solid #f59e0b; padding: 10px 30px;
         display: flex; justify-content: space-between; align-items: center;
-        position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 15px;
+        position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 10px;
     }}
     .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; }}
     
-    /* شريط الأخبار المطور (بطيء جداً) */
+    /* شريط الأخبار المطور: أسرع (60 ثانية) وأوضح (خط أكبر) */
     .ticker-wrap {{ 
         width: 100%; 
-        background: #111; 
-        padding: 8px 0; 
+        background: #000; /* خلفية سوداء تماماً للوضوح */
+        padding: 12px 0; 
         overflow: hidden; 
         white-space: nowrap; 
-        border-bottom: 1px solid #222; 
+        border-bottom: 1px solid #f59e0b; 
         margin-bottom: 15px;
     }}
     .ticker {{ 
         display: inline-block; 
         padding-right: 100%; 
-        /* تم جعل الأنيميشن 300 ثانية ليكون بطيئاً جداً */
-        animation: ticker 300s linear infinite; 
+        animation: ticker 60s linear infinite; /* سرعة متوسطة وواضحة */
         color: #f59e0b; 
-        font-size: 14px;
-        font-weight: bold;
+        font-size: 18px; /* تكبير الخط للوضوح */
+        font-weight: 700;
+        letter-spacing: 0.5px;
     }}
     @keyframes ticker {{ 
         0% {{ transform: translateX(100%); }} 
         100% {{ transform: translateX(-100%); }} 
     }}
 
-    /* ستايل الكروت الكبير (نوي) */
+    /* ستايل كروت نوي الكبير بالتفاصيل */
     div.stButton > button[key*="card_"] {{
         background-color: white !important;
         color: #111 !important;
@@ -122,8 +118,8 @@ with st.container():
             st.session_state.auth = False; st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# شريط الأخبار البطيء
-st.markdown(f'<div class="ticker-wrap"><div class="ticker">خبر عاجل: {news_text}   •   تم التحديث في: {datetime.now().strftime("%H:%M")}</div></div>', unsafe_allow_html=True)
+# عرض الشريط (أسرع وأوضح)
+st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔴 عاجل: {news_text}   •   تم التحديث الآن: {datetime.now().strftime("%H:%M")}</div></div>', unsafe_allow_html=True)
 
 # 7. البيانات
 @st.cache_data(ttl=60)
@@ -146,6 +142,7 @@ menu = option_menu(None, ["الأدوات", "المشاريع", "المطوري�
 
 main_col, side_col = st.columns([0.75, 0.25])
 
+# الجزء الجانبي (استلام فوري)
 with side_col:
     st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
     st.markdown("<div style='background:#0d0d0d; border-radius:15px; padding:10px; border-top:3px solid #10b981;'>", unsafe_allow_html=True)
@@ -154,6 +151,7 @@ with side_col:
         st.markdown(f'<div style="background:#161616; padding:8px; border-right:3px solid #10b981; margin-bottom:5px; border-radius:5px;"><div style="color:#f59e0b; font-size:12px;">{row.get("Project Name")}</div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
+# الجزء الرئيسي
 with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
@@ -161,7 +159,7 @@ with main_col:
         st.markdown(f"<div style='background:#111; padding:25px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr>{item.get('Project Features', item.get('Detailed_Info'))}</div>", unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        search = st.text_input("🔍 بحث سـريع...")
+        search = st.text_input("🔍 بحث عن مشروع...")
         dff = df_p.copy()
         if search: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
         
