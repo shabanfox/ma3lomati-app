@@ -118,4 +118,30 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
             dev = row.get('المطور', 'مطور عقاري')
             
             # زر واتساب
-            msg
+            msg = f"تفاصيل مشروع {name} في {loc}. السعر: {price}"
+            
+            st.markdown(f"""
+                <div class="nawy-card">
+                    <img src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=400" style="width:100%; height:150px; object-fit:cover;">
+                    <div style="padding: 15px;">
+                        <span style="color: #ed1c24; font-size: 11px; font-weight: bold;">{loc}</span>
+                        <h4 style="margin: 5px 0; color: #00416b;">{name}</h4>
+                        <p style="color: #777; font-size: 13px;">{dev}</p>
+                        <hr style="border:0; border-top:1px solid #eee;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b style="color:#333;">{price}</b>
+                            <a href="https://wa.me/?text={msg}" target="_blank" style="text-decoration:none;">
+                                <button style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px;">واتساب</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+else:
+    # واجهة افتراضية قبل رفع الداتا
+    st.markdown("""
+        <div style="text-align:center; padding:100px; color:#888;">
+            <h2>مرحباً بك في BrokerEdge</h2>
+            <p>يرجى رفع ملف الإكسيل من القائمة الجانبية للبدء (الباسورد: 123)</p>
+        </div>
+    """, unsafe_allow_html=True)
