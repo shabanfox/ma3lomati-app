@@ -8,7 +8,7 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. إدارة الحالة (Session State)
+# 2. إدارة الحالة
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
@@ -26,7 +26,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS - الحجم الكبير مع نص مركزي فقط)
+# 4. التنسيق الجمالي (العودة لستايل نوي الفخم بالتفاصيل)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -43,34 +43,28 @@ st.markdown(f"""
     }}
     .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; }}
     
-    .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }}
-    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
-    @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
-
-    /* ستايل الكروت: الحجم الكبير (نوي) مع توسيط النص تماماً */
+    /* ستايل كارت نوي الثابت بالتفاصيل */
     div.stButton > button[key*="card_"] {{
         background-color: white !important;
         color: #111 !important;
         border: 1px solid #eee !important;
-        border-radius: 20px !important;
+        border-radius: 15px !important;
         width: 100% !important;
-        height: 250px !important; /* الحجم الكبير السابق */
+        min-height: 280px !important; /* الحجم الفخم الثابت */
         display: flex !important;
-        align-items: center !important; /* توسيط رأسي */
-        justify-content: center !important; /* توسيط أفقي */
+        flex-direction: column !important;
+        align-items: flex-start !important;
         padding: 20px !important;
         transition: 0.3s !important;
-        text-align: center !important;
-        font-size: 24px !important; /* خط كبير وواضح */
-        font-weight: 900 !important;
+        text-align: right !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        line-height: 1.4 !important;
+        white-space: pre-wrap !important;
+        line-height: 1.5 !important;
     }}
     div.stButton > button[key*="card_"]:hover {{
-        border: 2px solid #f59e0b !important;
-        transform: translateY(-8px) !important;
-        box-shadow: 0 12px 30px rgba(245, 158, 11, 0.2) !important;
-        color: #f59e0b !important;
+        border-right: 6px solid #f59e0b !important;
+        transform: translateY(-5px) !important;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2) !important;
     }}
 
     .ready-sidebar-container {{
@@ -97,25 +91,18 @@ if not st.session_state.auth:
     st.stop()
 
 # 6. الهيدر وزر الخروج
-header_container = st.container()
-with header_container:
-    st.markdown(f"""
-        <div class="luxury-header">
-            <div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div>
-            <div></div>
-        </div>
-    """, unsafe_allow_html=True)
-    # وضع زر الخروج في أقصى اليسار فوق الهيدر
-    col_empty, col_logout = st.columns([0.88, 0.12])
-    with col_logout:
-        st.markdown("<div style='margin-top:-60px;'>", unsafe_allow_html=True)
+header_main, header_btn = st.columns([0.85, 0.15])
+with st.container():
+    st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div><div></div></div>', unsafe_allow_html=True)
+    with header_btn:
+        st.markdown("<div style='margin-top:-60px; text-align:left;'>", unsafe_allow_html=True)
         if st.button("🚪 خروج", key="logout_top"):
             st.session_state.auth = False; st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {get_real_news()}</div></div>', unsafe_allow_html=True)
 
-# 7. جلب البيانات
+# 7. تحميل البيانات
 @st.cache_data(ttl=60)
 def load_all_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -139,7 +126,7 @@ main_col, side_col = st.columns([0.75, 0.25])
 with side_col:
     st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold; font-size:15px;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
     st.markdown("<div class='ready-sidebar-container'>", unsafe_allow_html=True)
-    ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(12)
+    ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(10)
     for _, row in ready_items.iterrows():
         st.markdown(f'<div class="ready-card"><div style="color:#f59e0b; font-size:13px; font-weight:bold;">{row.get("Project Name")}</div><div style="color:#888; font-size:10px;">📍 {row.get("Area")}</div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -148,28 +135,12 @@ with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
         if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
-        
-        # صفحة تفاصيل فخمة
-        title = item.get('Project Name', item.get('Developer'))
-        st.markdown(f"""
-            <div style='background:#111; padding:30px; border-radius:20px; border-right:10px solid #f59e0b; color:white;'>
-                <h1 style='color:#f59e0b;'>{title}</h1>
-                <hr style='opacity:0.1;'>
-                <div style='font-size:18px; line-height:2;'>
-                    <b>📍 الموقع:</b> {item.get('Area', 'غير محدد')}<br>
-                    <b>🏗️ المطور:</b> {item.get('Developer', 'N/A')}<br>
-                    <b>📐 المساحة:</b> {item.get('Project Area', item.get('Number of Projects', 'N/A'))}<br>
-                    <br>
-                    <h3>📖 التفاصيل الكاملة:</h3>
-                    {item.get('Project Features', item.get('Detailed_Info', 'لا توجد بيانات إضافية.'))}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<div style='background:#111; padding:30px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr style='opacity:0.1;'><div style='font-size:18px;'>{item.get('Project Features', item.get('Detailed_Info'))}</div></div>", unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        search = st.text_input("🔍 ابحث عن اسم المشروع...")
+        search = st.text_input("🔍 بحث عن مشروع...")
         dff = df_p.copy()
-        if search: dff = dff[dff['Project Name'].str.contains(search, case=False)]
+        if search: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
         
         limit = 6
         items = dff.iloc[st.session_state.p_idx*limit : (st.session_state.p_idx+1)*limit]
@@ -180,19 +151,18 @@ with main_col:
                 if i+j < len(items):
                     row = items.iloc[i+j]
                     with cols[j]:
-                        # الاسم فقط بحجم نوي الكبير
-                        if st.button(row.get('Project Name'), key=f"card_p_{i+j}"):
-                            st.session_state.selected_item = row; st.rerun()
+                        label = f"🏢 {row.get('Project Name')}\n📍 الموقع: {row.get('Area')}\n━━━━━━━━━━━━\n🏗️ المطور: {row.get('Developer')}\n📐 المساحة: {row.get('Project Area')}"
+                        if st.button(label, key=f"card_p_{i+j}"): st.session_state.selected_item = row; st.rerun()
         
         st.write("---")
-        n1, n2, n3 = st.columns([1, 2, 1])
-        if n1.button("السابق ⬅️", key="p_p") and st.session_state.p_idx > 0: st.session_state.p_idx -= 1; st.rerun()
-        if n3.button("التالي ➡️", key="p_n") and (st.session_state.p_idx+1)*limit < len(dff): st.session_state.p_idx += 1; st.rerun()
+        n1, _, n2 = st.columns([1, 2, 1])
+        if n1.button("السابق ⬅️", key="p_prev"): st.session_state.p_idx = max(0, st.session_state.p_idx-1); st.rerun()
+        if n2.button("التالي ➡️", key="p_next"): st.session_state.p_idx += 1; st.rerun()
 
     elif menu == "المطورين":
-        search_d = st.text_input("🔍 ابحث عن اسم المطور...")
+        search_d = st.text_input("🔍 بحث عن مطور...")
         dff_d = df_d.copy()
-        if search_d: dff_d = dff_d[dff_d['Developer'].str.contains(search_d, case=False)]
+        if search_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(search_d, case=False).any(), axis=1)]
 
         limit_d = 6
         items_d = dff_d.iloc[st.session_state.d_idx*limit_d : (st.session_state.d_idx+1)*limit_d]
@@ -203,17 +173,16 @@ with main_col:
                 if i+j < len(items_d):
                     row = items_d.iloc[i+j]
                     with cols[j]:
-                        # الاسم فقط بحجم نوي الكبير
-                        if st.button(row.get('Developer'), key=f"card_d_{i+j}"):
-                            st.session_state.selected_item = row; st.rerun()
+                        label = f"🏗️ {row.get('Developer')}\n⭐ فئة: {row.get('Developer Category')}\n━━━━━━━━━━━━\n👤 المالك: {row.get('Owner')}\n🏢 مشاريع: {row.get('Number of Projects')}"
+                        if st.button(label, key=f"card_d_{i+j}"): st.session_state.selected_item = row; st.rerun()
 
         st.write("---")
-        nd1, nd2, nd3 = st.columns([1, 2, 1])
-        if nd1.button("السابق ⬅️", key="d_p") and st.session_state.d_idx > 0: st.session_state.d_idx -= 1; st.rerun()
-        if nd3.button("التالي ➡️", key="d_n") and (st.session_state.d_idx+1)*limit_d < len(dff_d): st.session_state.d_idx += 1; st.rerun()
+        nd1, _, nd2 = st.columns([1, 2, 1])
+        if nd1.button("السابق ⬅️", key="d_prev"): st.session_state.d_idx = max(0, st.session_state.d_idx-1); st.rerun()
+        if nd2.button("التالي ➡️", key="d_next"): st.session_state.d_idx += 1; st.rerun()
 
     elif menu == "الأدوات":
-        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات العقارية</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات</h3>", unsafe_allow_html=True)
         t1, t2 = st.tabs(["🧮 القسط", "📐 المساحة"])
         with t1:
             price = st.number_input("السعر", 1000000); y = st.slider("السنين", 1, 15, 8)
