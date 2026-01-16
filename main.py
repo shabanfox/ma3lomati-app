@@ -26,7 +26,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS)
+# 4. التنسيق الجمالي (CSS المطور لجعل الاسم بطلاً للكارت)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -47,24 +47,28 @@ st.markdown(f"""
     .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
     @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
 
-    /* ستايل الكروت الموحد */
+    /* ستايل الكروت النظيف (الاسم فقط) */
     div.stButton > button[key*="card_"] {{
         background-color: white !important;
         color: #111 !important;
         border: 1px solid #eee !important;
         border-radius: 15px !important;
         width: 100% !important;
-        min-height: 220px !important;
-        padding: 20px !important;
+        height: 150px !important; /* ارتفاع ثابت وموحد */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 10px !important;
         transition: 0.3s !important;
-        text-align: right !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        white-space: pre-wrap !important;
+        text-align: center !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
     }}
     div.stButton > button[key*="card_"]:hover {{
-        border-color: #f59e0b !important;
-        transform: translateY(-5px) !important;
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2) !important;
+        border-right: 8px solid #f59e0b !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3) !important;
     }}
 
     .ready-sidebar-container {{
@@ -73,7 +77,6 @@ st.markdown(f"""
     }}
     .ready-card {{ background: #161616; border-right: 3px solid #10b981; padding: 10px; border-radius: 8px; margin-bottom: 8px; }}
     
-    /* زر الخروج الصغير في الهيدر */
     div.stButton > button[key="logout_top"] {{
         background-color: #ef4444 !important; color: white !important;
         height: 35px !important; width: 80px !important; font-size: 12px !important;
@@ -91,20 +94,17 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# 6. الهيدر (مع زر الخروج على اليسار)
-header_col1, header_col2 = st.columns([0.8, 0.2])
+# 6. الهيدر وزر الخروج
+header_main, header_btn = st.columns([0.85, 0.15])
 with st.container():
     st.markdown(f"""
         <div class="luxury-header">
             <div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div>
-            <div id="logout_placeholder"></div>
+            <div></div>
         </div>
     """, unsafe_allow_html=True)
-    
-    # وضع زر الخروج في أقصى اليسار
-    col_empty, col_logout = st.columns([0.88, 0.12])
-    with col_logout:
-        st.markdown("<div style='margin-top:-65px;'>", unsafe_allow_html=True)
+    with header_btn:
+        st.markdown("<div style='margin-top:-60px; text-align:left;'>", unsafe_allow_html=True)
         if st.button("🚪 خروج", key="logout_top"):
             st.session_state.auth = False; st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
@@ -141,17 +141,38 @@ with side_col:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_col:
+    # --- عرض التفاصيل الكاملة عند الضغط ---
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
         if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
-        st.markdown(f"<div style='background:#111; padding:30px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr style='opacity:0.1;'><div style='font-size:18px;'>{item.get('Project Features', item.get('Detailed_Info'))}</div></div>", unsafe_allow_html=True)
+        
+        # تفاصيل ذكية بناءً على النوع (مشروع أو مطور)
+        is_project = 'Project Name' in item
+        title = item.get('Project Name') if is_project else item.get('Developer')
+        
+        st.markdown(f"""
+            <div style='background:#111; padding:30px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'>
+                <h1 style='color:#f59e0b; margin-bottom:0;'>{title}</h1>
+                <p style='color:#888; font-size:18px;'>📍 {item.get('Area', item.get('Developer Category', ''))}</p>
+                <hr style='opacity:0.1; margin:20px 0;'>
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
+                    <div><b>🏢 المطور:</b> {item.get('Developer', 'N/A')}</div>
+                    <div><b>📐 المساحة:</b> {item.get('Project Area', item.get('Number of Projects', 'N/A'))}</div>
+                    <div><b>👤 الإدارة/المالك:</b> {item.get('Management', item.get('Owner', 'N/A'))}</div>
+                    <div><b>⭐ الفئة/النوع:</b> {item.get('Project Type', item.get('Developer Category', 'N/A'))}</div>
+                </div>
+                <div style='font-size:18px; line-height:1.8;'>
+                    <h3>📖 الوصف والتفاصيل:</h3>
+                    {item.get('Project Features', item.get('Detailed_Info', 'لا توجد تفاصيل إضافية.'))}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        search = st.text_input("🔍 ابحث عن مشروع...")
+        search = st.text_input("🔍 ابحث عن اسم المشروع...")
         dff = df_p.copy()
-        if search: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
+        if search: dff = dff[dff['Project Name'].str.contains(search, case=False)]
         
-        # الترقيم (6 كروت)
         limit = 6
         items = dff.iloc[st.session_state.p_idx*limit : (st.session_state.p_idx+1)*limit]
         
@@ -161,23 +182,20 @@ with main_col:
                 if i+j < len(items):
                     row = items.iloc[i+j]
                     with cols[j]:
-                        label = f"🏢 {row.get('Project Name')}\n📍 {row.get('Area')}\n━━━━━━\n📐 {row.get('Project Area')}"
-                        if st.button(label, key=f"card_p_{i+j}"): st.session_state.selected_item = row; st.rerun()
+                        # الاسم فقط!
+                        if st.button(row.get('Project Name'), key=f"card_p_{i+j}"):
+                            st.session_state.selected_item = row; st.rerun()
         
-        # أزرار التنقل للمشاريع
         st.write("---")
-        nav1, nav2, nav3 = st.columns([1, 2, 1])
-        if nav1.button("السابق ⬅️", key="p_prev") and st.session_state.p_idx > 0:
-            st.session_state.p_idx -= 1; st.rerun()
-        if nav3.button("التالي ➡️", key="p_next") and (st.session_state.p_idx+1)*limit < len(dff):
-            st.session_state.p_idx += 1; st.rerun()
+        n1, n2, n3 = st.columns([1, 2, 1])
+        if n1.button("السابق ⬅️", key="p_p") and st.session_state.p_idx > 0: st.session_state.p_idx -= 1; st.rerun()
+        if n3.button("التالي ➡️", key="p_n") and (st.session_state.p_idx+1)*limit < len(dff): st.session_state.p_idx += 1; st.rerun()
 
     elif menu == "المطورين":
         search_d = st.text_input("🔍 ابحث عن مطور...")
         dff_d = df_d.copy()
-        if search_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(search_d, case=False).any(), axis=1)]
+        if search_d: dff_d = dff_d[dff_d['Developer'].str.contains(search_d, case=False)]
 
-        # الترقيم (6 كروت)
         limit_d = 6
         items_d = dff_d.iloc[st.session_state.d_idx*limit_d : (st.session_state.d_idx+1)*limit_d]
 
@@ -187,19 +205,17 @@ with main_col:
                 if i+j < len(items_d):
                     row = items_d.iloc[i+j]
                     with cols[j]:
-                        label = f"🏗️ {row.get('Developer')}\n⭐ فئة: {row.get('Developer Category')}\n━━━━━━\n👤 {row.get('Owner')}"
-                        if st.button(label, key=f"card_d_{i+j}"): st.session_state.selected_item = row; st.rerun()
+                        # الاسم فقط!
+                        if st.button(row.get('Developer'), key=f"card_d_{i+j}"):
+                            st.session_state.selected_item = row; st.rerun()
 
-        # أزرار التنقل للمطورين
         st.write("---")
-        nav_d1, nav_d2, nav_d3 = st.columns([1, 2, 1])
-        if nav_d1.button("السابق ⬅️", key="d_prev") and st.session_state.d_idx > 0:
-            st.session_state.d_idx -= 1; st.rerun()
-        if nav_d3.button("التالي ➡️", key="d_next") and (st.session_state.d_idx+1)*limit_d < len(dff_d):
-            st.session_state.d_idx += 1; st.rerun()
+        nd1, nd2, nd3 = st.columns([1, 2, 1])
+        if nd1.button("السابق ⬅️", key="d_p") and st.session_state.d_idx > 0: st.session_state.d_idx -= 1; st.rerun()
+        if nd3.button("التالي ➡️", key="d_n") and (st.session_state.d_idx+1)*limit_d < len(dff_d): st.session_state.d_idx += 1; st.rerun()
 
     elif menu == "الأدوات":
-        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات العقارية</h3>", unsafe_allow_html=True)
         t1, t2 = st.tabs(["🧮 القسط", "📐 المساحة"])
         with t1:
             price = st.number_input("السعر", 1000000); y = st.slider("السنين", 1, 15, 8)
