@@ -10,7 +10,7 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 
-# 3. التنسيق (CSS) - الأسود والذهبي والـ 60% يمين
+# 3. التنسيق (CSS) - جعل الزرار هو الكارت بالكامل
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -18,48 +18,35 @@ st.markdown("""
     
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
 
-    /* الهيدر */
     .gold-header {
         background: #000000; color: #f59e0b; padding: 20px;
         text-align: center; font-weight: 900; font-size: 26px;
         border-bottom: 4px solid #f59e0b; margin-bottom: 20px;
     }
 
-    /* كارت المطور - أسود في ذهبي */
-    .dev-grid-card {
-        background: #000000; /* خلفية سوداء */
-        border: 2px solid #f59e0b; /* إطار ذهبي */
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        transition: 0.3s;
-        height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 10px;
-    }
-    .dev-grid-card:hover {
-        background: #f59e0b; /* يقلب ذهبي عند التمرير */
-        cursor: pointer;
-    }
-    .dev-name {
-        color: #f59e0b; /* النص ذهبي */
-        font-weight: 900;
-        font-size: 18px;
-        margin: 0;
-    }
-    .dev-grid-card:hover .dev-name {
-        color: #000000; /* النص يقلب أسود عند التمرير */
-    }
-
-    /* أزرار التصفح */
-    .stButton>button {
+    /* استايل الزرار ليتحول لكارت أسود وذهبي */
+    div.stButton > button {
         background-color: #000000 !important;
         color: #f59e0b !important;
-        border: 1px solid #f59e0b !important;
-        font-weight: bold !important;
+        border: 2px solid #f59e0b !important;
+        border-radius: 12px !important;
+        height: 120px !important;
+        width: 100% !important;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        transition: 0.3s !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
     }
+
+    div.stButton > button:hover {
+        background-color: #f59e0b !important;
+        color: #000000 !important;
+        border: 2px solid #000000 !important;
+        transform: translateY(-5px) !important;
+    }
+
+    /* إخفاء المسافات الزائدة */
+    .block-container { padding-top: 1rem; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,7 +63,7 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# 5. الدخول
+# 5. شاشة الدخول
 if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
     _, c2, _ = st.columns([1,1,1])
@@ -85,27 +72,37 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# 6. الواجهة
-st.markdown('<div class="gold-header">MA3LOMATI PRO 2026</div>', unsafe_allow_html=True)
+# 6. الهيدر وزر الخروج فوق عاليسار
+h_col1, h_col2 = st.columns([0.9, 0.1])
+with h_col1:
+    st.markdown('<div class="gold-header">MA3LOMATI PRO 2026</div>', unsafe_allow_html=True)
+with h_col2:
+    if st.button("🚪 خروج", key="logout"):
+        st.session_state.auth = False; st.rerun()
 
+# 7. منطق العرض
 if st.session_state.selected_dev:
-    # --- صفحة التفاصيل (100% عرض) ---
+    # --- صفحة التفاصيل الكاملة ---
     dev_name = st.session_state.selected_dev
     dev_info = df_d[df_d['Developer'] == dev_name].iloc[0]
-    if st.button("⬅️ عودة"):
+    
+    if st.button("⬅️ عودة للقائمة", key="back"):
         st.session_state.selected_dev = None
         st.rerun()
     
     st.markdown(f"""
-        <div style="background:#000; padding:30px; border-radius:15px; border:2px solid #f59e0b; color:white;">
-            <h1 style="color:#f59e0b;">{dev_name}</h1>
-            <p>👤 المالك: {dev_info.get('Owner')}</p>
+        <div style="background:#000; padding:40px; border-radius:20px; border:3px solid #f59e0b; color:white; margin-top:20px;">
+            <h1 style="color:#f59e0b; font-size:40px;">{dev_name}</h1>
+            <p style="font-size:22px; color:#aaa;">👤 صاحب الشركة: {dev_info.get('Owner')}</p>
             <hr style="border-color:#f59e0b;">
-            <p style="font-size:18px;">{dev_info.get('Detailed_Info')}</p>
+            <div style="font-size:20px; line-height:1.8;">
+                {dev_info.get('Detailed_Info')}
+            </div>
         </div>
     """, unsafe_allow_html=True)
+
 else:
-    # --- الصفحة الرئيسية ---
+    # --- القائمة الرئيسية ---
     menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
         icons=["tools", "building", "person-vcard"], 
         default_index=2, orientation="horizontal",
@@ -113,13 +110,14 @@ else:
     )
 
     if menu == "المطورين":
-        # تقسيم الشاشة: 60% يمين للكروت، 40% يسار فراغ
+        # توزيع 60% يمين و 40% يسار فراغ
         main_col, empty_col = st.columns([0.6, 0.4])
         
         with main_col:
-            search = st.text_input("🔍 بحث...", placeholder="اكتب اسم المطور")
+            search = st.text_input("🔍 ابحث عن مطور بالاسم...", placeholder="اكتب هنا...")
             dff = df_d.copy()
-            if search: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
+            if search:
+                dff = dff[dff['Developer'].str.contains(search, case=False)]
             
             # الترقيم (8 مطورين)
             limit = 8
@@ -127,28 +125,32 @@ else:
             start = st.session_state.d_idx * limit
             items = dff.iloc[start : start + limit]
 
-            # شبكة الكروت (2 في كل صف داخل الـ 60%)
+            # شبكة الكروت (2 في كل صف) - الكارت هو الزرار نفسه
             grid_cols = st.columns(2)
             for i, (idx, row) in enumerate(items.iterrows()):
+                dev_name = row.get('Developer')
                 with grid_cols[i % 2]:
-                    st.markdown(f"""<div class="dev-grid-card"><p class="dev-name">{row.get('Developer')}</p></div>""", unsafe_allow_html=True)
-                    if st.button("عرض الزتونة", key=f"btn_{idx}", use_container_width=True):
-                        st.session_state.selected_dev = row.get('Developer')
+                    # هنا الزرار بياخد ستايل الكارت الأسود والذهبي
+                    if st.button(dev_name, key=f"dev_{idx}"):
+                        st.session_state.selected_dev = dev_name
                         st.rerun()
 
-            # التنقل
+            # أزرار التنقل (Next/Prev)
             st.write("---")
             n1, n2, n3 = st.columns([1, 2, 1])
-            if n1.button("السابق") and st.session_state.d_idx > 0:
-                st.session_state.d_idx -= 1; st.rerun()
-            with n2: st.markdown(f"<p style='text-align:center; font-weight:bold;'>صفحة {st.session_state.d_idx + 1} من {total_p}</p>", unsafe_allow_html=True)
-            if n3.button("التالي") and (start + limit) < len(dff):
-                st.session_state.d_idx += 1; st.rerun()
+            with n1:
+                if st.session_state.d_idx > 0:
+                    if st.button("السابق", key="prev"):
+                        st.session_state.d_idx -= 1; st.rerun()
+            with n2:
+                st.markdown(f"<p style='text-align:center; font-weight:bold; font-size:18px;'>صفحة {st.session_state.d_idx + 1} من {total_p}</p>", unsafe_allow_html=True)
+            with n3:
+                if (start + limit) < len(dff):
+                    if st.button("التالي", key="next"):
+                        st.session_state.d_idx += 1; st.rerun()
 
     elif menu == "المشاريع":
-        st.write("قسم المشاريع")
+        st.info("قسم المشاريع سيتم تنفيذه بنفس الستايل عند الطلب.")
+    
     elif menu == "الأدوات":
-        st.write("قسم الأدوات")
-
-if st.sidebar.button("🚪 خروج"):
-    st.session_state.auth = False; st.rerun()
+        st.write("حاسبة الأقساط والأدوات...")
