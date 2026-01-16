@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import math
 import feedparser
 from datetime import datetime
 from streamlit_option_menu import option_menu
@@ -13,7 +12,7 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-# 3. جلب الأخبار (RSS)
+# 3. جلب الأخبار
 @st.cache_data(ttl=1800)
 def get_real_news():
     try:
@@ -25,28 +24,28 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS)
-st.markdown(f"""
+# 4. التنسيق الجمالي (CSS) - تم إصلاح مشكلة الـ f-string هنا
+st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    .block-container {{ padding-top: 0rem !important; }}
-    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
+    .block-container { padding-top: 0rem !important; }
+    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
+    [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
     
-    .luxury-header {{
+    .luxury-header {
         background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
         border-bottom: 2px solid #f59e0b; padding: 15px 30px;
         display: flex; justify-content: space-between; align-items: center;
         position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 15px;
-    }}
-    .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; }}
+    }
+    .logo-text { color: #f59e0b; font-weight: 900; font-size: 24px; }
     
-    .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }}
-    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
-    @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
+    .ticker-wrap { width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }
+    .ticker { display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }
+    @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-    div.stButton > button[key*="card_"] {{
+    div.stButton > button[key*="card_"] {
         background-color: white !important;
         color: #111 !important;
         border: 1px solid #eee !important;
@@ -63,23 +62,22 @@ st.markdown(f"""
         white-space: pre-wrap !important;
         line-height: 1.6 !important;
         font-weight: bold !important;
-    }}
-    div.stButton > button[key*="card_"]:hover {{
-        border-color: #f59e0b !important;
-        transform: translateY(-5px) !important;
-    }}
-
-    .ready-sidebar-container {{
-        background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px;
-        max-height: 80vh; overflow-y: auto; border-top: 3px solid #10b981;
-    }}
-    .ready-card {{ background: #161616; border-right: 3px solid #10b981; padding: 10px; border-radius: 8px; margin-bottom: 8px; }}
-    .ready-title {{ color: #f59e0b; font-size: 14px; font-weight: bold; }}
+    }
     
     /* زر الخروج الأحمر */
     div.stButton > button[key="logout_btn"] {
-        background-color: #dc2626 !important; color: white !important; border-radius: 8px !important;
+        background-color: #dc2626 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
     }
+
+    .ready-sidebar-container {
+        background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px;
+        max-height: 80vh; overflow-y: auto; border-top: 3px solid #10b981;
+    }
+    .ready-card { background: #161616; border-right: 3px solid #10b981; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+    .ready-title { color: #f59e0b; font-size: 14px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -92,7 +90,7 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# بناء الهيدر مع زر الخروج
+# بناء الهيدر
 now = datetime.now().strftime("%H:%M")
 h_col1, h_col2 = st.columns([0.85, 0.15])
 with h_col1:
@@ -105,15 +103,15 @@ with h_col2:
 
 st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 
-# جلب البيانات (الربط الصحيح)
+# جلب البيانات
 @st.cache_data(ttl=60)
 def load_all_data():
-    # تم تعديل الروابط لتكون روابط CSV قابلة للقراءة برمجياً
+    # روابط CSV الصحيحة
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        p = pd.read_csv(u_p).fillna("بيانات قيد التحديث").astype(str)
-        d = pd.read_csv(u_d).fillna("بيانات قيد التحديث").astype(str)
+        p = pd.read_csv(u_p).fillna("").astype(str)
+        d = pd.read_csv(u_d).fillna("").astype(str)
         return p, d
     except: return pd.DataFrame(), pd.DataFrame()
 
@@ -177,16 +175,15 @@ with main_col:
                         if st.button(label, key=f"card_p_{i+j}"):
                             st.session_state.selected_item = row; st.rerun()
         
-        # أزرار التنقل
         st.markdown("---")
-        b1, b2, b3 = st.columns([1,2,1])
+        b1, _, b3 = st.columns([1,2,1])
         if st.session_state.p_idx > 0:
             if b1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
         if (st.session_state.p_idx + 1) * limit < len(dff_p):
             if b3.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
 
     elif menu == "المطورين":
-        s_d = st.text_input("🔍 ابحث عن مطور عقاري...")
+        s_d = st.text_input("🔍 ابحث عن مطور...")
         dff_d = df_d.copy()
         if s_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(s_d, case=False).any(), axis=1)]
 
@@ -201,7 +198,6 @@ with main_col:
                             f"⭐ الفئة: {row.get('Developer Category')}\n"
                             f"━━━━━━━━━━━━━━\n"
                             f"👤 المالك: {row.get('Owner')}\n"
-                            f"🏢 عدد المشاريع: {row.get('Number of Projects')}\n"
                             f"📖 عرض سابقة الأعمال"
                         )
                         if st.button(label, key=f"card_d_{i+j}"):
