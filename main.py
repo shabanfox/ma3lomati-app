@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import feedparser
+import random
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
@@ -11,6 +12,7 @@ st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sideb
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+if 'cache_key' not in st.session_state: st.session_state.cache_key = random.randint(1, 999999)
 
 # 3. جلب الأخبار
 @st.cache_data(ttl=1800)
@@ -24,7 +26,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS) - تم إصلاح مشكلة الـ f-string هنا
+# 4. التنسيق الجمالي (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -63,13 +65,13 @@ st.markdown("""
         line-height: 1.6 !important;
         font-weight: bold !important;
     }
-    
-    /* زر الخروج الأحمر */
+
     div.stButton > button[key="logout_btn"] {
-        background-color: #dc2626 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        border: none !important;
+        background-color: #dc2626 !important; color: white !important; border-radius: 8px !important; border: none !important;
+    }
+    
+    div.stButton > button[key="refresh_btn"] {
+        background-color: #333 !important; color: white !important; border-radius: 8px !important; border: none !important;
     }
 
     .ready-sidebar-container {
@@ -90,48 +92,57 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# بناء الهيدر
+# بناء الهيدر مع الأزرار
 now = datetime.now().strftime("%H:%M")
-h_col1, h_col2 = st.columns([0.85, 0.15])
+h_col1, h_col2, h_col3 = st.columns([0.75, 0.12, 0.13])
 with h_col1:
-    st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div><div style="color:#aaa; font-size:12px; text-align:left;">📅 {datetime.now().strftime("%Y-%m-%d")} | {now}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">📅 {datetime.now().strftime("%Y-%m-%d")} | {now}</div></div>', unsafe_allow_html=True)
 with h_col2:
-    st.markdown("<div style='margin-top:20px;'>", unsafe_allow_html=True)
+    if st.button("🔄 تحديث", key="refresh_btn"):
+        st.cache_data.clear()
+        st.session_state.cache_key = random.randint(1, 999999)
+        st.rerun()
+with h_col3:
     if st.button("🚪 خروج", key="logout_btn"):
         st.session_state.auth = False; st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 
-# جلب البيانات
+# 6. جلب البيانات مع تنظيف الأعمدة
 @st.cache_data(ttl=60)
-def load_all_data():
-    # روابط CSV الصحيحة
+def load_all_data(cache_key):
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        p = pd.read_csv(u_p).fillna("").astype(str)
-        d = pd.read_csv(u_d).fillna("").astype(str)
+        p = pd.read_csv(u_p)
+        d = pd.read_csv(u_d)
+        
+        # تنظيف أسماء الأعمدة من أي مسافات مخفية
+        p.columns = p.columns.str.strip()
+        d.columns = d.columns.str.strip()
+        
+        p = p.fillna("قيد التحديث").astype(str)
+        d = d.fillna("قيد التحديث").astype(str)
         return p, d
     except: return pd.DataFrame(), pd.DataFrame()
 
-df_p, df_d = load_all_data()
+df_p, df_d = load_all_data(st.session_state.cache_key)
 
 menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
     icons=["tools", "building", "person-vcard"], 
     default_index=1, orientation="horizontal",
-    styles={"container": {"background-color": "#0a0a0a", "padding": "0"}, "nav-link-selected": {"background-color": "#f59e0b", "color": "black"}}
+    styles={"container": {"background-color": "#0a0a0a"}, "nav-link-selected": {"background-color": "#f59e0b", "color": "black"}}
 )
 
 main_col, side_col = st.columns([0.75, 0.25])
 
 with side_col:
-    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold; font-size:15px;'>🔑 استلام فوري فقط</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold;'>🔑 استلام فوري فقط</p>", unsafe_allow_html=True)
     st.markdown("<div class='ready-sidebar-container'>", unsafe_allow_html=True)
     if not df_p.empty:
         ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
         for _, row in ready_items.head(10).iterrows():
-            st.markdown(f'<div class="ready-card"><div class="ready-title">{row.get("Project Name")}</div><div style="color:#888; font-size:11px;">📍 {row.get("Area")}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ready-card"><div class="ready-title">{row.get("Project Name", "مشروع")}</div><div style="color:#888; font-size:11px;">📍 {row.get("Area", "غير محدد")}</div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_col:
@@ -142,7 +153,7 @@ with main_col:
         
         st.markdown(f"""
             <div style="background:#111; padding:30px; border-radius:15px; border-right:5px solid #f59e0b; color:white;">
-                <h1 style="color:#f59e0b; margin-bottom:10px;">{item.get('Project Name', item.get('Developer'))}</h1>
+                <h1 style="color:#f59e0b; margin-bottom:10px;">{item.get('Project Name', item.get('Developer', 'التفاصيل'))}</h1>
                 <hr style="opacity:0.1; margin-bottom:20px;">
                 <div style="font-size:18px; line-height:1.8;">
                     {item.get('Project Features', item.get('Detailed_Info', 'لا توجد تفاصيل إضافية متاحة.'))}
@@ -151,7 +162,7 @@ with main_col:
         """, unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        s_p = st.text_input("🔍 ابحث عن مشروع...")
+        s_p = st.text_input("🔍 ابحث عن مشروع أو منطقة...")
         dff_p = df_p.copy()
         if s_p: dff_p = dff_p[dff_p.apply(lambda r: r.astype(str).str.contains(s_p, case=False).any(), axis=1)]
         
@@ -193,9 +204,11 @@ with main_col:
                 if i+j < len(dff_d):
                     row = dff_d.iloc[i+j]
                     with cols[j]:
+                        # جلب الفئة بعد تنظيف العمود
+                        category = row.get('Developer Category', 'قيد التحديث')
                         label = (
                             f"🏗️ {row.get('Developer')}\n"
-                            f"⭐ الفئة: {row.get('Developer Category')}\n"
+                            f"⭐ الفئة: {category}\n"
                             f"━━━━━━━━━━━━━━\n"
                             f"👤 المالك: {row.get('Owner')}\n"
                             f"📖 عرض سابقة الأعمال"
@@ -204,7 +217,7 @@ with main_col:
                             st.session_state.selected_item = row; st.rerun()
 
     elif menu == "الأدوات":
-        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات المساعدة</h3>", unsafe_allow_html=True)
         t1, t2 = st.tabs(["🧮 حاسبة القسط", "📐 محول المساحات"])
         with t1:
             price = st.number_input("السعر الإجمالي", 1000000); y = st.slider("سنوات التقسيط", 1, 15, 8)
