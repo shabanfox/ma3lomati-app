@@ -4,48 +4,76 @@ import feedparser
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="Ma3lomati PRO 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. حقن Tailwind CSS وخط Cairo في قلب Streamlit
+# 2. إدارة حالة الصفحة (Pagination)
+if 'page_num' not in st.session_state:
+    st.session_state.page_num = 0
+
+# 3. ستايل الألوان الواضحة (High Contrast Style)
 st.markdown("""
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* تطبيق الخط على كل العناصر */
-    html, body, [class*="css"], .stMarkdown {
+    html, body, [class*="css"] {
         font-family: 'Cairo', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
+        background-color: #F8FAFC !important; /* خلفية فاتحة جداً مريحة للعين */
     }
     
-    /* إخفاء واجهة ستريمليت الافتراضية */
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
-    .block-container { padding-top: 0rem !important; background-color: #f9fafb; }
-    
-    /* تصميم كارت المشاريع بأسلوب Tailwind */
-    .custom-card {
+    .block-container { padding-top: 0rem !important; }
+
+    /* الهيدر الملون بوضوح */
+    .header-box {
+        background: #0F172A; /* كحلي غامق جداً */
+        color: #FFFFFF;
+        padding: 40px 20px;
+        text-align: center;
+        border-bottom: 5px solid #F59E0B; /* برتقالي ذهبي واضح */
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 20px;
+    }
+
+    /* كروت المشاريع بألوان واضحة */
+    .project-card {
         background: white;
-        border-radius: 1rem;
-        border-right: 5px solid #2563eb;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        padding: 1.5rem;
+        border-radius: 15px;
+        border: 2px solid #E2E8F0;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         transition: 0.3s;
     }
-    .custom-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+    .project-card:hover {
+        border-color: #3B82F6; /* أزرق واضح عند التمرير */
+        box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        background: #DCFCE7;
+        color: #166534;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    /* أزرار التنقل */
+    .stButton>button {
+        width: 100%;
+        background-color: #3B82F6 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 10px !important;
+        padding: 10px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظائف جلب البيانات (الأخبار وجوجل شيت)
-@st.cache_data(ttl=1800)
-def get_real_news():
-    try:
-        feed = feedparser.parse("https://www.youm7.com/rss/SectionRss?SectionID=297")
-        news = [item.title for item in feed.entries[:10]]
-        return "  •  ".join(news) if news else "متابعة مستمرة لآخر مستجدات العقارات"
-    except: return "سوق العقارات المصري: تحديثات يناير 2026"
-
+# 4. وظائف البيانات
 @st.cache_data(ttl=60)
 def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -54,94 +82,112 @@ def load_data():
         return p
     except: return pd.DataFrame()
 
-# 4. بناء الهيدر بأسلوب Tailwind (HTML داخل st.markdown)
-st.markdown("""
-    <nav style="background: white; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 1.5rem; font-weight: 800; color: #1e3a8a;">Broker<span style="color: #3b82f6;">Edge</span></div>
-        <div style="background: #3b82f6; color: white; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">دخول البروكر</div>
-    </nav>
-    <header style="background: #1e3a8a; padding: 4rem 1rem; text-align: center; color: white;">
-        <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem;">كل داتا السوق في جيبك</h1>
-        <p style="color: #bfdbfe; margin-bottom: 2rem;">ابحث عن المشاريع، قارن المطورين، واحصل على الزتونة فوراً</p>
-    </header>
-""", unsafe_allow_html=True)
+df_p = load_data()
 
-# شريط الأخبار
-st.markdown(f"""
-    <div style="background: #f1f5f9; padding: 5px 0; overflow: hidden; border-bottom: 1px solid #e2e8f0;">
-        <marquee scrollamount="5" direction="right" style="color: #475569; font-size: 14px;">🔥 {get_real_news()}</marquee>
+# 5. الهيدر
+st.markdown("""
+    <div class="header-box">
+        <h1 style="color: #F59E0B; font-size: 40px; font-weight: 900; margin-bottom: 10px;">Broker<span style="color:white;">Edge</span> PRO</h1>
+        <p style="font-size: 18px; color: #CBD5E1;">الدليل العقاري الأسرع والأكثر وضوحاً في مصر</p>
     </div>
 """, unsafe_allow_html=True)
 
-# 5. محرك البحث والتبويبات
-df_p = load_data()
-
-with st.container():
-    st.markdown("<div style='max-width: 900px; margin: -30px auto 30px auto;'>", unsafe_allow_html=True)
-    search_q = st.text_input("", placeholder="🔍 ابحث عن اسم المشروع أو المطور...", label_visibility="collapsed")
-    st.markdown("</div>", unsafe_allow_html=True)
-
+# 6. المنيو
 menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
     icons=["tools", "building", "person-vcard"], 
     default_index=1, orientation="horizontal",
     styles={
-        "container": {"background-color": "white", "padding": "5px", "border-radius": "10px", "box-shadow": "0 2px 4px rgba(0,0,0,0.05)"},
-        "nav-link-selected": {"background-color": "#1e3a8a", "color": "white"}
+        "container": {"background-color": "white", "padding": "10px", "border-radius": "15px", "border": "1px solid #E2E8F0"},
+        "nav-link-selected": {"background-color": "#0F172A", "color": "white"}
     }
 )
 
-# 6. عرض النتائج بأسلوب الـ Grid الاحترافي
+# 7. محرك البحث
+search_q = st.text_input("", placeholder="🔍 اكتب اسم المشروع أو المطور (البحث يعمل تلقائياً)...", label_visibility="collapsed")
+
 if menu == "المشاريع":
+    # فلترة البحث
     dff = df_p.copy()
     if search_q:
         dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search_q, case=False).any(), axis=1)]
+        st.session_state.page_num = 0 # إعادة الترقيم عند البحث
 
-    # توزيع المشاريع في كروت
+    # إعدادات الترقيم (6 فقط في الصفحة)
+    items_per_page = 6
+    total_pages = len(dff) // items_per_page + (1 if len(dff) % items_per_page > 0 else 0)
+    
+    start_idx = st.session_state.page_num * items_per_page
+    end_idx = start_idx + items_per_page
+    current_items = dff.iloc[start_idx:end_idx]
+
+    # العرض في شبكة
     main_col, side_col = st.columns([0.75, 0.25])
     
     with main_col:
+        st.markdown(f"<h3>عرض المشاريع ({start_idx + 1} - {min(end_idx, len(dff))} من {len(dff)})</h3>", unsafe_allow_html=True)
+        
         cols = st.columns(2)
-        for i, (idx, row) in enumerate(dff.head(10).iterrows()):
+        for i, (idx, row) in enumerate(current_items.iterrows()):
             with cols[i % 2]:
                 st.markdown(f"""
-                    <div class="custom-card">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <h3 style="color: #1e3a8a; font-size: 1.2rem; font-weight: 800; margin:0;">{row.get('Project Name', 'مشروع')}</h3>
-                            <span style="background: #dcfce7; color: #166534; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold;">محدث</span>
+                    <div class="project-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <h3 style="color: #1E293B; margin: 0; font-size: 20px;">{row.get('Project Name', 'مشروع جديد')}</h3>
+                            <span class="status-badge">متاح</span>
                         </div>
-                        <p style="color: #64748b; font-size: 13px; margin: 10px 0;">📍 {row.get('Area', 'الموقع')}</p>
-                        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 14px; font-weight: 700; color: #1e40af;">{row.get('Developer', 'المطور')}</span>
-                            <span style="color: #3b82f6; font-size: 12px; cursor: pointer;">التفاصيل ←</span>
+                        <p style="color: #3B82F6; font-weight: bold; margin: 5px 0;">📍 {row.get('Area', 'الموقع')}</p>
+                        <p style="color: #64748B; font-size: 14px;">🏢 المطور: <b>{row.get('Developer', 'غير محدد')}</b></p>
+                        <div style="background: #F1F5F9; padding: 10px; border-radius: 10px; font-size: 13px; color: #475569; margin-top: 15px;">
+                            📏 المساحة: {row.get('Project Area', 'N/A')}
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-                with st.expander("فتح الزتونة"):
-                    st.write(f"✨ **المميزات:** {row.get('Project Features', 'N/A')}")
-                    st.info(f"📐 **المساحة:** {row.get('Project Area', 'N/A')}")
+        
+        # أزرار التنقل (التالي والسابق)
+        st.write("---")
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c1:
+            if st.session_state.page_num > 0:
+                if st.button("⬅️ السابق"):
+                    st.session_state.page_num -= 1
+                    st.rerun()
+        with c2:
+            st.markdown(f"<p style='text-align:center; font-weight:bold; margin-top:10px;'>صفحة {st.session_state.page_num + 1} من {total_pages}</p>", unsafe_allow_html=True)
+        with c3:
+            if end_idx < len(dff):
+                if st.button("التالي ➡️"):
+                    st.session_state.page_num += 1
+                    st.rerun()
 
     with side_col:
         st.markdown("""
-            <div style="background: white; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0;">
-                <h4 style="color: #16a34a; font-size: 15px; font-weight: 800; margin-bottom: 1rem;">🔑 استلام فوري</h4>
+            <div style="background: white; padding: 20px; border-radius: 15px; border: 2px solid #10B981;">
+                <h4 style="color: #10B981; text-align: center; margin-top: 0;">🔑 استلام فوري</h4>
+                <p style="font-size: 12px; color: #64748B; text-align: center;">أحدث الوحدات الجاهزة للسكن</p>
             </div>
         """, unsafe_allow_html=True)
-        # هنا يمكن وضع فلترة الاستلام الفوري بنفس أسلوب الكود الأول
-        ready_df = dff[dff.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
-        for _, r in ready_df.head(5).iterrows():
+        
+        # فلترة الاستلام الفوري (أول 5 مشاريع فقط للجانب)
+        ready_df = dff[dff.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(5)
+        for _, r in ready_df.iterrows():
             st.markdown(f"""
-                <div style="background: #f0fdf4; border-right: 3px solid #16a34a; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: bold; color: #166534;">{r.get('Project Name')}</div>
-                    <div style="font-size: 11px; color: #15803d;">📍 {r.get('Area')}</div>
+                <div style="background: #ECFDF5; border-right: 4px solid #10B981; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                    <div style="font-size: 14px; font-weight: bold; color: #065F46;">{r.get('Project Name')}</div>
+                    <div style="font-size: 11px; color: #059669;">📍 {r.get('Area')}</div>
                 </div>
             """, unsafe_allow_html=True)
 
-# 7. الأدوات
 elif menu == "الأدوات":
-    st.markdown("<div style='background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);'>", unsafe_allow_html=True)
-    st.subheader("🧮 حاسبة الأقساط السريعة")
-    c1, c2 = st.columns(2)
-    with c1: price = st.number_input("سعر الوحدة", 1000000)
-    with c2: years = st.slider("عدد السنوات", 1, 15, 8)
-    st.metric("القسط الشهري التقريبي", f"{price/(years*12):,.0f} ج.م")
+    st.markdown("<div style='background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
+    st.header("🧮 حاسبة الأقساط الواضحة")
+    price = st.number_input("سعر الوحدة الإجمالي (ج.م)", value=5000000, step=100000)
+    years = st.slider("عدد سنوات التقسيط", 1, 15, 8)
+    
+    installment = price / (years * 12)
+    st.markdown(f"""
+        <div style="background: #EFF6FF; border: 2px solid #3B82F6; padding: 20px; border-radius: 15px; text-align: center; margin-top: 20px;">
+            <h2 style="color: #1E40AF; margin: 0;">{installment:,.0f} ج.م</h2>
+            <p style="color: #3B82F6; font-weight: bold;">قسطك الشهري</p>
+        </div>
+    """, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
