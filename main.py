@@ -14,19 +14,24 @@ if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-# 3. جلب الأخبار
+# 3. جلب الأخبار الحقيقية (RSS من سكاي نيوز اقتصاد/عقارات)
 @st.cache_data(ttl=1800)
 def get_real_news():
     try:
-        rss_url = "https://www.youm7.com/rss/SectionRss?SectionID=297" 
+        # استخدام مصدر أخبار موثوق (اقتصاد)
+        rss_url = "https://www.skynewsarabia.com/rss/v1/business.xml" 
         feed = feedparser.parse(rss_url)
-        news = [item.title for item in feed.entries[:10]]
-        return "  •  ".join(news) if news else "جاري تحديث الأخبار العقارية..."
-    except: return "سوق العقارات المصري: متابعة مستمرة لآخر المستجدات."
+        # جلب أول 15 خبر
+        news = [item.title for item in feed.entries[:15]]
+        if news:
+            return "   •   ".join(news)
+        return "جاري اتصال بمصادر الأخبار العالمية..."
+    except:
+        return "سوق العقارات: استقرار في أسعار الوحدات الإدارية • العاصمة الإدارية تشهد إقبالاً كبيراً • استمرار العمل في مشروعات العلمين الجديدة."
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (العودة لستايل نوي الفخم بالتفاصيل)
+# 4. التنسيق الجمالي (CSS مع تعديل سرعة شريط الأخبار)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -35,6 +40,7 @@ st.markdown(f"""
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
     
+    /* الهيدر */
     .luxury-header {{
         background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px);
         border-bottom: 2px solid #f59e0b; padding: 10px 30px;
@@ -43,14 +49,38 @@ st.markdown(f"""
     }}
     .logo-text {{ color: #f59e0b; font-weight: 900; font-size: 24px; }}
     
-    /* ستايل كارت نوي الثابت بالتفاصيل */
+    /* شريط الأخبار المطور (بطيء جداً) */
+    .ticker-wrap {{ 
+        width: 100%; 
+        background: #111; 
+        padding: 8px 0; 
+        overflow: hidden; 
+        white-space: nowrap; 
+        border-bottom: 1px solid #222; 
+        margin-bottom: 15px;
+    }}
+    .ticker {{ 
+        display: inline-block; 
+        padding-right: 100%; 
+        /* تم جعل الأنيميشن 300 ثانية ليكون بطيئاً جداً */
+        animation: ticker 300s linear infinite; 
+        color: #f59e0b; 
+        font-size: 14px;
+        font-weight: bold;
+    }}
+    @keyframes ticker {{ 
+        0% {{ transform: translateX(100%); }} 
+        100% {{ transform: translateX(-100%); }} 
+    }}
+
+    /* ستايل الكروت الكبير (نوي) */
     div.stButton > button[key*="card_"] {{
         background-color: white !important;
         color: #111 !important;
         border: 1px solid #eee !important;
         border-radius: 15px !important;
         width: 100% !important;
-        min-height: 280px !important; /* الحجم الفخم الثابت */
+        min-height: 280px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
@@ -59,24 +89,16 @@ st.markdown(f"""
         text-align: right !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
         white-space: pre-wrap !important;
-        line-height: 1.5 !important;
     }}
     div.stButton > button[key*="card_"]:hover {{
         border-right: 6px solid #f59e0b !important;
         transform: translateY(-5px) !important;
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2) !important;
     }}
 
-    .ready-sidebar-container {{
-        background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 12px;
-        max-height: 80vh; overflow-y: auto; border-top: 3px solid #10b981;
-    }}
-    .ready-card {{ background: #161616; border-right: 3px solid #10b981; padding: 10px; border-radius: 8px; margin-bottom: 8px; }}
-    
+    /* زر الخروج */
     div.stButton > button[key="logout_top"] {{
         background-color: #ef4444 !important; color: white !important;
-        height: 35px !important; width: 80px !important; font-size: 12px !important;
-        border: none !important; border-radius: 8px !important;
+        height: 35px !important; border: none !important; border-radius: 8px !important;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -91,7 +113,7 @@ if not st.session_state.auth:
     st.stop()
 
 # 6. الهيدر وزر الخروج
-header_main, header_btn = st.columns([0.85, 0.15])
+header_main, header_btn = st.columns([0.88, 0.12])
 with st.container():
     st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI <span style="color:white; font-size:14px;">PRO</span></div><div></div></div>', unsafe_allow_html=True)
     with header_btn:
@@ -100,9 +122,10 @@ with st.container():
             st.session_state.auth = False; st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {get_real_news()}</div></div>', unsafe_allow_html=True)
+# شريط الأخبار البطيء
+st.markdown(f'<div class="ticker-wrap"><div class="ticker">خبر عاجل: {news_text}   •   تم التحديث في: {datetime.now().strftime("%H:%M")}</div></div>', unsafe_allow_html=True)
 
-# 7. تحميل البيانات
+# 7. البيانات
 @st.cache_data(ttl=60)
 def load_all_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -124,21 +147,21 @@ menu = option_menu(None, ["الأدوات", "المشاريع", "المطوري�
 main_col, side_col = st.columns([0.75, 0.25])
 
 with side_col:
-    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold; font-size:15px;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
-    st.markdown("<div class='ready-sidebar-container'>", unsafe_allow_html=True)
-    ready_items = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(10)
-    for _, row in ready_items.iterrows():
-        st.markdown(f'<div class="ready-card"><div style="color:#f59e0b; font-size:13px; font-weight:bold;">{row.get("Project Name")}</div><div style="color:#888; font-size:10px;">📍 {row.get("Area")}</div></div>', unsafe_allow_html=True)
+    st.markdown("<p style='color:#10b981; text-align:center; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
+    st.markdown("<div style='background:#0d0d0d; border-radius:15px; padding:10px; border-top:3px solid #10b981;'>", unsafe_allow_html=True)
+    ready = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)].head(10)
+    for _, row in ready.iterrows():
+        st.markdown(f'<div style="background:#161616; padding:8px; border-right:3px solid #10b981; margin-bottom:5px; border-radius:5px;"><div style="color:#f59e0b; font-size:12px;">{row.get("Project Name")}</div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
-        if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
-        st.markdown(f"<div style='background:#111; padding:30px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr style='opacity:0.1;'><div style='font-size:18px;'>{item.get('Project Features', item.get('Detailed_Info'))}</div></div>", unsafe_allow_html=True)
+        if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
+        st.markdown(f"<div style='background:#111; padding:25px; border-radius:15px; border-right:8px solid #f59e0b; color:white;'><h1>{item.get('Project Name', item.get('Developer'))}</h1><hr>{item.get('Project Features', item.get('Detailed_Info'))}</div>", unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        search = st.text_input("🔍 بحث عن مشروع...")
+        search = st.text_input("🔍 بحث سـريع...")
         dff = df_p.copy()
         if search: dff = dff[dff.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
         
@@ -156,8 +179,8 @@ with main_col:
         
         st.write("---")
         n1, _, n2 = st.columns([1, 2, 1])
-        if n1.button("السابق ⬅️", key="p_prev"): st.session_state.p_idx = max(0, st.session_state.p_idx-1); st.rerun()
-        if n2.button("التالي ➡️", key="p_next"): st.session_state.p_idx += 1; st.rerun()
+        if n1.button("السابق ⬅️", key="p_p"): st.session_state.p_idx = max(0, st.session_state.p_idx-1); st.rerun()
+        if n2.button("التالي ➡️", key="p_n"): st.session_state.p_idx += 1; st.rerun()
 
     elif menu == "المطورين":
         search_d = st.text_input("🔍 بحث عن مطور...")
@@ -178,8 +201,8 @@ with main_col:
 
         st.write("---")
         nd1, _, nd2 = st.columns([1, 2, 1])
-        if nd1.button("السابق ⬅️", key="d_prev"): st.session_state.d_idx = max(0, st.session_state.d_idx-1); st.rerun()
-        if nd2.button("التالي ➡️", key="d_next"): st.session_state.d_idx += 1; st.rerun()
+        if nd1.button("السابق ⬅️", key="d_p"): st.session_state.d_idx = max(0, st.session_state.d_idx-1); st.rerun()
+        if nd2.button("التالي ➡️", key="d_n"): st.session_state.d_idx += 1; st.rerun()
 
     elif menu == "الأدوات":
         st.markdown("<h3 style='color:#f59e0b;'>🛠️ الأدوات</h3>", unsafe_allow_html=True)
