@@ -4,3 +4,9 @@ streamlit-option-menu
 feedparser
 pandas
 openpyxl
+streamlit
+pandas
+requests
+beautifulsoup4
+feedparser
+streamlit-option-menu
