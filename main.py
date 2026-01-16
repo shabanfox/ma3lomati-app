@@ -1,19 +1,20 @@
 import streamlit as st
 import pandas as pd
 import feedparser
+import urllib.parse
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. إدارة حالة الجلسة
+# 2. إدارة الحالة (Session State)
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-# 3. جلب الأخبار (RSS)
+# 3. جلب الأخبار العقارية
 @st.cache_data(ttl=1800)
 def get_real_news():
     try:
@@ -25,7 +26,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS)
+# 4. التنسيق الجمالي الموحد (CSS)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -41,7 +42,6 @@ st.markdown(f"""
     }}
     .logo-main {{ color: #f59e0b; font-weight: 900; font-size: 28px; }}
     
-    /* شريط الأخبار المتحرك */
     .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 20px; }}
     .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
     @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
@@ -53,6 +53,9 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
         font-weight: bold !important; font-size: 16px !important;
     }}
+    div.stButton > button[key*="card_"]:hover {{ border-color: #f59e0b !important; transform: translateY(-5px) !important; }}
+    
+    .stSelectbox label, .stTextInput label {{ color: #f59e0b !important; font-weight: bold !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -62,8 +65,7 @@ if not st.session_state.auth:
     _, c2, _ = st.columns([1,1,1])
     with c2:
         if st.text_input("كود الدخول المباشر", type="password") == "2026": 
-            st.session_state.auth = True
-            st.rerun()
+            st.session_state.auth = True; st.rerun()
     st.stop()
 
 # 6. الهيدر وشريط الأخبار
@@ -78,7 +80,7 @@ with h_col3:
 
 st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 
-# 7. جلب البيانات
+# 7. جلب البيانات من Google Sheets
 @st.cache_data(ttl=60)
 def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -91,14 +93,14 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# 8. المنيو الرئيسي
-menu = option_menu(None, ["أدوات البروكر", "المشاريع", "المطورين"], 
-    icons=["briefcase", "building-up", "person-badge"], default_index=1, orientation="horizontal",
+# 8. القائمة الرئيسية
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
+    icons=["robot", "building-up", "person-badge", "briefcase"], default_index=1, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
 main_col, side_col = st.columns([0.78, 0.22])
 
-# الجانب الجانبي
+# الجانب الجانبي (استلام فوري)
 with side_col:
     st.markdown("<h4 style='color:#10b981; text-align:center;'>⚡ استلام فوري</h4>", unsafe_allow_html=True)
     if not df_p.empty:
@@ -113,15 +115,52 @@ with main_col:
         item = st.session_state.selected_item
         st.markdown(f"<div style='background:#111; padding:30px; border-radius:20px; border-right:5px solid #f59e0b; color:white;'><h2>{item.get('Project Name', item.get('Developer'))}</h2><hr>{item.get('Project Features', item.get('Detailed_Info', 'لا توجد تفاصيل'))}</div>", unsafe_allow_html=True)
 
+    elif menu == "المساعد الذكي":
+        st.markdown("<h3 style='color:#f59e0b;'>🤖 المساعد البيعي والربط المالي</h3>", unsafe_allow_html=True)
+        
+        # فلترة الميزانية
+        c1, c2, c3 = st.columns(3)
+        budget_down = c1.number_input("مقدم العميل المتاح", 0)
+        budget_monthly = c2.number_input("القسط الشهري المتاح", 0)
+        target_area = c3.selectbox("المنطقة المختارة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
+
+        st.markdown("---")
+        
+        # عرض المشاريع المتوافقة (محاكاة الربط المالي)
+        res_col, comm_col = st.columns([0.6, 0.4])
+        
+        with res_col:
+            st.markdown("#### 🏗️ مشاريع مقترحة لميزانية العميل")
+            # منطق فلترة بسيط (يمكن تطويره حسب أعمدة السعر في شيتك)
+            filtered_aid = df_p[df_p['Area'] == target_area] if target_area != "الكل" else df_p
+            if not filtered_aid.empty:
+                for _, r in filtered_aid.head(3).iterrows():
+                    st.success(f"✅ {r['Project Name']} - {r['Developer']}")
+            else:
+                st.warning("لا توجد نتائج مطابقة تماماً للميزانية حالياً.")
+
+        with comm_col:
+            st.markdown("#### 📲 إرسال تفاصيل للعميل (WhatsApp)")
+            client_name = st.text_input("اسم العميل")
+            whatsapp_num = st.text_input("رقم الواتساب (مثال: 2010...)")
+            broker_n = st.text_input("اسمك كبروكر", "Ma3lomati Agent")
+            
+            if st.button("📤 توليد رسالة الواتساب"):
+                msg = f"مرحباً أ/ {client_name}, معك {broker_n}. بخصوص استفسارك عن مشاريع {target_area}, أرشح لك مجموعة من الفرص الاستثمارية المميزة. يمكنك الاطلاع عليها هنا."
+                encoded_msg = urllib.parse.quote(msg)
+                wa_link = f"https://wa.me/{whatsapp_num}?text={encoded_msg}"
+                st.markdown(f"[اضغط هنا لفتح الواتساب وإرسال الرسالة]({wa_link})")
+
     elif menu == "المشاريع":
         f1, f2, f3 = st.columns(3)
         search = f1.text_input("🔍 اسم المشروع")
-        area = f2.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
-        dev = f3.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()))
+        area = f2.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()), key="p_area")
+        dev = f3.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()), key="p_dev")
         dff = df_p.copy()
         if search: dff = dff[dff['Project Name'].str.contains(search, case=False)]
         if area != "الكل": dff = dff[dff['Area'] == area]
         if dev != "الكل": dff = dff[dff['Developer'] == dev]
+        
         limit = 6
         start = st.session_state.p_idx * limit
         page = dff.iloc[start:start+limit]
@@ -130,8 +169,9 @@ with main_col:
             for j in range(2):
                 if i+j < len(page):
                     row = page.iloc[i+j]
-                    if cols[j].button(f"🏢 {row['Project Name']}\n📍 {row['Area']}\n🏗️ {row['Developer']}\n✨ عرض التفاصيل", key=f"card_p_{start+i+j}"):
+                    if cols[j].button(f"🏢 {row['Project Name']}\n📍 {row['Area']}\n🏗️ {row['Developer']}\n✨ التفاصيل", key=f"card_p_{start+i+j}"):
                         st.session_state.selected_item = row; st.rerun()
+        
         st.markdown("---")
         p1, _, p2 = st.columns([1,2,1])
         if st.session_state.p_idx > 0:
@@ -150,6 +190,7 @@ with main_col:
                     row = page_d.iloc[i+j]
                     if cols[j].button(f"🏗️ {row['Developer']}\n⭐ فئة: {row.get('Developer Category','A')}\n📖 سابقة الأعمال", key=f"card_d_{start_d+i+j}"):
                         st.session_state.selected_item = row; st.rerun()
+        
         st.markdown("---")
         dp1, _, dp2 = st.columns([1,2,1])
         if st.session_state.d_idx > 0:
@@ -161,12 +202,11 @@ with main_col:
         st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ حقيبة البروكر الذكية</h2>", unsafe_allow_html=True)
         t1, t2 = st.columns(2)
         with t1:
-            with st.expander("💳 1. حاسبة الأقساط (الأكثر طلباً)"):
+            with st.expander("💳 1. حاسبة الأقساط"):
                 total_p = st.number_input("إجمالي السعر", 1000000)
                 down_p = st.number_input("المقدم", 100000)
                 years = st.slider("عدد السنين", 1, 15, 8)
                 remain = total_p - down_p
-                st.info(f"المبلغ المتبقي: {remain:,.0f}")
                 st.metric("القسط الشهري", f"{remain/(years*12):,.0f}")
                 st.metric("القسط الربع سنوي", f"{remain/(years*4):,.0f}")
 
@@ -175,54 +215,22 @@ with main_col:
                 comm_pct = st.slider("النسبة %", 1.0, 5.0, 1.5)
                 st.metric("عمولتك الصافية", f"{deal*(comm_pct/100):,.0f} EGP")
 
-        with t2:
             with st.expander("📈 3. العائد على الاستثمار ROI"):
                 buy = st.number_input("سعر الشراء", 1000000, key="roi")
-                rent = st.number_input("إيجار شهري متوقع", 5000)
+                rent = st.number_input("إيجار شهري", 5000)
                 st.write(f"العائد السنوي: **{((rent*12)/buy)*100:.1f}%**")
 
+        with t2:
             with st.expander("📏 4. محول المساحات"):
-                val = st.number_input("القيمة بالمتر", 100.0)
+                val = st.number_input("المتر المربع", 100.0)
                 st.write(f"تساوي: {val * 10.76:.2f} قدم مربع")
 
-        st.markdown("---")
-        st.markdown("<h4 style='text-align:center;'>🎯 5. عداد الإنجاز & 🏦 6. تمويل العميل</h4>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        c1.number_input("📞 مكالمات اليوم", 0)
-        salary = c2.number_input("دخل العميل الشهري", 10000)
-        c2.success(f"أقصى قسط مسموح: {salary*0.4:,.0f}")
-elif menu == "المساعد الذكي":
-        st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🤖 المساعد البيعي الذكي</h2>", unsafe_allow_html=True)
-        
-        # قسم الفلترة المالية
-        with st.container():
-            st.markdown("#### 💰 فلترة حسب ميزانية العميل")
-            c1, c2, c3 = st.columns(3)
-            client_down = c1.number_input("المقدم المتاح لدى العميل", 0)
-            client_install = c2.number_input("القسط الشهري المتاح", 0)
-            target_area = c3.selectbox("المنطقة المستهدفة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
+            with st.expander("🏦 5. أقصى قسط للعميل"):
+                sal = st.number_input("دخل العميل", 10000)
+                st.success(f"أقصى قسط مسموح (40%): {sal*0.4:,.0f}")
 
-            # هنا سنضيف منطق برمجي يربط بين مدخلات العميل وبيانات الشيت
-            st.info("سيتم هنا عرض المشاريع التي تتوافق مع قدرة العميل المالية بناءً على معادلات التقسيط")
+            with st.expander("🎯 6. سجل الإنجاز اليومي"):
+                st.number_input("📞 مكالمات", 0)
+                st.number_input("🤝 زيارات", 0)
 
-        st.markdown("---")
-
-        # قسم النتائج المباشرة وأزرار التواصل
-        res_col, details_col = st.columns([0.6, 0.4])
-        
-        with res_col:
-            st.markdown("#### 🏗️ المشاريع المقترحة")
-            # عرض الكروت بشكل مبسط جداً (اسم المشروع + المطور + السعر)
-            st.write("قائمة المشاريع المفلترة تظهر هنا...")
-
-        with details_col:
-            st.markdown("#### 📲 إرسال البيانات للعميل")
-            broker_name = st.text_input("اسمك (ليظهر في الرسالة)", "بروكر Ma3lomati")
-            client_phone = st.text_input("رقم واتساب العميل (بدون مفتاح الدولة)")
-            
-            if st.button("🚀 إرسال التفاصيل عبر واتساب"):
-                # كود توليد رابط الواتساب التلقائي
-                msg = f"مرحباً يا فندم، معك {broker_name}... إليك تفاصيل المشروع..."
-                st.write(f"سيتم فتح رابط: https://wa.me/{client_phone}?text={msg}")
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
-
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | Smart Real Estate Solution</p>", unsafe_allow_html=True)
