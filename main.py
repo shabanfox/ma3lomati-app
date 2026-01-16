@@ -5,144 +5,114 @@ from bs4 import BeautifulSoup
 import urllib.parse
 from datetime import datetime
 from streamlit_option_menu import option_menu
-import time
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="MA3LOMATI PRO | AI & DATA", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. وظيفة الروبوت (Scraper) - سحب الداتا الحقيقية من Nawy
-def get_live_data_from_nawy():
-    url = "https://www.nawy.com/ar/projects"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    try:
-        # ملاحظة: المواقع الكبيرة قد تطلب Selenium أحياناً، هنا نستخدم Requests للسرعة
-        response = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # محاكاة سحب البيانات (تعديل الـ selectors بناءً على هيكل الموقع اللحظي)
-        projects = []
-        # هذا الجزء يبحث عن العناصر التي تحتوي على أسماء المشاريع والأسعار
-        # سنقوم بإنشاء داتا تجريبية قوية في حال فشل الاتصال لضمان عدم توقف النظام
-        items = soup.select('.project-card') # كلاس افتراضي
-        
-        for item in items[:5]:
-            name = item.select_one('h3').text.strip()
-            price = item.select_one('.price').text.strip()
-            projects.append({"Project Name": f"🔥 {name}", "Developer": "Nawy Live", "Area": "تحديث لحظي", "Project Features": f"السعر يبدأ من: {price}"})
-            
-        return pd.DataFrame(projects) if projects else None
-    except:
-        return None
-
-# 3. إدارة الحالة (Session State)
+# 2. إدارة حالة الجلسة
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 if 'live_market_data' not in st.session_state: st.session_state.live_market_data = pd.DataFrame()
 
-# 4. التنسيق (CSS)
+# 3. وظيفة الروبوت لسحب البيانات (Nawy Scraper)
+def get_live_data_from_nawy():
+    url = "https://www.nawy.com/ar/projects"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        projects = []
+        # محاولة سحب العناوين والأسعار
+        for item in soup.select('.project-card')[:5]:
+            name = item.select_one('h3').text.strip() if item.select_one('h3') else "مشروع جديد"
+            projects.append({"Project Name": f"🔥 {name}", "Developer": "Nawy Live", "Area": "تحديث لحظي"})
+        return pd.DataFrame(projects)
+    except: return None
+
+# 4. التنسيق الجمالي
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    .block-container { padding-top: 0rem !important; }
-    [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; }
-    .smart-box { background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; border-right: 5px solid #f59e0b; }
-    .stButton>button { border-radius: 10px !important; font-weight: bold !important; transition: 0.3s; }
-    .stButton>button:hover { border: 1px solid #f59e0b; color: #f59e0b; }
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    body, .stApp { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .smart-box { background: #111; padding: 20px; border-radius: 15px; border-right: 5px solid #f59e0b; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
 # 5. شاشة الدخول
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO 2026</h1>", unsafe_allow_html=True)
-    if st.text_input("كود الدخول المباشر", type="password") == "2026": 
-        st.session_state.auth = True
-        st.rerun()
+    st.markdown("<h1 style='text-align:center; color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    if st.text_input("كود الدخول", type="password") == "2026":
+        st.session_state.auth = True; st.rerun()
     st.stop()
 
-# 6. جلب بيانات الشيت الأساسية
+# 6. جلب بيانات الشيت
 @st.cache_data(ttl=60)
-def load_base_data():
+def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    try:
-        df = pd.read_csv(u_p).fillna("---")
-        return df
+    try: return pd.read_csv(u_p).fillna("---")
     except: return pd.DataFrame()
 
-df_base = load_base_data()
+df_p = load_data()
 
-# 7. القائمة الرئيسية
-menu = option_menu(None, ["المساعد الذكي", "المشاريع", "أدوات البروكر"], 
-    icons=["robot", "building", "tools"], default_index=0, orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+# 7. المنيو الرئيسي (تأكد من وجود كل الخيارات هنا)
+selected = option_menu(
+    menu_title=None,
+    options=["المساعد الذكي", "قاعدة المشاريع", "أدوات البروكر"],
+    icons=["robot", "building", "tools"],
+    default_index=0,
+    orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}}
+)
 
-# --- منطق العرض بناءً على اختيارك (المساعد الذكي بدون جانبية) ---
-if menu == "المساعد الذكي":
-    main_area = st.container()
-    show_ready = False
-else:
-    c_main, c_side = st.columns([0.8, 0.2])
-    main_area = c_main
-    show_ready = True
+# 8. عرض المحتوى بناءً على الاختيار
+if selected == "المساعد الذكي":
+    st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
+    st.title("🤖 المساعد الذكي")
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        m_area = st.selectbox("حدد المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()) if not df_p.empty else ["الكل"])
+        if st.button("🔄 تحديث من Nawy (Data Scraper)"):
+            live = get_live_data_from_nawy()
+            if live is not None: st.session_state.live_market_data = live; st.success("تم التحديث!")
+    
+    with col2:
+        phone = st.text_input("رقم واتساب العميل")
+        broker = st.text_input("اسمك المرسل", "Agent")
 
-with main_area:
-    if menu == "المساعد الذكي":
-        st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-        col_t, col_btn = st.columns([0.7, 0.3])
-        with col_t:
-            st.markdown("## 🤖 المساعد الذكي الخارق")
-            st.write("توصيات مبنية على داتا الشيت + تحديثات Nawy اللحظية")
-        with col_btn:
-            if st.button("🔄 تحديث الداتا من Nawy", use_container_width=True):
-                with st.spinner("الروبوت يسحب الآن أحدث الأسعار..."):
-                    live_df = get_live_data_from_nawy()
-                    if live_df is not None:
-                        st.session_state.live_market_data = live_df
-                        st.success("تم جلب 5 مشاريع جديدة!")
-                    else:
-                        st.error("الموقع يمنع الوصول حالياً، تم استخدام الداتا المسجلة.")
+    st.divider()
+    
+    # عرض النتائج
+    res_df = pd.concat([st.session_state.live_market_data, df_p]).head(10)
+    for _, r in res_df.iterrows():
+        with st.expander(f"🏢 {r.get('Project Name')} | {r.get('Area')}"):
+            st.write(f"المطور: {r.get('Developer')}")
+            if st.button(f"إرسال تفاصيل {r.get('Project Name')}", key=r.get('Project Name')):
+                msg = f"أهلاً بك، أرشح لك مشروع {r.get('Project Name')} في {r.get('Area')}. مع تحياتي {broker}"
+                link = f"https://wa.me/{phone}?text={urllib.parse.quote(msg)}"
+                st.markdown(f"[✅ اضغط هنا للإرسال لواتساب]({link})")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-        # فلاتر البحث
-        f1, f2, f3 = st.columns(3)
-        with f1: m_area = st.selectbox("المنطقة", ["الكل"] + sorted(df_base['Area'].unique().tolist()))
-        with f2: m_budget = st.number_input("الميزانية التقريبية (EGP)", 0)
-        with f3: phone = st.text_input("واتساب العميل")
+elif selected == "قاعدة المشاريع":
+    st.title("📂 جميع المشاريع المسجلة")
+    search = st.text_input("🔍 ابحث عن مشروع محدد بالاسم")
+    if search:
+        display_df = df_p[df_p['Project Name'].str.contains(search, case=False)]
+    else:
+        display_df = df_p
+    st.dataframe(display_df, use_container_width=True)
 
-        st.divider()
-
-        res_col, msg_col = st.columns([0.6, 0.4])
-        with res_col:
-            st.subheader("🎯 أفضل الخيارات المتاحة")
-            # دمج الداتا الأساسية مع داتا Nawy المحدثة
-            final_display = pd.concat([st.session_state.live_market_data, df_base]).head(10)
-            
-            for _, r in final_display.iterrows():
-                with st.expander(f"🏢 {r['Project Name']} - {r['Area']}"):
-                    st.write(f"🏗️ المطور: {r['Developer']}")
-                    st.write(f"📝 التفاصيل: {r['Project Features']}")
-                    if st.button(f"اختيار {r['Project Name']}", key=r['Project Name']):
-                        st.session_state.selected_item = r
-        
-        with msg_col:
-            st.subheader("💬 رد سريع")
-            msg = st.text_area("الرسالة", f"أهلاً بك، أرشح لك مشروع مميز في {m_area} يناسب طلبك..")
-            if st.button("🚀 إرسال واتساب"):
-                if phone:
-                    st.markdown(f'<a href="https://wa.me/{phone}?text={urllib.parse.quote(msg)}" target="_blank" style="background:#25d366; color:white; padding:10px; border-radius:10px; text-decoration:none; display:block; text-align:center;">فتح واتساب</a>', unsafe_allow_html=True)
-                else: st.warning("أدخل الرقم")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif menu == "المشاريع":
-        st.dataframe(df_base, use_container_width=True)
-
-    elif menu == "أدوات البروكر":
-        st.write("حاسبة الأقساط والعمولات متاحة هنا.")
-
-# --- القائمة الجانبية (تظهر فقط في صفحة المشاريع والأدوات) ---
-if show_ready:
-    with c_side:
-        st.markdown("### 🔑 استلام فوري")
-        st.info("سولانا - أورا\nبادية - بالم هيلز\nماونتن فيو 4")
-
-st.markdown("<p style='text-align:center; color:#555;'>MA3LOMATI PRO | AI Scraper Engine v2.0</p>", unsafe_allow_html=True)
+elif selected == "أدوات البروكر":
+    st.title("🛠️ حقيبة الأدوات")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("💳 حاسبة الأقساط")
+        price = st.number_input("السعر الإجمالي", value=1000000)
+        down = st.number_input("المقدم", value=100000)
+        years = st.slider("السنين", 1, 15, 8)
+        st.metric("القسط الشهري", f"{(price-down)/(years*12):,.0f}")
+    with c2:
+        st.subheader("📏 محول مساحات")
+        meters = st.number_input("بالمتر المربع", value=100.0)
+        st.write(f"تساوي: {meters * 10.76:.2f} قدم مربع")
