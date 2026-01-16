@@ -10,7 +10,7 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 
-# 3. التنسيق (CSS) - التحكم الدقيق في الأحجام والمواقع
+# 3. التنسيق (CSS) - الحل باستخدام المفاتيح (Keys) لتجنب الخطأ
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -18,35 +18,34 @@ st.markdown("""
     
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
 
-    /* هيدر ثابت مع زر خروج صغير عاليسار */
+    /* البار العلوي */
     .top-bar {
         display: flex; justify-content: space-between; align-items: center;
         background: #000; padding: 10px 20px; border-bottom: 3px solid #f59e0b;
         border-radius: 0 0 15px 15px; margin-bottom: 20px;
     }
-    .logo-title { color: #f59e0b; font-weight: 900; font-size: 20px; margin: 0; }
 
-    /* زر الخروج الصغير */
-    .stButton > button[kind="secondary"] {
-        padding: 2px 10px !important; height: 30px !important; width: 60px !important;
+    /* 1. تنسيق زر الخروج الصغير (بناءً على الكي logout_btn) */
+    div.stButton > button[key*="logout_btn"] {
+        padding: 0px !important; height: 30px !important; width: 70px !important;
         font-size: 12px !important; background-color: #ff4b4b !important; color: white !important;
         border: none !important; border-radius: 5px !important;
     }
 
-    /* المربعات الكبيرة (المطورين) */
-    div.stButton > button[kind="primary"] {
+    /* 2. تنسيق المربعات الكبيرة للمطورين (بناءً على الكي sq_) */
+    div.stButton > button[key*="sq_"] {
         background-color: #000 !important; color: #f59e0b !important;
         border: 2px solid #f59e0b !important; border-radius: 12px !important;
         width: 180px !important; height: 180px !important;
         font-size: 18px !important; font-weight: 900 !important;
         transition: 0.3s !important; margin: 10px auto !important;
     }
-    div.stButton > button[kind="primary"]:hover {
+    div.stButton > button[key*="sq_"]:hover {
         background-color: #f59e0b !important; color: #000 !important; transform: scale(1.05);
     }
 
-    /* أزرار التنقل الصغيرة (التالي والسابق) */
-    .nav-btn > div.stButton > button {
+    /* 3. تنسيق أزرار التنقل الصغيرة (بناءً على الكي nav_) */
+    div.stButton > button[key*="nav_"] {
         height: 30px !important; width: 80px !important; font-size: 12px !important;
         padding: 0 !important; background: #f8fafc !important; color: #000 !important;
         border: 1px solid #e2e8f0 !important;
@@ -68,35 +67,39 @@ if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
     _, c2, _ = st.columns([1,1,1])
     with c2:
-        if st.text_input("Passcode", type="password") == "2026": 
+        if st.text_input("Passcode", type="password", key="main_login") == "2026": 
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# 6. البار العلوي (لوجو + خروج)
+# 6. الهيدر وزر الخروج
 t_col1, t_col2 = st.columns([0.9, 0.1])
 with t_col1:
-    st.markdown('<p class="logo-title">MA3LOMATI PRO 2026</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#f59e0b; font-weight:900; font-size:20px;">MA3LOMATI PRO 2026</p>', unsafe_allow_html=True)
 with t_col2:
-    if st.button("خروج", kind="secondary"):
+    # شيلنا الـ kind واستخدمنا الـ key للتحكم في الاستايل
+    if st.button("خروج", key="logout_btn"):
         st.session_state.auth = False; st.rerun()
 
-# 7. المحتوى
+# 7. المحتوى الرئيسي
 if st.session_state.selected_dev:
-    # صفحة التفاصيل
+    # --- صفحة التفاصيل ---
     dev_name = st.session_state.selected_dev
     dev_info = df_d[df_d['Developer'] == dev_name].iloc[0]
-    if st.button("⬅️ عودة", kind="primary"):
+    
+    if st.button("⬅️ عودة", key="nav_back"):
         st.session_state.selected_dev = None; st.rerun()
     
     st.markdown(f"""
-        <div style="background:#000; padding:25px; border-radius:15px; border:2px solid #f59e0b; color:white;">
+        <div style="background:#000; padding:25px; border-radius:15px; border:2px solid #f59e0b; color:white; margin-top:15px;">
             <h2 style="color:#f59e0b;">{dev_name}</h2>
+            <p>👤 المالك: {dev_info.get('Owner')}</p>
             <hr style="border-color:#f59e0b;">
-            <p style="font-size:18px;">{dev_info.get('Detailed_Info')}</p>
+            <p style="font-size:18px; line-height:1.8;">{dev_info.get('Detailed_Info')}</p>
         </div>
     """, unsafe_allow_html=True)
 
 else:
+    # --- قائمة المطورين ---
     menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
         icons=["tools", "building", "person-vcard"], 
         default_index=2, orientation="horizontal",
@@ -106,7 +109,7 @@ else:
     if menu == "المطورين":
         main_col, empty_col = st.columns([0.6, 0.4])
         with main_col:
-            search = st.text_input("🔍 بحث...")
+            search = st.text_input("🔍 بحث المطورين...", key="dev_search")
             dff = df_d.copy()
             if search: dff = dff[dff['Developer'].str.contains(search, case=False)]
             
@@ -114,31 +117,29 @@ else:
             total_p = (len(dff) // limit) + (1 if len(dff) % limit > 0 else 0)
             items = dff.iloc[st.session_state.d_idx*limit : (st.session_state.d_idx+1)*limit]
 
-            # شبكة المربعات 2 في الصف
+            # شبكة المربعات
             for i in range(0, len(items), 2):
                 cols = st.columns(2)
                 with cols[0]:
                     n1 = items.iloc[i].get('Developer')
-                    if st.button(n1, key=f"sq_{i}", kind="primary"):
+                    if st.button(n1, key=f"sq_{i}"):
                         st.session_state.selected_dev = n1; st.rerun()
                 with cols[1]:
                     if i + 1 < len(items):
                         n2 = items.iloc[i+1].get('Developer')
-                        if st.button(n2, key=f"sq_{i+1}", kind="primary"):
+                        if st.button(n2, key=f"sq_{i+1}"):
                             st.session_state.selected_dev = n2; st.rerun()
 
-            # أزرار التنقل الصغيرة أسفل المحتوى
+            # أزرار التنقل الصغيرة
             st.write("---")
-            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
-            with nav_col1:
-                st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
+            nav_c1, nav_c2, nav_c3 = st.columns([1, 2, 1])
+            with nav_c1:
                 if st.session_state.d_idx > 0:
-                    if st.button("السابق", key="prev_sm"): st.session_state.d_idx -= 1; st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-            with nav_col2:
+                    if st.button("السابق", key="nav_prev"): 
+                        st.session_state.d_idx -= 1; st.rerun()
+            with nav_c2:
                 st.markdown(f"<p style='text-align:center; font-size:12px; color:#666;'>صفحة {st.session_state.d_idx + 1} من {total_p}</p>", unsafe_allow_html=True)
-            with nav_col3:
-                st.markdown('<div class="nav-btn">', unsafe_allow_html=True)
+            with nav_c3:
                 if (st.session_state.d_idx + 1) * limit < len(dff):
-                    if st.button("التالي", key="next_sm"): st.session_state.d_idx += 1; st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                    if st.button("التالي", key="nav_next"): 
+                        st.session_state.d_idx += 1; st.rerun()
