@@ -10,7 +10,7 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_dev' not in st.session_state: st.session_state.selected_dev = None
 
-# 3. التنسيق (CSS) - جعل الأزرار مربعة 1*1
+# 3. التنسيق (CSS) - إجبار الحجم الموحد 1:1
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -24,38 +24,50 @@ st.markdown("""
         border-bottom: 4px solid #f59e0b; border-radius: 0 0 15px 15px; margin-bottom: 25px;
     }
 
-    /* تحويل الأزرار لمربعات 1*1 */
+    /* تثبيت حجم حاوية الزرار */
+    [data-testid="column"] {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* الزرار المربع الموحد */
     div.stButton > button {
         background-color: #000000 !important;
         color: #f59e0b !important;
         border: 2px solid #f59e0b !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         
-        /* تثبيت الحجم المربع */
-        aspect-ratio: 1 / 1 !important; 
-        width: 100% !important;
+        /* السر هنا: تثبيت الطول والعرض بـ px لضمان التطابق التام */
+        width: 180px !important;
+        height: 180px !important;
         
         display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         
-        font-size: 16px !important; /* حجم خط مناسب للمربع */
-        font-weight: 800 !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
         transition: 0.3s !important;
-        padding: 10px !important;
-        white-space: normal !important; /* للسماح بنزول النص سطر جديد لو طويل */
-        line-height: 1.2 !important;
+        margin: 10px auto !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
 
     div.stButton > button:hover {
         background-color: #f59e0b !important;
         color: #000000 !important;
         transform: scale(1.05) !important;
+        border: 2px solid #000000 !important;
     }
 
-    /* ضبط المسافات بين المربعات */
-    [data-testid="column"] {
-        padding: 8px !important;
+    /* تحسين شكل النصوص داخل الزر */
+    div.stButton p {
+        margin: 0 !important;
+        padding: 5px !important;
+        line-height: 1.2 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -76,33 +88,31 @@ if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
     _, c2, _ = st.columns([1,1,1])
     with c2:
-        if st.text_input("Passcode", type="password") == "2026": 
+        if st.text_input("Passcode", type="password", key="login_pass") == "2026": 
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# 6. الهيدر
+# 6. الواجهة الأساسية
 st.markdown('<div class="gold-header">MA3LOMATI PRO 2026</div>', unsafe_allow_html=True)
 
-# 7. منطق العرض
 if st.session_state.selected_dev:
     # صفحة التفاصيل
     dev_name = st.session_state.selected_dev
     dev_info = df_d[df_d['Developer'] == dev_name].iloc[0]
-    if st.button("⬅️ عودة لقائمة المطورين"):
+    if st.button("⬅️ عودة"):
         st.session_state.selected_dev = None
         st.rerun()
     
     st.markdown(f"""
-        <div style="background:#000; padding:30px; border-radius:15px; border:2px solid #f59e0b; color:white;">
+        <div style="background:#000; padding:30px; border-radius:15px; border:2px solid #f59e0b; color:white; text-align:right;">
             <h1 style="color:#f59e0b;">{dev_name}</h1>
-            <p>👤 صاحب الشركة: {dev_info.get('Owner')}</p>
+            <p style="font-size:20px;">👤 صاحب الشركة: {dev_info.get('Owner')}</p>
             <hr style="border-color:#f59e0b;">
-            <p style="font-size:18px;">{dev_info.get('Detailed_Info')}</p>
+            <p style="font-size:18px; line-height:1.8;">{dev_info.get('Detailed_Info')}</p>
         </div>
     """, unsafe_allow_html=True)
 
 else:
-    # القائمة الرئيسية
     menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
         icons=["tools", "building", "person-vcard"], 
         default_index=2, orientation="horizontal",
@@ -110,33 +120,32 @@ else:
     )
 
     if menu == "المطورين":
-        # توزيع 60% يمين و 40% يسار فراغ
+        # المساحة 60% يمين
         main_col, empty_col = st.columns([0.6, 0.4])
         
         with main_col:
-            search = st.text_input("🔍 بحث عن مطور...", placeholder="اكتب الاسم هنا")
+            search = st.text_input("🔍 بحث...", placeholder="اكتب اسم المطور")
             dff = df_d.copy()
             if search:
                 dff = dff[dff['Developer'].str.contains(search, case=False)]
             
-            # الترقيم (8 مطورين)
             limit = 8
             total_p = (len(dff) // limit) + (1 if len(dff) % limit > 0 else 0)
             start = st.session_state.d_idx * limit
             items = dff.iloc[start : start + limit]
 
-            # شبكة المربعات (2 في كل صف داخل الـ 60%)
+            # شبكة المربعات المتساوية تماماً (2 في كل صف)
             for i in range(0, len(items), 2):
                 cols = st.columns(2)
                 with cols[0]:
                     name1 = items.iloc[i].get('Developer')
-                    if st.button(name1, key=f"sq_{i}"):
+                    if st.button(name1, key=f"sq_{start+i}"):
                         st.session_state.selected_dev = name1
                         st.rerun()
                 with cols[1]:
                     if i + 1 < len(items):
                         name2 = items.iloc[i+1].get('Developer')
-                        if st.button(name2, key=f"sq_{i+1}"):
+                        if st.button(name2, key=f"sq_{start+i+1}"):
                             st.session_state.selected_dev = name2
                             st.rerun()
 
