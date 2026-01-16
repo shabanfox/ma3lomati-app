@@ -15,6 +15,7 @@ if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'r_idx' not in st.session_state: st.session_state.r_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+if 'random_key' not in st.session_state: st.session_state.random_key = random.randint(1, 100000)
 
 # 3. جلب الأخبار
 @st.cache_data(ttl=1800)
@@ -37,7 +38,7 @@ st.markdown("""
     [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
     .luxury-header { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(10px); border-bottom: 2px solid #f59e0b; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; border-radius: 0 0 25px 25px; margin-bottom: 10px; }
     .logo-text { color: #f59e0b; font-weight: 900; font-size: 22px; }
-    div.stButton > button[key*="card_"] { background-color: white !important; color: #111 !important; border-radius: 12px !important; width: 100% !important; min-height: 200px !important; text-align: right !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; white-space: pre-wrap !important; }
+    div.stButton > button[key*="card_"] { background-color: white !important; color: #111 !important; border-radius: 12px !important; width: 100% !important; min-height: 200px !important; text-align: right !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; white-space: pre-wrap !important; font-size: 16px !important; font-weight: bold !important; }
     div.stButton > button[key="logout_top"] { background-color: #dc2626 !important; color: white !important; border-radius: 8px !important; padding: 5px 15px !important; }
     div.stButton > button[key="refresh_btn"] { background-color: #10b981 !important; color: white !important; border-radius: 8px !important; margin-top: 28px !important; width: 100% !important; }
     .sidebar-box { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; padding: 10px; border-top: 3px solid #10b981; }
@@ -69,16 +70,18 @@ with h_col2:
 
 st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 
-# 6. جلب البيانات (مع كسر التخزين المؤقت لجوجل)
+# 6. جلب البيانات (استخدام روابط التصدير المباشرة لضمان الربط)
 @st.cache_data(ttl=200)
-def load_all_data(r_val):
-    u_p = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv&cache_bust={r_val}"
-    u_d = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv&cache_bust={r_val}"
+def load_all_data(cache_key):
+    # تم تحويل روابط pubhtml إلى روابط التصدير CSV لتعمل برمجياً
+    sheet_projects = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv&gid=0&cache={cache_key}"
+    sheet_developers = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv&gid=0&cache={cache_key}"
+    
     try:
-        p = pd.read_csv(u_p)
-        d = pd.read_csv(u_d)
+        p = pd.read_csv(sheet_projects)
+        d = pd.read_csv(sheet_developers)
         
-        # دالة التنظيف العميق لمنع ظهور None
+        # دالة التنظيف العميق لمنع ظهور None أو nan
         def deep_clean(df):
             df = df.fillna("بيانات قيد التحديث ⏳")
             for col in df.columns:
@@ -89,8 +92,7 @@ def load_all_data(r_val):
     except:
         return pd.DataFrame(), pd.DataFrame()
 
-# نستخدم رقم عشوائي كل 200 ثانية لضمان الداتا
-df_p, df_d = load_all_data(int(time.time() / 200))
+df_p, df_d = load_all_data(st.session_state.random_key)
 
 menu = option_menu(None, ["الأدوات", "المشاريع", "المطورين"], 
     icons=["tools", "building", "person-vcard"], default_index=1, orientation="horizontal",
@@ -103,12 +105,13 @@ main_col, side_col = st.columns([0.75, 0.25])
 with side_col:
     st.markdown("<p style='color:#10b981; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
     if not df_p.empty:
+        # البحث عن كلمة فوري في أي عمود
         ready_df = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
         r_limit = 6
         curr_ready = ready_df.iloc[st.session_state.r_idx*r_limit : (st.session_state.r_idx+1)*r_limit]
         st.markdown("<div class='sidebar-box'>", unsafe_allow_html=True)
         for _, row in curr_ready.iterrows():
-            st.markdown(f'<div class="ready-card"><b>{row.get("Project Name")}</b><br><small>📍 {row.get("Area")}</small></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ready-card"><b>{row.get("Project Name", "N/A")}</b><br><small>📍 {row.get("Area", "N/A")}</small></div>', unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         rc1, rc2 = st.columns(2)
         if st.session_state.r_idx > 0 and rc1.button("السابق", key="r_prev"): st.session_state.r_idx -= 1; st.rerun()
@@ -118,7 +121,7 @@ with side_col:
 with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
-        if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
+        if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
         
         st.markdown('<div class="detail-card">', unsafe_allow_html=True)
         if 'Project Name' in item:
@@ -138,18 +141,17 @@ with main_col:
 
     elif menu == "المشاريع":
         f1, f2, f3, f4 = st.columns([1, 1, 1, 0.4])
-        s_area = f1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
-        s_dev = f2.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()))
+        s_area = f1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()) if not df_p.empty else ["الكل"])
+        s_dev = f2.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()) if not df_p.empty else ["الكل"])
         s_search = f3.text_input("🔍 اسم المشروع")
         if f4.button("🔄", key="refresh_btn"):
             st.cache_data.clear()
-            # توليد رقم عشوائي جديد تماماً عند الضغط يدوياً
             st.session_state.random_key = random.randint(1, 100000)
             st.rerun()
 
         dff_p = df_p.copy()
-        if s_area != "الكل": dff_p = dff_p[s_area == dff_p['Area']]
-        if s_dev != "الكل": dff_p = dff_p[s_dev == dff_p['Developer']]
+        if s_area != "الكل": dff_p = dff_p[dff_p['Area'] == s_area]
+        if s_dev != "الكل": dff_p = dff_p[dff_p['Developer'] == s_dev]
         if s_search: dff_p = dff_p[dff_p['Project Name'].str.contains(s_search, case=False)]
 
         p_limit = 6
@@ -167,5 +169,40 @@ with main_col:
         pc1, pc2 = st.columns(2)
         if st.session_state.p_idx > 0 and pc1.button("⬅️ السابق", key="p_prev"): st.session_state.p_idx -= 1; st.rerun()
         if (st.session_state.p_idx + 1) * p_limit < len(dff_p) and pc2.button("التالي ➡️", key="p_next"): st.session_state.p_idx += 1; st.rerun()
-    
-    # ... باقي الأقسام (المطورين والأدوات) تظل كما هي ...
+
+    elif menu == "المطورين":
+        s_d = st.text_input("🔍 ابحث عن مطور...")
+        dff_d = df_d.copy()
+        if s_d: dff_d = dff_d[dff_d.apply(lambda r: r.astype(str).str.contains(s_d, case=False).any(), axis=1)]
+        
+        d_limit = 6
+        curr_d = dff_d.iloc[st.session_state.d_idx*d_limit : (st.session_state.d_idx+1)*d_limit]
+        for i in range(0, len(curr_d), 2):
+            cols = st.columns(2)
+            for j in range(2):
+                if i+j < len(curr_d):
+                    row = curr_d.iloc[i+j]
+                    with cols[j]:
+                        lbl = f"🏗️ {row.get('Developer')}\n👑 المالك: {row.get('Owner')}\n⭐ فئة {row.get('Developer Category')}\n🏢 مشاريع: {row.get('Number of Projects')}"
+                        if st.button(lbl, key=f"card_d_{i+j}"): st.session_state.selected_item = row; st.rerun()
+        
+        st.markdown("---")
+        dc1, dc2 = st.columns(2)
+        if st.session_state.d_idx > 0 and dc1.button("⬅️ السابق", key="d_prev"): st.session_state.d_idx -= 1; st.rerun()
+        if (st.session_state.d_idx + 1) * d_limit < len(dff_d) and dc2.button("التالي ➡️", key="d_next"): st.session_state.d_idx += 1; st.rerun()
+
+    elif menu == "الأدوات":
+        st.markdown("<h2 style='color:#f59e0b;'>🛠️ الأدوات العقارية</h2>", unsafe_allow_html=True)
+        t1, t2 = st.tabs(["💰 حاسبة الأقساط", "📐 محول المساحات"])
+        with t1:
+            c1, c2 = st.columns(2)
+            total = c1.number_input("إجمالي السعر", value=2000000)
+            down = c2.number_input("المقدم", value=200000)
+            years = st.slider("سنين التقسيط", 1, 15, 7)
+            rem = total - down
+            st.metric("المبلغ المتبقي", f"{rem:,.0f} ج.م")
+            st.metric("القسط الشهري", f"{rem/(years*12):,.0f} ج.م")
+        with t2:
+            sqm = st.number_input("المساحة بالمتر المربع", value=100.0)
+            st.info(f"القدم المربع: {sqm * 10.76:,.2f}")
+            st.info(f"الفدان: {sqm / 4200:,.4f}")
