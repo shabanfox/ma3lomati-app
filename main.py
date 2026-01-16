@@ -65,6 +65,8 @@ st.markdown("""
     .ticker-wrap { width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 10px; }
     .ticker { display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    
+    .info-label { color: #f59e0b; font-weight: bold; margin-left: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -107,7 +109,7 @@ menu = option_menu(None, ["الأدوات", "المشاريع", "المطوري�
 
 main_col, side_col = st.columns([0.75, 0.25])
 
-# --- القائمة الجانبية (استلام فوري - 6 عناصر) ---
+# --- القائمة الجانبية (استلام فوري) ---
 with side_col:
     st.markdown("<p style='color:#10b981; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
     ready_df = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
@@ -126,17 +128,34 @@ with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
         if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
-        st.markdown(f'<div style="background:#111; padding:25px; border-radius:15px; border-right:5px solid #f59e0b; color:white;"><h2>{item.get("Project Name", item.get("Developer"))}</h2><hr opacity="0.1"><p style="font-size:18px; line-height:1.8;">{item.get("Project Features", item.get("Detailed_Info", "لا يوجد بيانات"))}</p></div>', unsafe_allow_html=True)
+        
+        # تفاصيل المشروع أو المطور
+        st.markdown('<div style="background:#111; padding:25px; border-radius:15px; border-right:5px solid #f59e0b; color:white;">', unsafe_allow_html=True)
+        
+        if 'Project Name' in item: # لو كان مشروع
+            st.markdown(f"<h2>🏢 {item.get('Project Name')}</h2><hr>")
+            st.markdown(f"<p><span class='info-label'>📍 المنطقة:</span> {item.get('Area')}</p>")
+            st.markdown(f"<p><span class='info-label'>🏗️ المطور:</span> {item.get('Developer')}</p>")
+            st.markdown(f"<p><span class='info-label'>📐 التفاصيل:</span> {item.get('Project Features')}</p>")
+        else: # لو كان مطور
+            st.markdown(f"<h2>🏗️ {item.get('Developer')}</h2><hr>")
+            st.markdown(f"<p><span class='info-label'>👤 المالك:</span> {item.get('Owner')}</p>")
+            st.markdown(f"<p><span class='info-label'>⭐ الفئة:</span> {item.get('Developer Category')}</p>")
+            st.markdown(f"<p><span class='info-label'>📍 العنوان:</span> {item.get('Headquarters Address')}</p>")
+            st.markdown(f"<div style='margin-top:20px; background:#1a1a1a; padding:15px; border-radius:10px;'>")
+            st.markdown(f"<h4>📖 معلومات تفصيلية (Detailed Info):</h4>")
+            st.markdown(f"<p style='line-height:1.8;'>{item.get('Detailed_Info', 'لا توجد معلومات إضافية مسجلة لهذا المطور')}</p>")
+            st.markdown("</div>")
+            st.markdown(f"<p style='margin-top:15px;'><span class='info-label'>📚 سابقة الأعمال:</span><br>{item.get('Previous Projects')}</p>")
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        # الفلاتر وزر التحديث
         f1, f2, f3, f4 = st.columns([1, 1, 1, 0.5])
         s_area = f1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
         s_dev = f2.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()))
         s_search = f3.text_input("🔍 بحث بالاسم")
-        if f4.button("🔄", key="refresh_btn"):
-            st.cache_data.clear()
-            st.rerun()
+        if f4.button("🔄", key="refresh_btn"): st.cache_data.clear(); st.rerun()
 
         dff_p = df_p.copy()
         if s_area != "الكل": dff_p = dff_p[dff_p['Area'] == s_area]
