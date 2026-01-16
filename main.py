@@ -48,7 +48,6 @@ st.markdown("""
         padding: 15px !important; transition: 0.3s !important; text-align: right !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; white-space: pre-wrap !important;
     }
-    div.stButton > button[key*="card_"]:hover { border-color: #f59e0b !important; transform: translateY(-3px) !important; }
     
     div.stButton > button[key="logout_top"] {
         background-color: #dc2626 !important; color: white !important; border-radius: 8px !important;
@@ -67,6 +66,7 @@ st.markdown("""
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     
     .info-label { color: #f59e0b; font-weight: bold; margin-left: 5px; }
+    .detail-card { background:#111; padding:25px; border-radius:15px; border-right:5px solid #f59e0b; color:white; line-height:1.8; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -79,7 +79,7 @@ if not st.session_state.auth:
             st.session_state.auth = True; st.rerun()
     st.stop()
 
-# بناء الهيدر وزر الخروج
+# الهيدر وزر الخروج
 h_col1, h_col2 = st.columns([0.85, 0.15])
 with h_col1:
     st.markdown(f'<div class="luxury-header"><div class="logo-text">MA3LOMATI PRO</div><div style="color:#aaa; font-size:12px;">📅 {datetime.now().strftime("%Y-%m-%d")}</div></div>', unsafe_allow_html=True)
@@ -95,8 +95,12 @@ def load_all_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        p = pd.read_csv(u_p).fillna("").astype(str)
-        d = pd.read_csv(u_d).fillna("").astype(str)
+        # استخدام .fillna("") لاستبدال أي None بنص فارغ
+        p = pd.read_csv(u_p).fillna("جاري التحديث...").astype(str)
+        d = pd.read_csv(u_d).fillna("جاري التحديث...").astype(str)
+        # تنظيف إضافي لكلمة "nan" التي قد تظهر من Pandas
+        p = p.replace("nan", "جاري التحديث...")
+        d = d.replace("nan", "جاري التحديث...")
         return p, d
     except: return pd.DataFrame(), pd.DataFrame()
 
@@ -109,52 +113,49 @@ menu = option_menu(None, ["الأدوات", "المشاريع", "المطوري�
 
 main_col, side_col = st.columns([0.75, 0.25])
 
-# --- القائمة الجانبية (استلام فوري) ---
+# --- القائمة الجانبية ---
 with side_col:
     st.markdown("<p style='color:#10b981; font-weight:bold;'>🔑 استلام فوري</p>", unsafe_allow_html=True)
-    ready_df = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
-    r_limit = 6
-    curr_ready = ready_df.iloc[st.session_state.r_idx*r_limit : (st.session_state.r_idx+1)*r_limit]
-    st.markdown("<div class='sidebar-box'>", unsafe_allow_html=True)
-    for _, row in curr_ready.iterrows():
-        st.markdown(f'<div class="ready-card"><b>{row.get("Project Name")}</b><br><small>📍 {row.get("Area")}</small></div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-    rc1, rc2 = st.columns(2)
-    if st.session_state.r_idx > 0 and rc1.button("السابق", key="r_prev"): st.session_state.r_idx -= 1; st.rerun()
-    if (st.session_state.r_idx + 1) * r_limit < len(ready_df) and rc2.button("التالي", key="r_next"): st.session_state.r_idx += 1; st.rerun()
+    if not df_p.empty:
+        ready_df = df_p[df_p.apply(lambda r: r.astype(str).str.contains('فوري|جاهز', case=False).any(), axis=1)]
+        r_limit = 6
+        curr_ready = ready_df.iloc[st.session_state.r_idx*r_limit : (st.session_state.r_idx+1)*r_limit]
+        st.markdown("<div class='sidebar-box'>", unsafe_allow_html=True)
+        for _, row in curr_ready.iterrows():
+            st.markdown(f'<div class="ready-card"><b>{row.get("Project Name")}</b><br><small>📍 {row.get("Area")}</small></div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        rc1, rc2 = st.columns(2)
+        if st.session_state.r_idx > 0 and rc1.button("السابق", key="r_prev"): st.session_state.r_idx -= 1; st.rerun()
+        if (st.session_state.r_idx + 1) * r_limit < len(ready_df) and rc2.button("التالي", key="r_next"): st.session_state.r_idx += 1; st.rerun()
 
 # --- الجزء الرئيسي ---
 with main_col:
     if st.session_state.selected_item is not None:
         item = st.session_state.selected_item
-        if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
+        if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
         
-        # تفاصيل المشروع أو المطور
-        st.markdown('<div style="background:#111; padding:25px; border-radius:15px; border-right:5px solid #f59e0b; color:white;">', unsafe_allow_html=True)
-        
-        if 'Project Name' in item: # لو كان مشروع
-            st.markdown(f"<h2>🏢 {item.get('Project Name')}</h2><hr>")
+        st.markdown('<div class="detail-card">', unsafe_allow_html=True)
+        if 'Project Name' in item:
+            st.markdown(f"<h2>🏢 {item.get('Project Name')}</h2><hr style='opacity:0.2;'>")
             st.markdown(f"<p><span class='info-label'>📍 المنطقة:</span> {item.get('Area')}</p>")
             st.markdown(f"<p><span class='info-label'>🏗️ المطور:</span> {item.get('Developer')}</p>")
-            st.markdown(f"<p><span class='info-label'>📐 التفاصيل:</span> {item.get('Project Features')}</p>")
-        else: # لو كان مطور
-            st.markdown(f"<h2>🏗️ {item.get('Developer')}</h2><hr>")
+            st.markdown(f"<p><span class='info-label'>📐 المساحة:</span> {item.get('Project Area')}</p>")
+            st.markdown(f"<div style='background:#1a1a1a; padding:15px; border-radius:10px; margin-top:15px;'>")
+            st.markdown(f"<h4>✨ تفاصيل المشروع:</h4><p>{item.get('Project Features')}</p></div>")
+        else:
+            st.markdown(f"<h2>🏗️ {item.get('Developer')}</h2><hr style='opacity:0.2;'>")
             st.markdown(f"<p><span class='info-label'>👤 المالك:</span> {item.get('Owner')}</p>")
-            st.markdown(f"<p><span class='info-label'>⭐ الفئة:</span> {item.get('Developer Category')}</p>")
-            st.markdown(f"<p><span class='info-label'>📍 العنوان:</span> {item.get('Headquarters Address')}</p>")
-            st.markdown(f"<div style='margin-top:20px; background:#1a1a1a; padding:15px; border-radius:10px;'>")
-            st.markdown(f"<h4>📖 معلومات تفصيلية (Detailed Info):</h4>")
-            st.markdown(f"<p style='line-height:1.8;'>{item.get('Detailed_Info', 'لا توجد معلومات إضافية مسجلة لهذا المطور')}</p>")
-            st.markdown("</div>")
-            st.markdown(f"<p style='margin-top:15px;'><span class='info-label'>📚 سابقة الأعمال:</span><br>{item.get('Previous Projects')}</p>")
-            
+            st.markdown(f"<p><span class='info-label'>📍 المقر:</span> {item.get('Headquarters Address')}</p>")
+            st.markdown(f"<div style='background:#1a1a1a; padding:15px; border-radius:10px; margin-top:15px;'>")
+            st.markdown(f"<h4>📖 معلومات تفصيلية:</h4><p>{item.get('Detailed_Info')}</p></div>")
+            st.markdown(f"<p style='margin-top:15px;'><span class='info-label'>📚 سابقة الأعمال:</span> {item.get('Previous Projects')}</p>")
         st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu == "المشاريع":
-        f1, f2, f3, f4 = st.columns([1, 1, 1, 0.5])
+        f1, f2, f3, f4 = st.columns([1, 1, 1, 0.4])
         s_area = f1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Area'].unique().tolist()))
         s_dev = f2.selectbox("🏗️ المطور", ["الكل"] + sorted(df_p['Developer'].unique().tolist()))
-        s_search = f3.text_input("🔍 بحث بالاسم")
+        s_search = f3.text_input("🔍 اسم المشروع")
         if f4.button("🔄", key="refresh_btn"): st.cache_data.clear(); st.rerun()
 
         dff_p = df_p.copy()
