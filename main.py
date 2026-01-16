@@ -3,130 +3,134 @@ import pandas as pd
 from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="BrokerEdge Pro", layout="wide")
+st.set_page_config(page_title="BrokerEdge PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# إدارة الحالة
-if 'page_num' not in st.session_state: st.session_state.page_num = 0
+# إدارة الحالة (Pagination)
+if 'p_page' not in st.session_state: st.session_state.p_page = 0
+if 'd_page' not in st.session_state: st.session_state.d_page = 0
 
-# 2. التنسيق الجمالي (CSS) - ألوان صارخة وواضحة جداً
+# 2. التنسيق الجمالي (CSS) - الألوان واضحة وزر الخروج فوق عاليسار
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     html, body, [class*="css"] { font-family: 'Cairo', sans-serif !important; direction: rtl; text-align: right; background-color: #F8FAFC; }
-    
-    /* الهيدر */
-    .main-header {
-        background: #0F172A; color: #F59E0B; padding: 25px; text-align: center;
-        border-bottom: 5px solid #F59E0B; border-radius: 0 0 20px 20px; margin-bottom: 20px;
-    }
+    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
+    .block-container { padding-top: 0rem !important; }
 
+    /* الهيدر العلوي */
+    .top-bar {
+        background: #0F172A; padding: 15px 40px; display: flex; 
+        justify-content: space-between; align-items: center; color: white;
+        border-bottom: 4px solid #F59E0B;
+    }
+    .logo { font-size: 24px; font-weight: 900; color: #F59E0B; }
+    
     /* الكروت الشبكية */
     .grid-card {
-        background: white; border-radius: 15px; border: 2px solid #CBD5E1;
-        padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        min-height: 200px;
+        background: white; border-radius: 12px; border: 2px solid #E2E8F0;
+        padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        min-height: 200px; transition: 0.3s;
     }
-    .card-title { color: #1E3A8A; font-size: 22px; font-weight: 900; }
-    .card-price { color: #EF4444; font-size: 18px; font-weight: bold; }
+    .grid-card:hover { border-color: #3B82F6; transform: translateY(-5px); }
+    .card-title { color: #1E3A8A; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
     
-    /* أزرار التنقل */
-    .stButton>button {
-        background-color: #F59E0B !important; color: #0F172A !important;
-        font-weight: 900 !important; border-radius: 10px !important; height: 50px;
+    /* زر الخروج المخصص */
+    .logout-btn {
+        background: #EF4444; color: white; padding: 5px 20px; 
+        border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظيفة جلب البيانات (مع معالجة الأخطاء)
-def load_data():
-    # الرابط الذي أرسلته مع تحويله لصيغة البرمجة (CSV)
-    raw_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+# 3. وظيفة جلب البيانات (تحويل روابط pubhtml إلى csv برمجياً)
+def fetch_data(url):
     try:
-        df = pd.read_csv(raw_url).fillna("غير متوفر")
-        return df
+        csv_url = url.replace('/pubhtml', '/export?format=csv')
+        return pd.read_csv(csv_url).fillna("غير متوفر")
     except:
-        # بيانات احتياطية في حال فشل الرابط لتجربة الكود
-        data = {
-            'Project Name': ['مشروع تجريبي 1', 'مشروع تجريبي 2', 'مشروع تجريبي 3'],
-            'Area': ['التجمع الخامس', 'الشيخ زايد', 'العاصمة الإدارية'],
-            'Developer': ['مطور 1', 'مطور 2', 'مطور 3'],
-            'Price': ['5,000,000', '4,200,000', '7,500,000']
-        }
-        return pd.DataFrame(data)
+        return pd.DataFrame()
 
-df = load_data()
+# روابط الشيتات الخاصة بك
+url_projects = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pubhtml"
+url_developers = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pubhtml"
 
-# 4. الهيدر
-st.markdown('<div class="main-header"><h1>BrokerEdge PRO 2026</h1></div>', unsafe_allow_html=True)
+# 4. بناء الهيدر مع زر الخروج فوق عاليسار
+st.markdown(f"""
+    <div class="top-bar">
+        <div class="logo">BrokerEdge PRO</div>
+        <a href="/" target="_self" class="logout-btn">🚪 خروج</a>
+    </div>
+""", unsafe_allow_html=True)
 
-# 5. المنيو الرئيسي
-menu = option_menu(None, ["المشاريع", "المطورين", "الأدوات", "خروج"], 
-    icons=["building", "person-badge", "tools", "door-open"], 
+# 5. القائمة الرئيسية
+menu = option_menu(None, ["المشاريع", "المطورين", "الأدوات"], 
+    icons=["building", "person-vcard", "tools"], 
     default_index=0, orientation="horizontal",
     styles={
-        "container": {"background-color": "white", "border": "2px solid #CBD5E1"},
+        "container": {"background-color": "white", "margin": "10px 0", "border": "1px solid #E2E8F0"},
         "nav-link-selected": {"background-color": "#0F172A", "color": "#F59E0B"}
     }
 )
 
-# ----------------- قائمة الخروج -----------------
-if menu == "خروج":
-    st.info("تم تسجيل الخروج بنجاح. أغلق المتصفح للخصوصية.")
-    st.stop()
-
-# ----------------- قائمة الأدوات -----------------
-elif menu == "الأدوات":
-    st.markdown("<div style='background:white; padding:30px; border-radius:15px; border:2px solid #CBD5E1;'>", unsafe_allow_html=True)
-    st.header("🧮 حاسبة الأقساط")
-    price = st.number_input("سعر الوحدة", value=5000000)
-    years = st.slider("سنوات التقسيط", 1, 15, 8)
-    monthly = price / (years * 12)
-    st.metric("القسط الشهري التقريبي", f"{monthly:,.0f} ج.م")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ----------------- قائمة المشاريع والمطورين -----------------
-else:
-    # محرك البحث
-    q = st.text_input("", placeholder="🔍 ابحث هنا عن أي شيء...")
-    
-    dff = df.copy()
+# 6. معالجة الصفحات والعرض
+def display_grid(df, state_key):
+    q = st.text_input("🔍 بحث سريع...", placeholder="اكتب للبحث في النتائج...")
     if q:
-        dff = dff[dff.apply(lambda r: r.astype(str).str.contains(q, case=False).any(), axis=1)]
+        df = df[df.astype(str).apply(lambda x: x.str.contains(q, case=False)).any(axis=1)]
+        st.session_state[state_key] = 0
 
-    # نظام الترتيب (6 في الصفحة)
     limit = 6
-    total_pages = max(1, (len(dff) // limit) + (1 if len(dff) % limit > 0 else 0))
-    start_idx = st.session_state.page_num * limit
-    current_items = dff.iloc[start_idx : start_idx + limit]
+    total_pages = max(1, (len(df) // limit) + (1 if len(df) % limit > 0 else 0))
+    start = st.session_state[state_key] * limit
+    items = df.iloc[start : start + limit]
 
-    # العرض الشبكي (2 في كل صف)
+    # الشبكة
     cols = st.columns(2)
-    for i, (idx, row) in enumerate(current_items.iterrows()):
+    for i, (idx, row) in enumerate(items.iterrows()):
         with cols[i % 2]:
             st.markdown(f"""
                 <div class="grid-card">
                     <div class="card-title">{row.iloc[0]}</div>
-                    <div style="color:#64748B;">📍 {row.iloc[1] if len(row)>1 else ""}</div>
-                    <div style="margin-top:10px;">🏢 المطور: <b>{row.iloc[2] if len(row)>2 else ""}</b></div>
-                    <hr>
-                    <div class="card-price">السعر: {row.iloc[3] if len(row)>3 else "اتصل بنا"}</div>
+                    <div style="color: #64748B; font-weight: bold;">📍 {row.iloc[1] if len(row)>1 else ""}</div>
+                    <div style="margin: 10px 0; font-size: 14px;">🏢 المطور: {row.iloc[2] if len(row)>2 else ""}</div>
+                    <hr style="border:0; border-top:1px solid #eee;">
+                    <div style="color: #EF4444; font-weight: 900;">{row.iloc[3] if len(row)>3 else ""}</div>
                 </div>
             """, unsafe_allow_html=True)
-            with st.expander("كل البيانات"):
+            with st.expander("التفاصيل"):
                 st.write(row)
 
     # أزرار التنقل
     st.write("---")
     c1, c2, c3 = st.columns([1, 2, 1])
     with c1:
-        if st.session_state.page_num > 0:
-            if st.button("⬅️ السابق"):
-                st.session_state.page_num -= 1
+        if st.session_state[state_key] > 0:
+            if st.button("⬅️ السابق", key=f"prev_{state_key}"):
+                st.session_state[state_key] -= 1
                 st.rerun()
     with c2:
-        st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.page_num + 1} من {total_pages}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state[state_key] + 1} من {total_pages}</p>", unsafe_allow_html=True)
     with c3:
-        if (start_idx + limit) < len(dff):
-            if st.button("التالي ➡️"):
-                st.session_state.page_num += 1
+        if (start + limit) < len(df):
+            if st.button("التالي ➡️", key=f"next_{state_key}"):
+                st.session_state[state_key] += 1
                 st.rerun()
+
+# التشغيل الفعلي للقوائم
+if menu == "المشاريع":
+    df_p = fetch_data(url_projects)
+    if not df_p.empty: display_grid(df_p, 'p_page')
+    else: st.error("فشل تحميل بيانات المشاريع. تأكد من إعدادات مشاركة الشيت.")
+
+elif menu == "المطورين":
+    df_d = fetch_data(url_developers)
+    if not df_d.empty: display_grid(df_d, 'd_page')
+    else: st.error("فشل تحميل بيانات المطورين.")
+
+elif menu == "الأدوات":
+    st.markdown("<div style='background:white; padding:40px; border-radius:15px; border:2px solid #E2E8F0;'>", unsafe_allow_html=True)
+    st.header("🧮 حاسبة القسط الشهري")
+    p = st.number_input("سعر الوحدة", value=5000000)
+    y = st.slider("السنوات", 1, 15, 8)
+    st.metric("القسط الشهري", f"{p/(y*12):,.0f} ج.م")
+    st.markdown("</div>", unsafe_allow_html=True)
