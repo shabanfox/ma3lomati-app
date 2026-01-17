@@ -1,45 +1,104 @@
-# 5. نظام إدارة المستخدمين (التسجيل والدخول)
-if 'user_db' not in st.session_state:
-    st.session_state.user_db = {"admin": "2026"}  # مستخدم افتراضي
+import streamlit as st
+import pandas as pd
+import feedparser
+import urllib.parse
+from datetime import datetime
+import pytz
+from streamlit_option_menu import option_menu
 
+# 1. إعدادات الصفحة (يجب أن تكون أول أمر)
+st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
+
+# 2. تهيئة الذاكرة (Session State)
+if 'auth' not in st.session_state: st.session_state.auth = False
+if 'user_db' not in st.session_state: st.session_state.user_db = {"admin": "2026"} # قاعدة بيانات مؤقتة
+if 'current_user' not in st.session_state: st.session_state.current_user = None
+if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+if 'active_menu' not in st.session_state: st.session_state.active_menu = "المساعد الذكي"
+
+# 3. شاشة التسجيل والدخول (قبل أي محتوى آخر)
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:50px;'><h1 style='color:#f59e0b; font-size:50px;'>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#f59e0b; text-align:center; padding-top:30px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
     
-    # تبديل بين الدخول والتسجيل
-    tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 إنشاء حساب جديد"])
+    tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 إنشاء حساب بروكر"])
     
     with tab_login:
         _, c2, _ = st.columns([1,1,1])
         with c2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            user_in = st.text_input("اسم المستخدم", placeholder="User Name", key="login_user")
-            pass_in = st.text_input("كلمة السر", type="password", placeholder="Password", key="login_pass")
-            if st.button("دخول للنظام 🚀", use_container_width=True):
-                if user_in in st.session_state.user_db and st.session_state.user_db[user_in] == pass_in:
+            u = st.text_input("اسم المستخدم", key="u_login")
+            p = st.text_input("كلمة السر", type="password", key="p_login")
+            if st.button("دخول للنظام", use_container_width=True):
+                if u in st.session_state.user_db and st.session_state.user_db[u] == p:
                     st.session_state.auth = True
-                    st.session_state.current_user = user_in
-                    st.success("تم تسجيل الدخول بنجاح!")
+                    st.session_state.current_user = u
                     st.rerun()
                 else:
-                    st.error("اسم المستخدم أو كلمة السر خطأ")
+                    st.error("بيانات الدخول غير صحيحة")
 
     with tab_signup:
         _, c2, _ = st.columns([1,1,1])
         with c2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            new_user = st.text_input("اسم المستخدم الجديد", placeholder="اختر اسم مستخدم")
-            new_pass = st.text_input("كلمة سر قوية", type="password", placeholder="اختر كلمة سر")
-            confirm_pass = st.text_input("تأكيد كلمة السر", type="password")
-            
-            if st.button("إنشاء الحساب 🆕", use_container_width=True):
-                if new_user in st.session_state.user_db:
-                    st.warning("هذا المستخدم موجود بالفعل!")
-                elif new_pass != confirm_pass:
-                    st.error("كلمات السر غير متطابقة")
-                elif len(new_pass) < 4:
-                    st.error("كلمة السر ضعيفة جداً")
+            nu = st.text_input("اسم مستخدم جديد")
+            np = st.text_input("كلمة سر جديدة", type="password")
+            if st.button("إنشاء حساب", use_container_width=True):
+                if nu and np:
+                    st.session_state.user_db[nu] = np
+                    st.success("تم التسجيل! ادخل الآن من خانة تسجيل دخول")
                 else:
-                    st.session_state.user_db[new_user] = new_pass
-                    st.success("تم إنشاء الحساب! يمكنك الآن الدخول من تبويب 'تسجيل دخول'")
-    
-    st.stop() # يمنع ظهور باقي التطبيق لو لسه مسجلش دخول
+                    st.error("برجاء ملء البيانات")
+    st.stop() # يوقف الكود هنا لحد ما يسجل دخول
+
+# --- لو وصل هنا يبقى مسجل دخول (باقي كود التطبيق) ---
+
+# 4. جلب البيانات والأخبار (نفس كودك الأصلي)
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("---")
+        d = pd.read_csv(u_d).fillna("---")
+        p.rename(columns={'Area': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
+        return p, d
+    except: return pd.DataFrame(), pd.DataFrame()
+
+df_p, df_d = load_data()
+
+# 5. التصميم الهيدر والمنيو (نفس كودك مع تعديل بسيط)
+st.markdown(f"<p style='text-align:left; color:#aaa;'>مرحباً بك: {st.session_state.current_user} | 2026</p>", unsafe_allow_html=True)
+
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
+    icons=["robot", "search", "building", "briefcase"], orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+
+# حل مشكلة تعليق الصفحات عند التنقل
+if menu != st.session_state.active_menu:
+    st.session_state.selected_item = None
+    st.session_state.active_menu = menu
+    st.rerun()
+
+# 6. عرض المحتوى
+if st.session_state.selected_item is not None:
+    if st.button("⬅️ عودة للقائمة"):
+        st.session_state.selected_item = None
+        st.rerun()
+    st.write(st.session_state.selected_item) # عرض تفاصيل المشروع
+
+else:
+    if menu == "المساعد الذكي":
+        st.title("🤖 المساعد الذكي")
+        # كود المساعد...
+    elif menu == "المشاريع":
+        st.title("🏗️ دليل المشاريع")
+        for i, r in df_p.head(10).iterrows():
+            if st.button(f"{r['ProjectName']}", key=f"card_p_{i}"):
+                st.session_state.selected_item = r
+                st.rerun()
+    elif menu == "المطورين":
+        st.title("🏢 كبار المطورين")
+        # كود المطورين...
+    elif menu == "أدوات البروكر":
+        st.title("🛠️ أدواتك الحسابية")
+        if st.button("🚪 تسجيل الخروج"):
+            st.session_state.auth = False
+            st.rerun()
