@@ -1,101 +1,145 @@
 import streamlit as st
 import pandas as pd
 import urllib.parse
+from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="MA3LOMATI PRO", layout="wide")
+# 1. إعداد الصفحة الأساسي
+st.set_page_config(page_title="MA3LOMATI PRO | منصة العقارات الشاملة", layout="wide")
 
-# 2. رابط البيانات
-PROJECTS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+# 2. روابط البيانات (تأكد أن الرابط ينتهي بـ output=csv)
+DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
 
-@st.cache_data(ttl=5)
-def load_and_clean_data():
+@st.cache_data(ttl=10)
+def load_data():
     try:
-        df = pd.read_csv(PROJECTS_URL).fillna("---")
-        # تنظيف أسماء الأعمدة من أي مسافات مخفية يمين أو شمال
+        df = pd.read_csv(DATA_URL).fillna("---")
+        # تنظيف العناوين من المسافات المخفية
         df.columns = df.columns.str.strip()
-        # حذف التكرار
-        if 'Project Name' in df.columns:
-            df = df.drop_duplicates(subset=['Project Name'], keep='first')
         return df
     except Exception as e:
-        st.error(f"خطأ في التحميل: {e}")
+        st.error(f"حدث خطأ أثناء الاتصال بالبيانات: {e}")
         return pd.DataFrame()
 
-df = load_and_clean_data()
+df = load_data()
 
-# 3. التنسيق
+# 3. التنسيق الجمالي (CSS)
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
-    body, .stApp { background-color: #0e1117; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: white; }
-    .main-card { background: #1a1c24; border-right: 6px solid #f59e0b; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; background-color: #0e1117; }
+    .stApp { background-color: #0e1117; color: white; }
+    .card { background: #1a1c24; border-right: 5px solid #f59e0b; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; }
+    .stat-box { background: #25272e; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #444; }
+    .price-tag { color: #10b981; font-weight: bold; font-size: 1.1em; }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. واجهة المستخدم
-st.title("🤖 المساعد الذكي | إدارة مشاريع التجمع")
+# 4. القائمة الجانبية (Navigation)
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/602/602175.png", width=100)
+    st.title("لوحة التحكم")
+    selected = option_menu(
+        menu_title=None,
+        options=["المساعد الذكي", "دليل المطورين", "إحصائيات السوق"],
+        icons=["robot", "building", "graph-up"],
+        menu_icon="cast",
+        default_index=0,
+        styles={
+            "container": {"padding": "0!important", "background-color": "#1a1c24"},
+            "nav-link": {"font-size": "16px", "text-align": "right", "margin": "0px", "color": "white"},
+            "nav-link-selected": {"background-color": "#f59e0b"},
+        }
+    )
 
-if not df.empty:
-    st.write(f"مرحباً بك.. لديك الآن **{len(df)}** مشروعاً جاهزاً.")
+# --- الصفحة الأولى: المساعد الذكي ---
+if selected == "المساعد الذكي":
+    st.title("🤖 المساعد الذكي للمشاريع")
     
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
-    with col_f1: search_q = st.text_input("🔍 بحث باسم المشروع أو المطور")
-    with col_f2: 
-        s_types = ["الكل"] + sorted(df['Sales Type'].unique().tolist()) if 'Sales Type' in df.columns else ["الكل"]
-        selected_sale = st.selectbox("💰 نوع البيع", s_types)
-    with col_f3:
-        f_types = ["الكل"] + sorted(df['Finishing Status'].unique().tolist()) if 'Finishing Status' in df.columns else ["الكل"]
-        selected_finish = st.selectbox("🏗️ التشطيب", f_types)
-    with col_f4: client_phone = st.text_input("📞 واتساب العميل")
+    # فلاتر البحث
+    col1, col2, col3, col4 = st.columns(4)
+    with col1: search = st.text_input("🔍 ابحث (مشروع/مطور/منطقة)")
+    with col2: 
+        s_type = ["الكل"] + sorted(df['Sales Type'].unique().tolist()) if 'Sales Type' in df.columns else ["الكل"]
+        sel_sale = st.selectbox("💰 نوع البيع", s_type)
+    with col3:
+        f_type = ["الكل"] + sorted(df['Finishing Status'].unique().tolist()) if 'Finishing Status' in df.columns else ["الكل"]
+        sel_finish = st.selectbox("🏗️ التشطيب", f_type)
+    with col4: phone = st.text_input("📞 واتساب العميل")
 
-    # تصفية البيانات (Logic)
-    filtered_df = df.copy()
-    if search_q:
-        filtered_df = filtered_df[filtered_df.apply(lambda row: row.astype(str).str.contains(search_q, case=False).any(), axis=1)]
-    if selected_sale != "الكل":
-        filtered_df = filtered_df[filtered_df['Sales Type'] == selected_sale]
-    if selected_finish != "الكل":
-        filtered_df = filtered_df[filtered_df['Finishing Status'] == selected_finish]
+    # تصفية الداتا
+    mask = df.copy()
+    if search:
+        mask = mask[mask.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
+    if sel_sale != "الكل":
+        mask = mask[mask['Sales Type'] == sel_sale]
+    if sel_finish != "الكل":
+        mask = mask[mask['Finishing Status'] == sel_finish]
 
-    # 5. عرض الكروت (مع حماية ضد الـ KeyError)
-    for _, row in filtered_df.iterrows():
-        # استخدام .get() بدلاً من القوسين [] يمنع الـ Error لو العمود مش موجود
-        p_name = row.get('Project Name', 'غير مسجل')
-        dev = row.get('Developer', 'غير مسجل')
-        owner = row.get('Owner', 'غير مسجل')
-        loc = row.get('Location', 'غير مسجل')
+    st.write(f"تم العثور على **{len(mask)}** نتيجة")
+
+    # عرض الكروت
+    for _, row in mask.iterrows():
+        # استخدام .get لمنع الـ KeyError
+        name = row.get('Project Name', '---')
+        dev = row.get('Developer', '---')
+        owner = row.get('Owner', '---')
+        loc = row.get('Location', '---')
         price = row.get('Starting Price (EGP)', 'اتصل للتفاصيل')
         units = row.get('Available Units (Types)', '---')
-        finish = row.get('Finishing Status', '---')
-        s_type = row.get('Sales Type', '---')
-        payment = row.get('Payment Plan', '---')
-        nawy_link = row.get('Nawy Link', '#')
+        finishing = row.get('Finishing Status', '---')
+        stype = row.get('Sales Type', '---')
+        pay = row.get('Payment Plan', '---')
+        link = row.get('Nawy Link', '#')
 
         st.markdown(f"""
-        <div class="main-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="color:#f59e0b; margin:0;">🏢 {p_name}</h2>
-                <span style="background:#333; padding:5px 10px; border-radius:5px; font-size:12px;">{s_type}</span>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between;">
+                <h3 style="color:#f59e0b; margin:0;">🏢 {name}</h3>
+                <span style="background:#f59e0b; color:black; padding:2px 8px; border-radius:5px; font-size:12px; font-weight:bold;">{stype}</span>
             </div>
-            <p style="color:#aaa; margin:10px 0;">المطور: <b>{dev}</b> | المالك: {owner}</p>
-            <p>📍 الموقع: {loc}</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background:#25272e; padding:10px; border-radius:10px;">
-                <div>🏠 وحدات: {units}</div>
-                <div>🏗️ تشطيب: {finish}</div>
-                <div style="color:#10b981; font-weight:bold;">💰 {price}</div>
-                <div>💳 سداد: {payment}</div>
+            <p style="margin:10px 0;">🏗️ <b>المطور:</b> {dev} ({owner}) | 📍 {loc}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background:#0e1117; padding:15px; border-radius:10px; margin:10px 0;">
+                <div>🏠 <b>الوحدات:</b> {units}</div>
+                <div>🏗️ <b>التشطيب:</b> {finishing}</div>
+                <div class="price-tag">💰 {price}</div>
+                <div>💳 <b>السداد:</b> {pay}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
-
-        # أزرار
+        
         c1, c2 = st.columns([1, 4])
         with c1:
-            msg = f"تفاصيل {p_name}:\n📍 الموقع: {loc}\n💰 السعر: {price}\n🏗️ التشطيب: {finish}\n💳 السداد: {payment}"
-            st.link_button("🚀 إرسال واتساب", f"https://wa.me/{client_phone}?text={urllib.parse.quote(msg)}")
+            wa_msg = f"تفاصيل مشروع {name}:\nالموقع: {loc}\nالسعر: {price}\nالتشطيب: {finishing}\nنظام السداد: {pay}"
+            st.link_button("🚀 إرسال واتساب", f"https://wa.me/{phone}?text={urllib.parse.quote(wa_msg)}")
         with c2:
-            if nawy_link != "#":
-                st.link_button("🔗 فتح في Nawy", nawy_link)
-else:
-    st.warning("لم يتم العثور على بيانات، تأكد من أن الشيت يحتوي على الأعمدة المطلوبة.")
+            if link != "#": st.link_button("🔗 فتح صفحة المشروع", link)
+
+# --- الصفحة الثانية: دليل المطورين ---
+elif selected == "دليل المطورين":
+    st.title("🏢 دليل كبار المطورين العقاريين")
+    if 'Developer' in df.columns:
+        dev_list = df['Developer'].unique()
+        for d in dev_list:
+            with st.expander(f"🏗️ شركة {d}"):
+                projects = df[df['Developer'] == d]
+                st.write(f"عدد المشاريع المسجلة: {len(projects)}")
+                st.table(projects[['Project Name', 'Location', 'Starting Price (EGP)']])
+    else:
+        st.info("لا توجد بيانات مطورين متاحة حالياً.")
+
+# --- الصفحة الثالثة: إحصائيات السوق ---
+elif selected == "إحصائيات السوق":
+    st.title("📊 تحليل بيانات السوق")
+    c1, c2, c3 = st.columns(3)
+    with c1: st.metric("إجمالي المشاريع", len(df))
+    with c2: 
+        if 'Sales Type' in df.columns:
+            st.metric("مشاريع المطور", len(df[df['Sales Type'] == 'مطور (Primary)']))
+    with c3:
+        if 'Sales Type' in df.columns:
+            st.metric("مشاريع الريسيل", len(df[df['Sales Type'] == 'ريسيل (Resale)']))
+    
+    st.divider()
+    st.subheader("📍 توزيع المشاريع حسب المنطقة")
+    if 'Location' in df.columns:
+        st.bar_chart(df['Location'].value_counts())
