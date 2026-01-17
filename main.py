@@ -11,13 +11,12 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. الرابط الخاص بك (تأكد من عمل Deploy جديد كـ Anyone) ---
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT_YOHvummf-xi8iWzmdVeJSK-TKcvkHLtt5F91MoahqH-d-F2BOvvLF4D8Pjmzww-Ag/exec"
+# --- 2. الرابط الصحيح الخاص بك ---
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
 # --- 3. إدارة حالة الجلسة ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 
 egypt_tz = pytz.timezone('Africa/Cairo')
 egypt_now = datetime.now(egypt_tz)
@@ -32,24 +31,25 @@ def signup_user(name, pwd, email, wa, comp):
 
 def login_user(user_input, pwd_input):
     try:
-        # إضافة timestamp لمنع المتصفح من كاش البيانات القديمة
+        # جلب البيانات من الشيت
         response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
         if response.status_code == 200:
             users_list = response.json()
             for user_data in users_list:
-                # جلب البيانات بناءً على أسماء الأعمدة في الشيت
-                name_s = str(user_data.get('Name', '')).strip()
-                pass_s = str(user_data.get('Password', '')).strip()
-                email_s = str(user_data.get('Email', '')).strip()
+                # التأكد من مطابقة أسماء الأعمدة في الشيت (Name, Password, Email)
+                # ملاحظة: البرمجة حساسة لحالة الأحرف (Name تبدأ بحرف كبير)
+                name_s = str(user_data.get('Name', user_data.get('name', ''))).strip()
+                pass_s = str(user_data.get('Password', user_data.get('password', ''))).strip()
+                email_s = str(user_data.get('Email', user_data.get('email', ''))).strip()
                 
                 if (user_input.strip() == name_s or user_input.strip() == email_s) and str(pwd_input).strip() == pass_s:
                     return name_s
         return None
     except Exception as e:
-        st.error(f"خطأ في الاتصال: {e}")
+        st.error(f"خطأ في قراءة البيانات: {e}")
         return None
 
-# --- 5. التصميم الجمالي (CSS) ---
+# --- 5. التنسيق الجمالي (CSS) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -57,13 +57,10 @@ st.markdown("""
     [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
     
+    div.stButton > button { border-radius: 12px !important; background-color: #f59e0b !important; color: black !important; font-weight: bold !important; width: 100%; height: 50px; }
+    .stTextInput label { color: #f59e0b !important; font-weight: bold !important; }
     .stTabs [data-baseweb="tab-list"] { gap: 10px; justify-content: center; }
-    .stTabs [data-baseweb="tab"] { background-color: #111; border-radius: 10px; color: white; padding: 10px 20px; }
-    .stTabs [aria-selected="true"] { background-color: #f59e0b !important; color: black !important; }
-
-    div.stButton > button { border-radius: 12px !important; font-family: 'Cairo', sans-serif !important; background-color: #f59e0b !important; color: black !important; font-weight: bold !important; width: 100%; }
-    .smart-box { background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; border-right: 5px solid #f59e0b; color: white; }
-    .stTextInput label { color: #f59e0b !important; }
+    .stTabs [aria-selected="true"] { background-color: #f59e0b !important; color: black !important; border-radius: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -78,80 +75,51 @@ if not st.session_state.auth:
         with col:
             u_log = st.text_input("الأسم أو الجيميل", key="log_u")
             p_log = st.text_input("كلمة السر", type="password", key="log_p")
-            if st.button("دخول آمن 🚀"):
-                with st.spinner("جاري التحقق من البيانات..."):
+            if st.button("دخول للمنصة 🚀"):
+                with st.spinner("جاري التحقق..."):
                     user_name = login_user(u_log, p_log)
                     if user_name:
                         st.session_state.auth = True
                         st.session_state.current_user = user_name
+                        st.success(f"مرحباً بك يا {user_name}")
+                        time.sleep(1)
                         st.rerun()
                     else:
-                        st.error("بيانات الدخول غير صحيحة، تأكد من الاسم وكلمة السر")
+                        st.error("بيانات الدخول غير صحيحة أو الحساب غير مفعل")
 
     with tab2:
         _, col, _ = st.columns([1,1.5,1])
         with col:
             r_name = st.text_input("الأسم بالكامل")
-            r_pass = st.text_input("كلمة السر المرجوة")
+            r_pass = st.text_input("كلمة السر")
             r_mail = st.text_input("الجيميل")
             r_wa = st.text_input("رقم الواتساب")
             r_co = st.text_input("الشركة")
-            if st.button("إرسال طلب الانضمام ✅"):
+            if st.button("تأكيد التسجيل ✅"):
                 if r_name and r_pass and r_mail:
                     if signup_user(r_name, r_pass, r_mail, r_wa, r_co):
-                        st.success("تم تسجيلك بنجاح! يمكنك الآن العودة لخانة تسجيل الدخول")
-                    else: st.error("حدث خطأ في الإرسال، جرب مرة أخرى")
-                else: st.warning("برجاء ملء البيانات الأساسية")
+                        st.success("تم تسجيل بياناتك بنجاح! اذهب الآن لتبويب تسجيل الدخول.")
+                    else: st.error("حدث خطأ، تأكد من اتصال الإنترنت")
+                else: st.warning("يرجى ملء البيانات الأساسية")
     st.stop()
 
-# --- 7. محتوى المنصة (يظهر بعد الدخول) ---
-
-# جلب البيانات
-@st.cache_data(ttl=60)
-def load_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    try:
-        p = pd.read_csv(u_p).fillna("---")
-        p.rename(columns={'Area': 'Location', 'Project Name': 'ProjectName'}, inplace=True, errors='ignore')
-        return p
-    except: return pd.DataFrame()
-
-df_p = load_data()
-
-# الهيدر
+# --- 7. واجهة المنصة بعد الدخول ---
 st.markdown(f"""
-    <div style="background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1600&q=80'); 
-                height: 150px; background-size: cover; background-position: center; border-radius: 0 0 30px 30px; 
-                display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b;">
-        <h1 style="color: white; margin: 0; font-size: 35px;">MA3LOMATI PRO</h1>
-        <p style="color: #f59e0b;">مرحباً بك يا {st.session_state.current_user} في منصة 2026</p>
+    <div style="background: #111; padding: 20px; border-radius: 0 0 20px 20px; border-bottom: 3px solid #f59e0b; text-align: center;">
+        <h2 style="color: white; margin: 0;">MA3LOMATI PRO</h2>
+        <p style="color: #f59e0b;">مرحباً {st.session_state.current_user} | {egypt_now.strftime('%I:%M %p')}</p>
     </div>
 """, unsafe_allow_html=True)
 
-# المنيو
 menu = option_menu(None, ["المشاريع", "المساعد الذكي", "أدوات البروكر"], 
     icons=["building", "robot", "briefcase"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-if menu == "المشاريع":
-    search = st.text_input("🔍 ابحث عن مشروع...")
-    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
-    
-    # عرض المشاريع بشكل كروت
-    for i in range(0, len(dff.head(10)), 2):
-        cols = st.columns(2)
-        for j in range(2):
-            if i+j < len(dff):
-                row = dff.iloc[i+j]
-                with cols[j].container(border=True):
-                    st.markdown(f"### {row['ProjectName']}")
-                    st.write(f"📍 الموقع: {row.get('Location','---')}")
-                    if st.button("عرض التفاصيل", key=f"btn_{i+j}"):
-                        st.info(f"عرض بيانات مشروع: {row['ProjectName']}")
-
-elif menu == "أدوات البروكر":
+if menu == "أدوات البروكر":
     if st.button("🚪 تسجيل الخروج"):
         st.session_state.auth = False
         st.rerun()
+else:
+    st.info("هذا القسم قيد التحديث لعام 2026")
 
-st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
