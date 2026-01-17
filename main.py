@@ -137,4 +137,57 @@ st.markdown(f"""
                 height: 180px; background-size: cover; background-position: center; border-radius: 0 0 30px 30px; 
                 display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b;">
         <h1 style="color: white; margin: 0; font-size: 40px;">MA3LOMATI PRO</h1>
-        <p style="color: #f59e0b;">مرحباً {st.session_
+        <p style="color: #f59e0b;">مرحباً {st.session_state.current_user} | {egypt_now.strftime('%I:%M %p')}</p>
+    </div>
+""", unsafe_allow_html=True)
+
+st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
+
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
+    icons=["robot", "search", "building", "briefcase"], default_index=0, orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
+
+# 10. منطق الأقسام
+if menu == "المساعد الذكي":
+    st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
+    st.title("🤖 مساعد الربط العقاري")
+    c1, c2, c3 = st.columns(3)
+    loc = c1.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
+    unit = c2.selectbox("🏠 نوع الوحدة", ["الكل", "سكنى", "تجاري", "إداري"])
+    budget = c3.number_input("💰 المقدم المتاح", 0)
+    
+    if st.button("🎯 استخراج الترشيحات"):
+        res = df_p[df_p['Location'] == loc] if loc != "الكل" else df_p
+        st.success(f"تم إيجاد {len(res.head(5))} مشاريع مناسبة")
+        for idx, r in res.head(5).iterrows():
+            st.write(f"🏢 {r['ProjectName']} - {r['Developer']}")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+elif menu == "المشاريع":
+    search = st.text_input("🔍 ابحث عن مشروع...")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    
+    start = st.session_state.p_idx * 6
+    page = dff.iloc[start:start+6]
+    for i in range(0, len(page), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i+j < len(page):
+                row = page.iloc[i+j]
+                if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row.get('Location','---')}", key=f"card_p_{start+i+j}"):
+                    st.info(f"تفاصيل: {row['ProjectName']}")
+                    
+elif menu == "أدوات البروكر":
+    st.title("🛠️ أدوات البروكر")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("<div class='tool-card'><h3>💳 حساب القسط</h3>", unsafe_allow_html=True)
+        total = st.number_input("السعر", 1000000)
+        st.write(f"القسط الشهري (8 سنين): {total/(8*12):,.0f}")
+        st.markdown("</div>", unsafe_allow_html=True)
+    with col2:
+        if st.button("🚪 تسجيل الخروج"):
+            st.session_state.auth = False
+            st.rerun()
+
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
