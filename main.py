@@ -1,22 +1,50 @@
 import streamlit as st
 import pandas as pd
+import requests
 import feedparser
 import urllib.parse
 from datetime import datetime
 import pytz
+import time
 from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة الفخمة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. إدارة الحالة والتوقيت المصري
+# 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+
+# 3. إدارة الحالة والتوقيت المصري
 if 'auth' not in st.session_state: st.session_state.auth = False
+if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
 egypt_tz = pytz.timezone('Africa/Cairo')
 egypt_now = datetime.now(egypt_tz)
+
+# --- وظائف الربط مع جوجل شيت (الخلفية) ---
+def signup_user(name, pwd, email, wa, comp):
+    payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
+    try:
+        response = requests.post(SCRIPT_URL, json=payload)
+        return response.text == "Success"
+    except: return False
+
+def login_user(user_input, pwd_input):
+    try:
+        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
+        if response.status_code == 200:
+            users_list = response.json()
+            for user_data in users_list:
+                name_s = str(user_data.get('Name', user_data.get('name', ''))).strip()
+                pass_s = str(user_data.get('Password', user_data.get('password', ''))).strip()
+                email_s = str(user_data.get('Email', user_data.get('email', ''))).strip()
+                if (user_input.strip().lower() == name_s.lower() or user_input.strip().lower() == email_s.lower()) and str(pwd_input).strip() == pass_s:
+                    return name_s
+        return None
+    except: return None
 
 # 3. جلب الأخبار العقارية
 @st.cache_data(ttl=1800)
@@ -59,12 +87,46 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 5. شاشة الدخول
+# 5. شاشة الدخول والاشتراك (تم دمجها بربط الجوجل شيت)
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b; font-size:60px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    _, c2, _ = st.columns([1,1,1])
-    with c2:
-        if st.text_input("كود الدخول المباشر", type="password") == "2026": st.session_state.auth = True; st.rerun()
+    st.markdown("<div style='text-align:center; padding-top:50px;'><h1 style='color:#f59e0b; font-size:60px;'>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
+    
+    tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 اشتراك جديد"])
+    
+    with tab_login:
+        _, c2, _ = st.columns([1,1.5,1])
+        with c2:
+            u_input = st.text_input("الأسم أو الجيميل", key="log_user")
+            p_input = st.text_input("كلمة السر", type="password", key="log_pass")
+            # دعم كود الدخول المباشر القديم كخيار إضافي
+            if st.button("دخول للمنصة 🚀"):
+                if p_input == "2026": # الكود المباشر
+                    st.session_state.auth = True
+                    st.session_state.current_user = "Admin"
+                    st.rerun()
+                else:
+                    user_verified = login_user(u_input, p_input)
+                    if user_verified:
+                        st.session_state.auth = True
+                        st.session_state.current_user = user_verified
+                        st.rerun()
+                    else:
+                        st.error("بيانات الدخول غير صحيحة")
+
+    with tab_signup:
+        _, c2, _ = st.columns([1,1.5,1])
+        with c2:
+            reg_name = st.text_input("الأسم بالكامل")
+            reg_pass = st.text_input("كلمة السر المرجوة", type="password")
+            reg_email = st.text_input("الجيميل")
+            reg_wa = st.text_input("رقم الواتساب")
+            reg_co = st.text_input("الشركة")
+            if st.button("تأكيد الاشتراك ✅"):
+                if reg_name and reg_pass and reg_email:
+                    if signup_user(reg_name, reg_pass, reg_email, reg_wa, reg_co):
+                        st.success("تم تسجيلك بنجاح! اذهب الآن لتبويب تسجيل الدخول.")
+                    else: st.error("حدث خطأ في الاتصال بالسيرفر")
+                else: st.warning("يرجى ملء الاسم وكلمة السر والإيميل")
     st.stop()
 
 # 6. جلب البيانات
@@ -89,7 +151,7 @@ st.markdown(f"""
                 height: 200px; background-size: cover; background-position: center; border-radius: 0 0 30px 30px; 
                 display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b;">
         <h1 style="color: white; margin: 0; font-size: 45px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5);">MA3LOMATI PRO</h1>
-        <p style="color: #f59e0b; font-weight: bold; font-size: 18px;">المساعد العقاري الذكي والبيانات اللحظية لسوق مصر</p>
+        <p style="color: #f59e0b; font-weight: bold; font-size: 18px;">أهلاً بك يا {st.session_state.current_user} في النسخة الاحترافية</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -120,7 +182,7 @@ if st.session_state.selected_item is not None:
         <hr><p>{item.get('Payment Plan', 'خطط سداد متنوعة متاحة عند التواصل')}</p>
     </div>""", unsafe_allow_html=True)
 
-# --- 11. المساعد الذكي (مساحة كاملة 100%) ---
+# --- 11. المساعد الذكي ---
 elif menu == "المساعد الذكي":
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
     st.title("🤖 مساعد الربط العقاري الذكي")
@@ -135,7 +197,6 @@ elif menu == "المساعد الذكي":
     if st.button("🎯 استخراج أفضل الترشيحات"):
         res = df_p.copy()
         if sel_loc != "الكل": res = res[res['Location'] == sel_loc]
-        # منطق البحث الذكي
         if not res.empty:
             st.success(f"تم إيجاد {len(res.head(10))} مشروع مطابق لطلبك:")
             for idx, r in res.head(6).iterrows():
@@ -148,7 +209,7 @@ elif menu == "المساعد الذكي":
         else: st.warning("لا توجد نتائج مطابقة تماماً، جرب تغيير الفلاتر.")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 12. المشاريع (70% مشاريع | 30% استلام فوري) ---
+# --- 12. المشاريع ---
 elif menu == "المشاريع":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -162,7 +223,6 @@ elif menu == "المشاريع":
         f1, f2 = st.columns(2)
         search = f1.text_input("🔍 ابحث باسم المشروع")
         area_f = f2.selectbox("📍 فلتر بالمنطقة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
-        
         dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
         if area_f != "الكل": dff = dff[dff['Location'] == area_f]
         
@@ -176,13 +236,12 @@ elif menu == "المشاريع":
                     if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row['Location']}\n🏗️ {row['Developer']}", key=f"card_p_{start+i+j}"):
                         st.session_state.selected_item = row; st.rerun()
         
-        # Pagination
         st.markdown("---")
         p1, _, p2 = st.columns([1,2,1])
         if st.session_state.p_idx > 0 and p1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
         if start + 6 < len(dff) and p2.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
 
-# --- 13. المطورين (70% الكل | 30% أفضل 10) ---
+# --- 13. المطورين ---
 elif menu == "المطورين":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -193,7 +252,6 @@ elif menu == "المطورين":
     with m_col:
         search_d = st.text_input("🔍 ابحث عن مطور")
         dfd_f = df_d[df_d['Developer'].str.contains(search_d, case=False)] if search_d else df_d
-        
         start_d = st.session_state.d_idx * 6
         page_d = dfd_f.iloc[start_d:start_d+6]
         for i in range(0, len(page_d), 2):
@@ -209,12 +267,9 @@ elif menu == "المطورين":
         if st.session_state.d_idx > 0 and d1.button("⬅️ السابق ", key="d_prev"): st.session_state.d_idx -= 1; st.rerun()
         if start_d + 6 < len(dfd_f) and d2.button("التالي ➡️ ", key="d_next"): st.session_state.d_idx += 1; st.rerun()
 
-# --- 14. حقيبة البروكر (6 أدوات احترافية) ---
+# --- 14. حقيبة البروكر ---
 elif menu == "أدوات البروكر":
     st.title("🛠️ حقيبة البروكر الاحترافية")
-    
-    
-
     r1_c1, r1_c2, r1_c3 = st.columns(3)
     r2_c1, r2_c2, r2_c3 = st.columns(3)
     
