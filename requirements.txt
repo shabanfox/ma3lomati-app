@@ -10,3 +10,10 @@ requests
 beautifulsoup4
 feedparser
 streamlit-option-menu
+streamlit
+pandas
+feedparser
+pytz
+streamlit-option_menu
+gspread
+google-auth
