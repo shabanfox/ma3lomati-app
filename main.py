@@ -1,109 +1,75 @@
 import streamlit as st
 import pandas as pd
 import urllib.parse
-from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide")
 
-# 2. التنسيق الجمالي وتوضيح الألوان
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    [data-testid="stAppViewContainer"] { background-color: #000000; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
-    h1, h2, h3 { color: #FFD700 !important; text-align: right; }
-    p, span, label { color: #FFFFFF !important; font-size: 18px !important; text-align: right; }
-    .news-ticker { background: #FFD700; color: black; padding: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; border-radius: 5px; margin-bottom: 20px; }
-    .news-ticker span { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; font-size: 20px; color: black; }
-    @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
-    .tool-box { background: #111; border: 2px solid #FFD700; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
-    .stButton button { width: 100%; background-color: #FFD700 !important; color: black !important; font-weight: bold !important; border-radius: 10px !important; height: 50px; }
-</style>
-""", unsafe_allow_html=True)
+# 2. الروابط المباشرة (تأكد أن الملف "Public" على الإنترنت)
+# جربنا هنا الرابط العام للملف مع تحديد الصيغة فقط
+u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
 
-# 3. شريط الأخبار
-st.markdown('<div class="news-ticker"><span>🔥 لونش جديد لشركة أورا قريباً بالشيخ زايد .. 🏗️ ارتفاع أسعار المتر بالعاصمة الإدارية بنسبة 15% .. 🚀 فتح باب الحجز في مرحلة جديدة بمدينتي .. </span></div>', unsafe_allow_html=True)
-
-# 4. شريط القائمة العلوية وزر الخروج
-col_menu, col_out = st.columns([8, 2])
-with col_menu:
-    selected = option_menu(
-        menu_title=None,
-        options=["اللونشات 🚀", "المشاريع 🏢", "المطورين 🏗️", "الأدوات 🛠️"],
-        icons=["rocket-takeoff", "search", "building", "calculator"],
-        orientation="horizontal",
-        styles={"nav-link-selected": {"background-color": "#FFD700", "color": "black"}}
-    )
-with col_out:
-    if st.button("🚪 تسجيل الخروج"):
-        st.write("تم تسجيل الخروج") # يمكنك ربطه بنظام الـ Auth الخاص بك
-
-# --- محتوى الصفحات ---
-
-if selected == "اللونشات 🚀":
-    st.markdown("<h1>🚀 رادار اللونشات الحالية</h1>")
-    st.info("هنا سيتم عرض أحدث فرص الحجز من جوجل شيت فور تحديثها")
-
-elif selected == "المشاريع 🏢":
-    st.markdown("<h1>🏢 دليل المشاريع الكامل</h1>")
-    st.text_input("🔍 ابحث عن مشروع أو منطقة...")
-    st.write("سيتم ربط هذا القسم بجدول المشاريع الرئيسي الخاص بك")
-
-elif selected == "المطورين 🏗️":
-    st.markdown("<h1>🏗️ موسوعة المطورين العقاريين</h1>")
-    st.write("بيانات الـ 50 مطور وقصص نجاحهم ستظهر هنا بالصور")
-
-elif selected == "الأدوات 🛠️":
-    st.markdown("<h1>🛠️ أدوات البروكر المحترف</h1>")
-    t1, t2, t3 = st.columns(3)
-    t4, t5, t6 = st.columns(3)
-    
-    with t1:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>🧮</h3><p>حاسبة القسط</p></div>', unsafe_allow_html=True)
-    with t2:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>📈</h3><p>حاسبة العائد ROI</p></div>', unsafe_allow_html=True)
-    with t3:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>📏</h3><p>مقارنة المساحات</p></div>', unsafe_allow_html=True)
-    with t4:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>💱</h3><p>أسعار الصرف</p></div>', unsafe_allow_html=True)
-    with t5:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>📉</h3><p>مؤشر السوق</p></div>', unsafe_allow_html=True)
-    with t6:
-        with st.container():
-            st.markdown('<div class="tool-box"><h3>💬</h3><p>رسائل تسويقية</p></div>', unsafe_allow_html=True)
-                else:
-                    user_verified = login_user(u_input, p_input)
-                    if user_verified:
-                        st.session_state.auth = True
-                        st.session_state.current_user = user_verified
-                        st.rerun()
-                    else:
-                        st.error("بيانات الدخول غير صحيحة")
-
-    with tab_signup:
-        _, c2, _ = st.columns([1,1.5,1])
-        with c2:
-            reg_name = st.text_input("الأسم بالكامل")
-            reg_pass = st.text_input("كلمة السر المرجوة", type="password")
-            reg_email = st.text_input("الجيميل")
-            reg_wa = st.text_input("رقم الواتساب")
-            reg_co = st.text_input("الشركة")
-            if st.button("تأكيد الاشتراك ✅"):
-                if reg_name and reg_pass and reg_email:
-                    if signup_user(reg_name, reg_pass, reg_email, reg_wa, reg_co):
-                        st.success("تم تسجيلك بنجاح! اذهب الآن لتبويب تسجيل الدخول.")
-                    else: st.error("حدث خطأ في الاتصال بالسيرفر")
-                else: st.warning("يرجى ملء الاسم وكلمة السر والإيميل")
-    st.stop()
-
-# 6. جلب البيانات
+# 3. وظيفة جلب البيانات
 @st.cache_data(ttl=60)
 def load_data():
+    try:
+        # سنحاول جلب الورقة الأولى (المشاريع)
+        all_data = pd.read_csv(u_p).fillna("---")
+        all_data.columns = all_data.columns.str.strip()
+        
+        # إذا كان شيت المطورين في ورقة ثانية، يفضل حالياً (للتجربة) 
+        # وضع المطورين في شيت منفصل تماماً أو التأكد من رابط الـ GID
+        # حالياً سنعتبر df_d هي نفسها لضمان عمل الكود
+        return all_data, all_data 
+    except Exception as e:
+        st.error(f"⚠️ مشكلة في الاتصال بجوجل شيت: {e}")
+        return pd.DataFrame(), pd.DataFrame()
+
+df_p, df_d = load_data()
+
+# --- التنسيق وواجهة المستخدم ---
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
+    .dev-box { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; border-right: 5px solid #f59e0b; margin-bottom: 15px; color: white; }
+    .stButton button { width: 100%; border-radius: 10px !important; background-color: #f59e0b !important; color: black !important; font-weight: bold !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+# 4. إدارة الحالة
+if 'view_dev' not in st.session_state: st.session_state.view_dev = None
+
+# 5. عرض البيانات
+if st.session_state.view_dev is None:
+    st.title("🏗️ دليل المطورين")
+    
+    if not df_d.empty:
+        # عرض المطورين (استناداً لعمود Developer في الشيت)
+        if 'Developer' in df_d.columns:
+            search = st.text_input("🔍 ابحث عن مطور...")
+            unique_devs = df_d[df_d['Developer'].str.contains(search, case=False, na=False)]
+            
+            for i, row in unique_devs.head(20).iterrows():
+                with st.container():
+                    st.markdown(f"""<div class="dev-box">
+                        <h3>{row['Developer']}</h3>
+                        <p>📍 الموقع الأساسي: {row.get('Location', '---')}</p>
+                    </div>""", unsafe_allow_html=True)
+                    if st.button(f"عرض الملف الكامل لـ {row['Developer']}", key=f"btn_{i}"):
+                        st.session_state.view_dev = row.to_dict()
+                        st.rerun()
+        else:
+            st.error("❌ لم يتم العثور على عمود باسم 'Developer' في الشيت. تأكد من تسمية الرأس في جوجل شيت.")
+else:
+    # صفحة التفاصيل
+    dev = st.session_state.view_dev
+    if st.button("⬅️ عودة"):
+        st.session_state.view_dev = None
+        st.rerun()
+    
+    st.header(f"🏗️ {dev['Developer']}")
+    st.info(f"معلومات الشركة: {dev.get('USP', 'مطور عقاري رائد')}")
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
@@ -286,4 +252,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
