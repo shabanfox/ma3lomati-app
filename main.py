@@ -6,123 +6,92 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide")
 
-# 2. هندسة الألوان والتصميم (ألوان صريحة وخطوط واضحة)
+# 2. التنسيق (ألوان صريحة وخطوط واضحة جداً)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    [data-testid="stAppViewContainer"] { background-color: #000000; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
+    h1, h2, h3 { color: #FFD700 !important; }
+    p, span, label { color: #FFFFFF !important; font-size: 18px !important; }
     
-    /* الخلفية والنصوص الأساسية */
-    [data-testid="stAppViewContainer"] {
-        background-color: #000000;
-        direction: rtl !important;
-        text-align: right !important;
-        font-family: 'Cairo', sans-serif;
+    /* شريط الأخبار المتحرك */
+    .news-ticker {
+        background: #FFD700; color: black; padding: 10px; font-weight: bold;
+        white-space: nowrap; overflow: hidden; position: relative; border-radius: 5px; margin-bottom: 20px;
     }
-    
-    /* العناوين والخطوط */
-    h1, h2, h3 { color: #FFD700 !important; font-weight: 900 !important; }
-    p, span, label { color: #FFFFFF !important; font-size: 18px !important; font-weight: 500; }
-    
-    /* ستايل كروت اللونشات (ألوان نيون واضحة) */
-    .launch-card {
-        background: #111111;
-        border: 2px solid #FFD700;
-        border-right: 15px solid #FFD700;
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-    }
-    
-    /* صناديق المعلومات */
-    .info-box {
-        background: #1A1A1A;
-        border: 1px solid #333;
-        padding: 15px;
-        border-radius: 10px;
-        color: #00FF00 !important; /* لون أخضر فاقع للمبالغ المادية */
-        font-weight: bold;
-        font-size: 20px !important;
-    }
+    .news-ticker p { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; color: black !important; margin: 0; font-size: 20px !important; }
+    @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* الأزرار - لون ذهبي واضح */
-    .stButton button {
-        background-color: #FFD700 !important;
-        color: #000000 !important;
-        font-weight: 900 !important;
-        font-size: 20px !important;
-        border-radius: 12px !important;
-        height: 55px !important;
-        border: none !important;
-    }
-
-    /* القائمة العلوية */
-    .nav-link { font-size: 20px !important; font-weight: bold !important; }
+    /* كروت اللونشات والأدوات */
+    .custom-card { background: #111; border: 2px solid #333; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-right: 10px solid #FFD700; }
+    .tool-box { background: #1A1A1A; border: 1px solid #FFD700; padding: 20px; border-radius: 15px; text-align: center; height: 180px; transition: 0.3s; }
+    .tool-box:hover { background: #FFD700; }
+    .tool-box:hover h3, .tool-box:hover p { color: black !important; }
+    
+    /* زر الخروج */
+    .logout-btn { color: #ff4b4b !important; border: 1px solid #ff4b4b !important; border-radius: 5px; padding: 5px 10px; text-decoration: none; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. المنيو الرئيسي (الأقسام الأربعة)
-selected = option_menu(
-    menu_title=None,
-    options=["اللونشات 🚀", "المشاريع 🏢", "المطورين 🏗️", "الأدوات 🛠️"],
-    icons=["rocket-takeoff", "search", "building", "calculator"],
-    menu_icon="cast",
-    default_index=0,
-    orientation="horizontal",
-    styles={
-        "container": {"padding": "0!important", "background-color": "#111"},
-        "nav-link": {"color": "white", "font-size": "18px", "text-align": "center", "margin":"0px"},
-        "nav-link-selected": {"background-color": "#FFD700", "color": "black"},
-    }
-)
+# 3. شريط الأخبار (تحديثات السوق)
+st.markdown("""<div class="news-ticker"><p> 🔥 لونش شركة أورا الجديد في الشيخ زايد يبدأ غداً .. 🚀 ارتفاع أسعار المتر في التجمع الخامس بنسبة 10% .. 🏗️ تسليم المرحلة الأولى من مشروع ميفيدا .. </p></div>""", unsafe_allow_html=True)
 
-# --- 4. محتوى الصفحات ---
+# 4. القائمة العلوية وزر الخروج
+col_nav, col_out = st.columns([9, 1])
+with col_nav:
+    selected = option_menu(
+        menu_title=None,
+        options=["اللونشات 🚀", "المشاريع 🏢", "المطورين 🏗️", "الأدوات 🛠️"],
+        icons=["rocket-takeoff", "search", "building", "calculator"],
+        orientation="horizontal",
+        styles={"nav-link-selected": {"background-color": "#FFD700", "color": "black"}}
+    )
+with col_out:
+    if st.button("🚪 خروج"):
+        st.session_state.auth = False
+        st.rerun()
+
+# --- محتوى الصفحات ---
 
 if selected == "اللونشات 🚀":
-    st.markdown("<h1>🚀 أهم اللونشات الحالية</h1>", unsafe_allow_html=True)
-    
-    # مثال لكارت لونش (كرر هذا الجزء مع الداتا)
-    st.markdown("""
-        <div class="launch-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>مشروع نايل تاور - العاصمة</h2>
-                <span style="background:red; color:white; padding:5px 15px; border-radius:8px;">عاجل 🔥</span>
-            </div>
-            <p>🏗️ <b>المطور:</b> شركة النيل للتطوير العقاري</p>
-            <p>📍 <b>الموقع:</b> داون تاون - العاصمة الإدارية</p>
-            <div class="info-box">
-                💰 مبلغ جدية الحجز (EOI): 50,000 ج.م (مسترد بالكامل)
-            </div>
-            <p style="color:#FFD700 !important; margin-top:10px;">💡 <b>نصيحة:</b> التركيز على المستثمرين الباحثين عن عائد إيجاري مضمون.</p>
-        </div>
-    """, unsafe_allow_html=True)
-    if st.button("📲 إرسال تفاصيل اللونش للعميل"):
-        pass
+    st.markdown("<h1>🚀 رادار اللونشات الحالية</h1>", unsafe_allow_html=True)
+    # هنا نضع كود عرض اللونشات من الشيت
+    st.markdown('<div class="custom-card"><h2>لونش أورا - زايد الجديدة</h2><p>📍 الموقع: بجوار مطار سفنكس | 💰 الـ EOI: 100,000 ج.م</p></div>', unsafe_allow_html=True)
 
 elif selected == "المشاريع 🏢":
-    st.markdown("<h1>🏢 محرك بحث المشاريع</h1>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.selectbox("اختر المنطقة", ["التجمع الخامس", "الشيخ زايد", "العاصمة الإدارية", "الساحل"])
-    with col2:
-        st.selectbox("نوع الوحدة", ["سكني", "تجاري", "إداري", "طبي"])
-    st.button("🔍 ابحث الآن")
+    st.markdown("<h1>🏢 محرك بحث المشاريع الذكي</h1>", unsafe_allow_html=True)
+    with st.expander("🔍 فلاتر البحث المتقدمة", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        c1.selectbox("المنطقة", ["التجمع", "زايد", "العاصمة", "الساحل"])
+        c2.selectbox("نوع الاستثمار", ["سكني", "تجاري", "إداري"])
+        c3.slider("ميزانية المقدم (ج.م)", 100000, 5000000, 500000)
+    st.button("🔍 عرض النتائج المطابقة")
 
 elif selected == "المطورين 🏗️":
-    st.markdown("<h1>🏗️ موسوعة المطورين</h1>", unsafe_allow_html=True)
-    st.text_input("🔍 ابحث عن اسم المطور...")
-    # هنا يتم عرض كروت المطورين بالصور كما صممنا سابقاً
+    st.markdown("<h1>🏗️ دليل المطورين المعتمدين</h1>", unsafe_allow_html=True)
+    # عرض المطورين بشكل Grid
+    cols = st.columns(2)
+    for i in range(2):
+        with cols[i]:
+            st.markdown('<div class="custom-card"><h3>شركة إعمار مصر</h3><p>⭐ التقييم: A+ | 🏗️ سابقة الأعمال: ميفيدا، مراسي</p></div>', unsafe_allow_html=True)
+            st.button(f"عرض الملف الكامل {i}", key=f"dev_{i}")
 
 elif selected == "الأدوات 🛠️":
-    st.markdown("<h1>🛠️ أدوات البروكر الذكية</h1>", unsafe_allow_html=True)
-    tab1, tab2 = st.tabs(["🧮 حاسبة الأقساط", "📊 مقارنة المطورين"])
+    st.markdown("<h1>🛠️ أدوات البروكر المحترف (6 أدوات)</h1>", unsafe_allow_html=True)
     
-    with tab1:
-        price = st.number_input("سعر الوحدة", value=1000000)
-        down_payment = st.slider("المقدم (%)", 0, 50, 10)
-        years = st.slider("عدد السنوات", 1, 10, 7)
-        calc_btn = st.button("احسب القسط")
-        if calc_btn:
-            total_dp = price * (down_payment/100)
-            monthly = (price - total_dp) / (years * 12)
-            st.success(f"المقدم المطلوب: {total_dp:,.0f} ج.م | القسط الشهري: {monthly:,.0f} ج.م")
+    t1, t2, t3 = st.columns(3)
+    t4, t5, t6 = st.columns(3)
+    
+    with t1: st.markdown('<div class="tool-box"><h3>🧮</h3><h3>حاسبة القسط</h3><p>احسب الدفعات الشهرية</p></div>', unsafe_allow_html=True)
+    with t2: st.markdown('<div class="tool-box"><h3>📈</h3><h3>حاسبة العائد ROI</h3><p>احسب مكسب العميل</p></div>', unsafe_allow_html=True)
+    with t3: st.markdown('<div class="tool-box"><h3>📏</h3><h3>مقارنة المساحات</h3><p>صافي ونصف صافي</p></div>', unsafe_allow_html=True)
+    with t4: st.markdown('<div class="tool-box"><h3>💱</h3><h3>محول العملات</h3><p>أسعار الذهب والدولار</p></div>', unsafe_allow_html=True)
+    with t5: st.markdown('<div class="tool-box"><h3>📉</h3><h3>مقياس التضخم</h3><p>قيمة العقار السنوية</p></div>', unsafe_allow_html=True)
+    with t6: st.markdown('<div class="tool-box"><h3>💬</h3><h3>رسائل الواتساب</h3><p>نماذج تسويق جاهزة</p></div>', unsafe_allow_html=True)
 
+    # مثال لتفعيل أداة (تظهر عند الضغط)
+    st.write("---")
+    with st.expander("🛠️ افتح الأداة المختارة"):
+        # هنا تضع كود كل أداة (مثال حاسبة القسط)
+        st.number_input("أدخل سعر الوحدة")
+        st.button("بدء الحساب")
