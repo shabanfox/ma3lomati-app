@@ -1,109 +1,33 @@
-import streamlit as st
-import pandas as pd
-import requests
-import feedparser
-import urllib.parse
-from datetime import datetime
-import pytz
-import time
-from streamlit_option_menu import option_menu
-
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
-
-# 2. روابط البيانات (تأكد من إضافة رابط شيت اللونشات الجديد هنا)
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
-U_LAUNCHES = "رابط_شيت_اللونشات_الجديد_CSV" # ضع رابط شيت اللونشات هنا
-
-# إدارة الحالة
-if 'auth' not in st.session_state: st.session_state.auth = False
-if 'current_user' not in st.session_state: st.session_state.current_user = None
-if 'selected_item' not in st.session_state: st.session_state.selected_item = None
-
-egypt_tz = pytz.timezone('Africa/Cairo')
-egypt_now = datetime.now(egypt_tz)
-
-# 3. التنسيق الجمالي المتكيف مع الموبايل (ألوان فاقعة وواضحة)
-st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+# --- 11. المساعد الذكي (نسخة الموبايل السريعة) ---
+elif menu == "المساعد الذكي":
+    st.markdown("<h1 style='color:#FFFF00; text-align:center;'>🤖 المساعد الذكي</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
     
-    /* الأساسيات */
-    [data-testid="stAppViewContainer"] {{ background-color: #000000; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
-    
-    /* شريط الأخبار بلون أصفر فاقع */
-    .ticker-wrap {{ background: #FFFF00; padding: 12px 0; border-radius: 0 0 15px 15px; margin-bottom: 20px; }}
-    .ticker {{ color: #000 !important; font-weight: bold; font-size: 16px; animation: ticker 30s linear infinite; display: inline-block; }}
-    @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
+    col_f1, col_f2 = st.columns(2) # تقسيم ثنائي للموبايل
+    locs = sorted(df_p['Location'].unique().tolist()) if 'Location' in df_p.columns else ["الكل"]
+    sel_loc = col_f1.selectbox("📍 المنطقة", ["الكل"] + locs)
+    sel_type = col_f2.selectbox("🏠 النوع", ["الكل", "شقق", "فيلات", "تجاري", "إداري"])
+    sel_budget = st.number_input("💰 المقدم المتاح (EGP)", 0, step=50000)
+    client_wa = st.text_input("رقم واتساب العميل (بدون أصفار)")
 
-    /* كروت الموبايل الواضحة */
-    div.stButton > button {{
-        background-color: #1a1a1a !important; color: #FFFFFF !important;
-        border: 2px solid #FFFF00 !important; border-radius: 15px !important;
-        font-weight: 900 !important; font-size: 18px !important;
-        padding: 20px !important; transition: 0.2s; width: 100% !important;
-    }}
-    div.stButton > button:active {{ background-color: #FFFF00 !important; color: #000 !important; }}
-
-    /* كروت اللونشات المميزة */
-    .launch-card {{
-        background: linear-gradient(145deg, #111, #222);
-        border-right: 12px solid #FF0000; /* أحمر للتنبيه */
-        padding: 20px; border-radius: 15px; margin-bottom: 15px;
-        border-top: 1px solid #444;
-    }}
-    
-    .smart-box {{ background: #111; border: 2px solid #FFFF00; padding: 20px; border-radius: 20px; color: white; }}
-    .tool-card {{ background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #FFFF00; text-align: center; margin-bottom: 10px; }}
-    
-    /* تحسين القائمة للموبايل */
-    .nav-link {{ font-size: 16px !important; padding: 10px !important; }}
-    </style>
-""", unsafe_allow_html=True)
-
-# 4. جلب البيانات
-@st.cache_data(ttl=60)
-def load_all_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
-    try:
-        p = pd.read_csv(u_p).fillna("---")
-        d = pd.read_csv(u_d).fillna("---")
-        # داتا تجريبية للونشات لو الرابط مش موجود
-        l = pd.DataFrame({
-            'Project': ['أورا زايد الجديدة', 'نايل بيزنس سيتي'],
-            'Dev': ['Ora Dev', 'Nile'],
-            'EOI': ['100,000', '50,000'],
-            'Status': ['جمع EOIs', 'Coming Soon']
-        })
-        return p, d, l
-    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-df_p, df_d, df_l = load_all_data()
-
-# --- شريط الأخبار العلوي ---
-st.markdown('<div class="ticker-wrap"><div class="ticker">🚀 عاجل: فتح باب الحجز في مشروع أورا الجديد بالشيخ زايد .. 🔥 أسعار المتر تبدأ من 45 ألف في العاصمة الإدارية .. 🏦 تمويل عقاري حتى 15 سنة متاح الآن ..</div></div>', unsafe_allow_html=True)
-
-# 5. المنيو الرئيسي (تم إضافة اللونشات)
-menu = option_menu(None, ["اللونشات 🚀", "المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
-    icons=["rocket", "robot", "search", "building", "calculator"], 
-    default_index=0, orientation="horizontal",
-    styles={
-        "container": {"background-color": "#111", "padding": "0"},
-        "nav-link": {"color": "white", "font-size": "14px"},
-        "nav-link-selected": {"background-color": "#FFFF00", "color": "black", "font-weight": "bold"}
-    })
-
-# --- منطق الصفحات ---
-
-if menu == "اللونشات 🚀":
-    st.markdown("<h1 style='color:#FF0000; text-align:center;'>🚀 رادار اللونشات العاجلة</h1>", unsafe_allow_html=True)
-    for i, row in df_l.iterrows():
-        st.markdown(f"""
-        <div class="launch-card">
-            <h2 style="color:#FFFF00; margin:0;">{row['Project']}</h2>
-            <p style="margin:5px 0;">🏗️ المطور: {row['Dev']}</p>
-            <div style="background:#000; padding:10px; border-radius:10px; border:1px dashed #FF0000; display:inline-block; width:100%;">
+    if st.button("🎯 استخراج الترشيحات"):
+        res = df_p.copy()
+        if sel_loc != "الكل":
+            res = res[res['Location'] == sel_loc]
+        
+        # التعديل هنا لضمان عدم وجود خطأ في المسافات
+        if not res.empty:
+            st.success(f"وجدنا {len(res.head(6))} مشروع")
+            for idx, r in res.head(6).iterrows():
+                with st.container(border=True):
+                    st.write(f"🏢 **{r['ProjectName']}**")
+                    st.write(f"🏗️ {r['Developer']} | 📍 {r['Location']}")
+                    msg = f"أرشح لك مشروع {r['ProjectName']} في {r['Location']}."
+                    link = f"https://wa.me/{client_wa}?text={urllib.parse.quote(msg)}"
+                    st.markdown(f"[📲 إرسال المقترح للعميل]({link})")
+        else:
+            st.warning("لا توجد نتائج مطابقة تماماً.")
+    st.markdown("</div>", unsafe_allow_html=True)
                 <p style="margin:0; font-weight:bold; color:#00FF00;">💰 مبلغ الحجز: {row['EOI']} ج.م</p>
                 <p style="margin:0; font-size:14px; color:#aaa;">الحالة: {row['Status']}</p>
             </div>
@@ -347,4 +271,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
