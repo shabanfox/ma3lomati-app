@@ -2,131 +2,114 @@ import streamlit as st
 import pandas as pd
 import urllib.parse
 from streamlit_option_menu import option_menu
-from streamlit_javascript import st_javascript
 
-# 1. إعدادات الصفحة والتصميم
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide")
 
+# 2. التنسيق الجمالي (CSS)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     [data-testid="stAppViewContainer"] { background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
-    .stMarkdown, div, p, h1, h2, h3 { direction: rtl !important; text-align: right !important; color: white; }
-    .launch-card { background: linear-gradient(145deg, #1a1a1a, #000); border-right: 8px solid #f59e0b; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .dev-card { background: #111; border: 1px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
-    .dev-card:hover { border-color: #f59e0b; transform: translateY(-5px); }
-    .status-badge { background: #f59e0b; color: black; padding: 2px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-    .stButton button { width: 100%; border-radius: 10px !important; background: #f59e0b !important; color: black !important; font-weight: bold !important; border: none !important; }
+    .stMarkdown, div, p, h1, h2, h3 { direction: rtl !important; text-align: right !important; }
+    
+    /* ستايل كارت اللونش */
+    .launch-card {
+        background: linear-gradient(145deg, #1e1e1e, #000000);
+        border-right: 10px solid #f59e0b;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .launch-title { color: #f59e0b; font-size: 28px; font-weight: 900; margin-bottom: 10px; }
+    .eoi-box { background: #333; padding: 10px 20px; border-radius: 10px; border: 1px dashed #f59e0b; display: inline-block; margin-top: 10px; }
+    
+    .stButton button { width: 100%; border-radius: 10px !important; background: #f59e0b !important; color: black !important; font-weight: bold !important; border: none !important; height: 45px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. روابط البيانات (تأكد من تفعيل النشر لـ CSV لكل شيت)
-U_PROJECTS = "رابط_شيت_المشاريع_CSV"
-U_DEVS = "رابط_شيت_المطورين_CSV"
-U_LAUNCHES = "رابط_شيت_اللونشات_CSV"
+# 3. الروابط (استبدلها بروابط الـ CSV الخاصة بك)
+U_PROJECTS = "https://docs.google.com/spreadsheets/d/e/YOUR_LINK/pub?gid=0&single=true&output=csv"
+U_DEVS = "https://docs.google.com/spreadsheets/d/e/YOUR_LINK/pub?gid=2031754026&single=true&output=csv"
+U_LAUNCHES = "https://docs.google.com/spreadsheets/d/e/YOUR_LINK/pub?gid=YOUR_LAUNCH_GID&single=true&output=csv"
 
 @st.cache_data(ttl=60)
-def load_all_data():
+def load_data():
     try:
-        p = pd.read_csv(U_PROJECTS).fillna("---")
-        d = pd.read_csv(U_DEVS).fillna("---")
-        l = pd.read_csv(U_LAUNCHES).fillna("---")
-        return p, d, l
-    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        # ملاحظة: إذا لم تتوفر الداتا حالياً سنصنع داتا تجريبية لتشغيل الشكل
+        l_df = pd.read_csv(U_LAUNCHES).fillna("---")
+        return l_df
+    except:
+        # داتا وهمية فقط لكي ترى "قسم اللونشات" شغال أمامك الآن
+        data = {
+            'Launch_Name': ['مشروع نايل تاور الجديد', 'ماونتن فيو زايد الجديدة'],
+            'Developer': ['Nile Development', 'Mountain View'],
+            'Location': ['العاصمة الإدارية', 'الشيخ زايد'],
+            'EOI_Amount': ['50,000 EGP', '100,000 EGP'],
+            'Status': ['قريباً جداً', 'جمع EOIs'],
+            'Hot_Note': ['أطول برج سكني في أفريقيا، فرصة استثمارية خرافية.', 'موقع استراتيجي بجوار مطار سفنكس مباشرة.']
+        }
+        return pd.DataFrame(data)
 
-df_p, df_d, df_l = load_all_data()
+df_launches = load_data()
 
-# 3. إدارة الحالة (الدخول وصفحات العرض)
-if 'auth' not in st.session_state: st.session_state.auth = True # للتجربة فقط
-if 'page' not in st.session_state: st.session_state.page = "main"
-if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+# 4. القائمة الرئيسية (Navigation)
+selected = option_menu(
+    menu_title=None,
+    options=["اللونشات 🚀", "المطورين 🏗️", "المشاريع 🏢"],
+    icons=["rocket-takeoff", "building", "search"],
+    menu_icon="cast",
+    default_index=0,
+    orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": "#111"},
+        "nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"},
+    }
+)
 
-# 4. القائمة الجانبية أو العلوية
-with st.sidebar:
-    st.image("https://via.placeholder.com/150x50.png?text=MA3LOMATI+PRO", use_column_width=True)
-    menu = option_menu("الرئيسية", ["اللونشات 🚀", "المطورين 🏗️", "دليل المشاريع 🏢", "المساعد الذكي 🤖"], 
-        icons=['rocket-takeoff', 'building', 'search', 'robot'], menu_icon="cast", default_index=0)
+# --- منطق الصفحات ---
 
-# --- قسم اللونشات (الصفحة الجديدة) ---
-if menu == "اللونشات 🚀":
-    st.markdown("<h1 style='color:#f59e0b;'>🚀 رادار اللونشات الحالية</h1>", unsafe_allow_html=True)
-    st.write("تابع أحدث الفرص قبل الإعلان الرسمي لجمع الـ EOIs")
-    
-    if df_l.empty:
-        st.info("لا توجد لونشات مسجلة حالياً.. انتظر تحديث الإدارة.")
+if selected == "اللونشات 🚀":
+    st.markdown("<h1 style='color:#f59e0b; text-align:center;'>🎯 رادار اللونشات الحصرية</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-size:18px;'>كن أول من يعلم وأول من يحجز لعملائك في أقوى الفرص القادمة</p>", unsafe_allow_html=True)
+    st.write("---")
+
+    if df_launches.empty:
+        st.info("لا توجد لونشات مسجلة حالياً.")
     else:
-        for i, row in df_l.iterrows():
-            st.markdown(f"""
-            <div class="launch-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="color:#f59e0b; margin:0;">{row['Launch_Name']}</h2>
-                    <span class="status-badge">{row['Status']}</span>
-                </div>
-                <p style="font-size:18px; margin:10px 0;">🏗️ <b>المطور:</b> {row['Developer']} | 📍 <b>المنطقة:</b> {row['Location']}</p>
-                <div style="background:#222; padding:15px; border-radius:10px; border:1px dashed #f59e0b;">
-                    <p style="margin:0;">💰 <b>مبلغ جدية الحجز (EOI):</b> <span style="color:#00ff00; font-weight:bold;">{row['EOI_Amount']}</span></p>
-                    <p style="margin:5px 0 0 0; color:#ddd; font-style:italic;">🔥 {row['Hot_Note']}</p>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            msg = f"فرصة لونش جديد! {row['Launch_Name']} بشركة {row['Developer']}. الحجز بدأ بـ {row['EOI_Amount']}. تحب أحجزلك ميعاد؟"
-            st.markdown(f"[📲 إرسال التنبيه لعميلك على الواتساب](https://wa.me/?text={urllib.parse.quote(msg)})")
-
-# --- قسم المطورين (المطور بالصور والقصص) ---
-elif menu == "المطورين 🏗️":
-    if st.session_state.selected_item is None:
-        st.title("🏗️ موسوعة المطورين")
-        search = st.text_input("🔍 ابحث عن مطور...")
-        
-        filtered_d = df_d[df_d['Developer'].str.contains(search, case=False)] if search else df_d
-        
-        for i, row in filtered_d.iterrows():
+        for i, row in df_launches.iterrows():
             with st.container():
                 st.markdown(f"""
-                <div class="dev-card">
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <img src="{row.get('Logo_URL', 'https://via.placeholder.com/50')}" width="50" style="border-radius:5px;">
+                <div class="launch-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
                         <div>
-                            <h3 style="margin:0; color:#f59e0b;">{row['Developer']}</h3>
-                            <p style="margin:0; font-size:14px; color:#aaa;">⭐ الفئة: {row.get('Category','A')}</p>
+                            <div class="launch-title">{row['Launch_Name']}</div>
+                            <div style="font-size:20px; color:#ccc;">🏗️ المطور: <b>{row['Developer']}</b></div>
+                            <div style="font-size:18px; color:#aaa;">📍 الموقع: {row['Location']}</div>
                         </div>
+                        <div style="background:#f59e0b; color:black; padding:5px 15px; border-radius:8px; font-weight:bold;">
+                            {row['Status']}
+                        </div>
+                    </div>
+                    <div class="eoi-box">
+                        <span style="color:#f59e0b; font-weight:bold;">💰 مبلغ الحجز (EOI):</span> 
+                        <span style="font-size:20px;">{row['EOI_Amount']}</span>
+                    </div>
+                    <div style="margin-top:15px; color:#eee; font-style:italic; border-top:1px solid #333; padding-top:10px;">
+                        💡 <b>توصية المنصة:</b> {row['Hot_Note']}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"عرض قصة نجاح {row['Developer']} 📖", key=f"dev_{i}"):
-                    st.session_state.selected_item = row.to_dict()
-                    st.rerun()
-    else:
-        # صفحة المطور التفصيلية
-        dev = st.session_state.selected_item
-        if st.button("⬅️ العودة للقائمة"):
-            st.session_state.selected_item = None
-            st.rerun()
-        
-        st.image(dev.get('Hero_Image', 'https://via.placeholder.com/800x300'), use_column_width=True)
-        st.header(f"🏗️ {dev['Developer']}")
-        
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.subheader("🌟 قصة النجاح وسر القوة")
-            st.write(dev.get('Success_Story', 'معلومات قادمة قريباً...'))
-            st.subheader("🏗️ سابقة الأعمال")
-            st.info(dev.get('Flagship_Projects', '---'))
-        with col2:
-            st.markdown(f"""
-            <div style="background:#1a1a1a; padding:15px; border-radius:10px;">
-                <p>👤 <b>رئيس مجلس الإدارة:</b><br>{dev.get('Owner', '---')}</p>
-                <p>📅 <b>التأسيس:</b> {dev.get('Establishment', '---')}</p>
-                <p>🎯 <b>نصيحة المنصة:</b><br>{dev.get('USP', '---')}</p>
-            </div>
-            """, unsafe_allow_html=True)
+                
+                # زر الواتساب لإرسال اللونش للعميل
+                msg = f"مساء الخير يا فندم، فيه لونش شغال حالياً لشركة {row['Developer']} في {row['Location']}. مبلغ الحجز {row['EOI_Amount']} ومسترد بالكامل. لو حابب أحجزلك مكان في أول يوم تواصل معايا."
+                st.markdown(f"[📲 أرسل تفاصيل اللونش لعميلك الآن](https://wa.me/?text={urllib.parse.quote(msg)})")
 
-# --- باقي الأقسام (تكملة للهيكل) ---
-elif menu == "دليل المشاريع 🏢":
-    st.title("🏢 محرك بحث المشاريع")
-    st.write("هنا تظهر المشاريع المربوطة بالمطورين...")
-    # كود البحث في df_p
+elif selected == "المطورين 🏗️":
+    st.title("🏗️ قسم المطورين")
+    st.write("هنا سيظهر شيت المطورين بالصور والقصص اللي عملناه...")
 
-elif menu == "المساعد الذكي 🤖":
-    st.title("🤖 المساعد العقاري الذكي")
-    st.write("قريباً: اسألني عن أفضل استثمار في التجمع أو زايد!")
+elif selected == "المشاريع 🏢":
+    st.title("🏢 دليل المشاريع")
+    st.write("هنا تظهر محرك بحث المشاريع...")
