@@ -12,7 +12,7 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. التنسيق الجمالي (Midnight & Gold)
+# 2. التنسيق الجمالي الموحد
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -35,11 +35,9 @@ st.markdown("""
 # 3. إدارة الحالة والروابط
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
-if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
-# --- وظائف الربط ---
 def login_user(u_in, p_in):
     try:
         res = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
@@ -50,60 +48,68 @@ def login_user(u_in, p_in):
         return None
     except: return None
 
-@st.cache_data(ttl=60)
-def load_data():
-    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
-    try:
-        p = pd.read_csv(u_p).fillna("---")
-        d = pd.read_csv(u_d).fillna("---")
-        p.rename(columns={'Area':'Location','الموقع':'Location','Project Name':'ProjectName'}, inplace=True)
-        return p, d
-    except: return pd.DataFrame(), pd.DataFrame()
-
 # 4. نظام الدخول
 if not st.session_state.auth:
     st.markdown("<h1 style='text-align:center; padding-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    with st.container():
-        u_log = st.text_input("الأسم أو الجيميل")
-        p_log = st.text_input("كلمة السر", type="password")
-        if st.button("دخول للنظام 🚀"):
-            if p_log == "2026":
-                st.session_state.auth, st.session_state.current_user = True, "Admin"
+    u_log = st.text_input("الأسم أو الجيميل")
+    p_log = st.text_input("كلمة السر", type="password")
+    if st.button("دخول للنظام 🚀"):
+        if p_log == "2026":
+            st.session_state.auth, st.session_state.current_user = True, "Admin"
+            st.rerun()
+        else:
+            user_found = login_user(u_log, p_log)
+            if user_found:
+                st.session_state.auth, st.session_state.current_user = True, user_found
                 st.rerun()
             else:
-                user_found = login_user(u_log, p_log)
-                if user_found:
-                    st.session_state.auth, st.session_state.current_user = True, user_found
-                    st.rerun()
-                else:
-                    st.error("بيانات الدخول غير صحيحة")
+                st.error("بيانات الدخول غير صحيحة")
     st.stop()
 
 # 5. القائمة الرئيسية
-df_p, df_d = load_data()
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "البروكر المحترف", "أدوات البروكر"], 
     icons=["robot", "search", "building", "stars", "calculator"], orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-# 6. قسم البروكر المحترف (المحاكي المالي)
+# 6. قسم البروكر المحترف
 if menu == "البروكر المحترف":
     st.title("🏆 أدوات البروكر المحترف")
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-    st.subheader("💡 محاكي نمو الثروة العقارية")
+    st.subheader("💡 محاكي الثروة (عقار vs ذهب vs بنك)")
     
-    col_a, col_b = st.columns([1, 2])
-    with col_a:
-        amount = st.number_input("مبلغ الاستثمار", 1000000, value=5000000)
-        years = st.slider("السنوات", 1, 10, 5)
-        growth = st.slider("زيادة العقار السنوية %", 10, 50, 25)
+    c_in, c_ch = st.columns([1, 2])
+    with c_in:
+        inv = st.number_input("المبلغ المستثمر", 1000000, value=5000000)
+        y = st.slider("عدد السنوات", 1, 10, 5)
+        g = st.slider("زيادة العقار السنوية %", 10, 50, 25)
+        c_wa = st.text_input("رقم العميل لإرسال التحليل")
     
-    with col_b:
-        t = np.arange(0, years + 1)
-        prop = amount * (1 + (growth/100)) ** t
-        gold = amount * (1 + 0.20) ** t
-        bank = amount * (1 + 0.18) ** t
-        
+    # حسابات المحاكاة
+    t = np.arange(0, y + 1)
+    p_v = inv * (1 + (g/100)) ** t
+    g_v = inv * (1 + 0.20) ** t # ذهب
+    b_v = inv * (1 + 0.18) ** t # بنك
+    
+    with c_ch:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=t, y=p_v, name="عقار", line=dict(color='#f59e0b', width=4)))
+        fig.add_trace(go.Scatter(x=t, y=g_v, name="ذهب", line=dict(dash='dash', color='yellow')))
+        fig.add_trace(go.Scatter(x=t, y=b_v, name="بنك", line=dict(dash='dot', color='green')))
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
+        st.plotly_chart(fig, use_container_width=True)
+    
+    if st.button("📲 إرسال التحليل المالي للعميل"):
+        profit = p_v[-1] - inv
+        msg = f"تحليل مالي من MA3LOMATI PRO:\nاستثمارك بقيمة {inv:,.0f} سيعود بـ {p_v[-1]:,.0f} بعد {y} سنوات بعائد ربح {profit:,.0f}."
+        st.markdown(f"[إرسال الآن](https://wa.me/{c_wa}?text={urllib.parse.quote(msg)})")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+elif menu == "أدوات البروكر":
+    st.title("🛠️ الحاسبة المالية")
+    val = st.number_input("قيمة العقار", value=1000000)
+    st.metric("القسط (على 8 سنوات)", f"{(val*0.9)/(8*12):,.0f}")
+
+st.markdown(f"<p style='text-align:center;'>مرحباً بك يا {st.session_state.current_user}</p>", unsafe_allow_html=True)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=t, y=prop, name="عقار", line=dict(color='#f59e0b', width=4)))
         fig.add_trace(go.Scatter(x=t, y=gold, name="ذهب", line=dict(dash='dash', color='yellow')))
@@ -350,6 +356,7 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
 
 
