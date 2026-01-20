@@ -170,6 +170,71 @@ elif menu == "أدوات البروكر":
     st.metric("القسط الشهري (8 سنين)", f"{v/96:,.0f}")
 
 st.markdown("<p style='text-align:center; color:#555; padding-top:30px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+
+egypt_tz = pytz.timezone('Africa/Cairo')
+egypt_now = datetime.now(egypt_tz)
+
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("---")
+        d = pd.read_csv(u_d).fillna("---")
+        p.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
+        return p, d
+    except: return pd.DataFrame(), pd.DataFrame()
+
+df_p, df_d = load_data()
+
+# --- شاشة الدخول ---
+if not st.session_state.auth:
+    st.markdown("<h1 style='text-align:center; padding-top:40px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    _, c2, _ = st.columns([1,2,1])
+    with c2:
+        u = st.text_input("الأسم")
+        p = st.text_input("كلمة السر", type="password")
+        if st.button("دخول للنظام 🚀"):
+            if p == "2026": # كود سريع للتجربة
+                st.session_state.auth = True; st.session_state.current_user = "Admin"; st.rerun()
+    st.stop()
+
+# --- الهيدر والمنيو ---
+st.markdown(f"""<div style="background:#112240; padding:20px; border-radius:0 0 30px 30px; border-bottom:4px solid #f59e0b; text-align:center;">
+    <h1 style="margin:0;">MA3LOMATI PRO</h1>
+    <p style="color:#f59e0b !important;">أهلاً {st.session_state.current_user} | {egypt_now.strftime('%I:%M %p')}</p>
+</div>""", unsafe_allow_html=True)
+
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
+    icons=["robot", "search", "building", "calculator"], orientation="horizontal",
+    styles={"container": {"background-color": "#0d1e36"}, "nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+
+# --- عرض المحتوى ---
+if st.session_state.selected_item is not None:
+    if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
+    item = st.session_state.selected_item
+    st.markdown(f"<div class='smart-box'><h2>{item['ProjectName']}</h2><p>الموقع: {item['Location']}</p></div>", unsafe_allow_html=True)
+
+elif menu == "المشاريع":
+    f1, f2 = st.columns([2,1])
+    search = f1.text_input("🔍 ابحث عن مشروع")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    
+    # عرض الكروت بلون أبيض واضح
+    for i in range(0, len(dff.head(6)), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i+j < len(dff):
+                row = dff.iloc[i+j]
+                if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row['Location']}", key=f"p_{i+j}"):
+                    st.session_state.selected_item = row; st.rerun()
+
+elif menu == "أدوات البروكر":
+    st.markdown("<div class='smart-box'><h3>🛠️ حاسبة القسط</h3></div>", unsafe_allow_html=True)
+    v = st.number_input("سعر الوحدة", 1000000)
+    st.metric("القسط الشهري (8 سنين)", f"{v/96:,.0f}")
+
+st.markdown("<p style='text-align:center; color:#555; padding-top:30px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
     div.stButton > button[key*="card_"]:hover {{ 
         transform: translateY(-5px) !important; 
         box-shadow: 0 10px 20px rgba(0,0,0,0.4) !important; 
@@ -389,4 +454,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+
 
