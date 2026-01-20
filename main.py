@@ -51,12 +51,12 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# 4. التنسيق الجمالي (Black Background + Yellow Frame + White Text)
+# 4. التنسيق الجمالي (Black Background + Gold Frame + White Text)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
     
-    /* الصفحة كاملة أسود */
+    /* الصفحة كاملة أسود فحم */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {{
         background-color: #000000 !important;
         direction: rtl !important;
@@ -66,35 +66,37 @@ st.markdown(f"""
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     .block-container {{ padding-top: 0rem !important; }}
 
-    /* الكتابة أبيض ناصع */
+    /* الكتابة أبيض ناصع وواضح جداً */
     p, span, div, label, li {{ color: #FFFFFF !important; font-weight: 700 !important; font-size: 17px !important; }}
-    h1, h2, h3, h4 {{ color: #FFFF00 !important; font-weight: 900 !important; }}
+    h1, h2, h3, h4 {{ color: #D4AF37 !important; font-weight: 900 !important; }}
 
-    /* الأزرار: أسود والفريم أصفر */
+    /* الأزرار: خلفية سوداء والفريم ذهبي */
     div.stButton > button {{
         background-color: #000000 !important;
         color: #FFFFFF !important;
-        border: 2px solid #FFFF00 !important;
-        border-radius: 10px !important;
+        border: 2px solid #D4AF37 !important;
+        border-radius: 12px !important;
         font-weight: 900 !important;
         transition: 0.3s !important;
+        box-shadow: 0 2px 10px rgba(212, 175, 55, 0.1);
     }}
     div.stButton > button:hover {{
-        background-color: #FFFF00 !important;
+        background-color: #D4AF37 !important;
         color: #000000 !important;
+        border: 2px solid #FFFFFF !important;
     }}
     
     /* كروت المشاريع والمطورين */
     div.stButton > button[key*="card_"] {{
-        min-height: 120px !important;
-        font-size: 18px !important;
-        margin-bottom: 10px !important;
+        min-height: 140px !important;
+        font-size: 19px !important;
+        margin-bottom: 12px !important;
     }}
 
     /* الصناديق والأدوات */
     .smart-box {{ 
         background-color: #000000 !important; 
-        border: 2px solid #FFFF00 !important; 
+        border: 2px solid #D4AF37 !important; 
         padding: 20px; 
         border-radius: 15px; 
         margin-bottom: 20px;
@@ -104,39 +106,39 @@ st.markdown(f"""
     .stTextInput input, .stSelectbox div, .stNumberInput input {{
         background-color: #000000 !important;
         color: #FFFFFF !important;
-        border: 2px solid #FFFF00 !important;
+        border: 2px solid #D4AF37 !important;
         font-weight: bold !important;
     }}
     
-    /* شريط الأخبار */
-    .ticker-wrap {{ background: #000; border-bottom: 2px solid #FFFF00; padding: 10px 0; }}
-    .ticker {{ color: #FFFF00 !important; font-weight: 900; font-size: 15px; }}
+    /* شريط الأخبار الذهبي */
+    .ticker-wrap {{ background: #000; border-bottom: 3px solid #D4AF37; padding: 10px 0; }}
+    .ticker {{ color: #D4AF37 !important; font-weight: 900; font-size: 15px; }}
     </style>
 """, unsafe_allow_html=True)
 
 # 5. شاشة الدخول
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:50px;'><h1>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; padding-top:50px;'><h1>MA3LOMATI PRO</h1><p style='color:white;'>نظام إدارة المشروعات العقارية 2026</p></div>", unsafe_allow_html=True)
     with st.container():
-        u = st.text_input("الأسم")
-        p = st.text_input("كلمة السر", type="password")
-        if st.button("دخول للمنصة"):
+        u = st.text_input("اسم المستخدم")
+        p = st.text_input("كلمة المرور", type="password")
+        if st.button("دخول النظام 🔐"):
             user = "Admin" if p == "2026" else login_user(u, p)
             if user:
                 st.session_state.auth = True; st.session_state.current_user = user
                 st.query_params["u"] = user; st.rerun()
-            else: st.error("خطأ في البيانات")
+            else: st.error("بيانات الدخول غير صحيحة")
     st.stop()
 
 # 6. الهيدر والساعة الحية (تحديث كل دقيقة - بدون ثواني)
-st.markdown(f"<div class='smart-box' style='text-align:center;'><h1>MA3LOMATI PRO</h1><p>أهلاً بك، {st.session_state.current_user}</p></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='smart-box' style='text-align:center;'><h1>MA3LOMATI PRO</h1><p>مرحباً بك، {st.session_state.current_user}</p></div>", unsafe_allow_html=True)
 
 c1, c2 = st.columns([0.7, 0.3])
 with c1:
-    st.markdown(f'<div class="ticker-wrap">🔥 سوق العقارات: متابعة مستمرة لأحدث المشروعات</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ticker-wrap">🔥 أخبار العقارات: تحديثات مستمرة لجميع مشروعات التجمع والعاصمة والشيخ زايد</div>', unsafe_allow_html=True)
 with c2:
     st.markdown(f"""
-        <div style='text-align: left; padding: 5px; color: #FFFF00; font-size: 15px; font-weight:900;'>
+        <div style='text-align: left; padding: 5px; color: #D4AF37; font-size: 15px; font-weight:900;'>
             📅 {egypt_now.strftime('%Y-%m-%d')} | 🕒 <span id="clock">{egypt_now.strftime('%I:%M %p')}</span>
         </div>
         <script>
@@ -148,47 +150,52 @@ with c2:
             setInterval(updateClock, 60000);
         </script>
     """, unsafe_allow_html=True)
-    if st.button("🚪 خروج"): st.session_state.auth = False; st.query_params.clear(); st.rerun()
+    if st.button("🚪 تسجيل خروج"): st.session_state.auth = False; st.query_params.clear(); st.rerun()
 
 # 7. المنيو الرئيسي
 menu = option_menu(None, ["المشاريع", "المساعد الذكي", "المطورين", "الأدوات"], 
     icons=["building", "robot", "people", "calculator"], orientation="horizontal",
     styles={
-        "container": {"background-color": "#000", "border": "1px solid #FFFF00"},
+        "container": {"background-color": "#000", "border": "1px solid #D4AF37"},
         "nav-link": {"color": "#FFF"},
-        "nav-link-selected": {"background-color": "#FFFF00", "color": "#000", "font-weight": "bold"}
+        "nav-link-selected": {"background-color": "#D4AF37", "color": "#000", "font-weight": "bold"}
     })
 
 # 8. محتوى الصفحات
 if menu == "المشاريع":
     f1, f2 = st.columns(2)
-    s = f1.text_input("🔍 ابحث")
-    l = f2.selectbox("📍 المنطقة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
+    s = f1.text_input("🔍 بحث عن مشروع")
+    l = f2.selectbox("📍 اختيار المنطقة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
     res = df_p[df_p['ProjectName'].str.contains(s, case=False)] if s else df_p
     if l != "الكل": res = res[res['Location'] == l]
     
-    for i, row in res.head(8).iterrows():
+    for i, row in res.head(10).iterrows():
         if st.button(f"🏢 {row['ProjectName']} | 📍 {row['Location']}", key=f"card_p_{i}"):
             st.session_state.selected_item = row; st.rerun()
 
 elif menu == "المساعد الذكي":
-    st.markdown("<div class='smart-box'><h3>🤖 المساعد الذكي</h3><p>أدخل طلب العميل لاستخراج الترشيحات...</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='smart-box'><h3>🤖 المساعد العقاري الذكي</h3><p>أدخل بيانات العميل هنا ليقوم النظام بترشيح أفضل 3 مشاريع مناسبة لميزانيته.</p></div>", unsafe_allow_html=True)
 
 elif menu == "المطورين":
-    for i, r in df_d.head(10).iterrows():
-        if st.button(f"🏗️ {r['Developer']}", key=f"card_d_{i}"):
+    st.title("🏗️ المطورين العقاريين")
+    for i, r in df_d.head(15).iterrows():
+        if st.button(f"🏗️ {r['Developer']} | Category: {r.get('Developer Category','A')}", key=f"card_d_{i}"):
             st.session_state.selected_item = r; st.rerun()
 
 elif menu == "الأدوات":
-    st.markdown("<div class='smart-box'><h3>🛠️ حاسبة البروكر</h3>", unsafe_allow_html=True)
-    v = st.number_input("السعر", 1000000)
-    st.metric("القسط (8 سنين)", f"{v/96:,.0f}")
+    st.markdown("<div class='smart-box'><h3>🛠️ حقيبة البروكر</h3>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    v = c1.number_input("إجمالي سعر الوحدة", 1000000)
+    c2.metric("القسط الشهري (8 سنين)", f"{v/96:,.0f} ج.م")
     st.markdown("</div>", unsafe_allow_html=True)
 
 # عرض التفاصيل
 if st.session_state.selected_item is not None:
     st.markdown("---")
-    if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
-    st.markdown(f"<div class='smart-box'><h2>التفاصيل الكاملة</h2><p>{st.session_state.selected_item}</p></div>", unsafe_allow_html=True)
+    if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
+    st.markdown("<div class='smart-box'><h2>التفاصيل والبيانات</h2>", unsafe_allow_html=True)
+    st.write(st.session_state.selected_item)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#333; margin-top:50px;'>MA3LOMATI PRO © 2026 | All Rights Reserved</p>", unsafe_allow_html=True)
+
