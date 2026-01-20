@@ -14,64 +14,82 @@ st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sid
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
-    /* الخلفية العامة */
     .block-container { padding-top: 1rem !important; }
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
-    [data-testid="stAppViewContainer"] { 
-        background-color: #0a192f; 
-        direction: rtl !important; 
-        text-align: right !important; 
-        font-family: 'Cairo', sans-serif; 
-    }
-    
-    /* العناوين */
-    h1, h2, h3 { color: #f59e0b !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    [data-testid="stAppViewContainer"] { background-color: #0a192f; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
+    h1, h2, h3 { color: #f59e0b !important; }
     p, span, label { color: #ccd6f6 !important; font-weight: bold; }
-
-    /* كروت الأزرار (المشاريع والمطورين) */
     div.stButton > button {
         background: linear-gradient(145deg, #112240, #0a192f) !important;
-        color: #ffffff !important;
-        border: 1px solid #233554 !important;
-        border-right: 5px solid #f59e0b !important;
-        border-radius: 12px !important;
-        min-height: 120px !important;
-        width: 100% !important;
-        transition: 0.3s all ease !important;
-        font-size: 16px !important;
-        margin-bottom: 10px !important;
+        color: #ffffff !important; border: 1px solid #233554 !important;
+        border-right: 5px solid #f59e0b !important; border-radius: 12px !important;
+        min-height: 100px !important; width: 100% !important; transition: 0.3s all ease !important;
     }
-    div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        transform: translateY(-5px) !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.4) !important;
-    }
-
-    /* الصناديق والمحتوى */
-    .smart-box { 
-        background: #112240; border: 1px solid #233554; padding: 20px; 
-        border-radius: 15px; border-right: 6px solid #f59e0b; margin-bottom: 20px;
-    }
-    .tool-card { 
-        background: #172a45; padding: 20px; border-radius: 15px; 
-        border-top: 4px solid #f59e0b; text-align: center; height: 100%; 
-    }
-    
-    /* الفلاتر والمدخلات */
-    .stSelectbox div, .stTextInput input, .stNumberInput input {
-        background-color: #112240 !important; color: white !important; border: 1px solid #233554 !important;
-    }
+    div.stButton > button:hover { border-color: #f59e0b !important; transform: translateY(-5px) !important; }
+    .smart-box { background: #112240; border: 1px solid #233554; padding: 20px; border-radius: 15px; border-right: 6px solid #f59e0b; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. إدارة الحالة والبيانات
+# 3. إدارة الحالة والرابط
 if 'auth' not in st.session_state: st.session_state.auth = False
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
-if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+if 'current_user' not in st.session_state: st.session_state.current_user = None
 
+# الرابط الخاص بك (Apps Script)
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
+# --- وظائف الربط الفعلي مع جوجل شيت ---
+def signup_user(name, pwd, email):
+    payload = {"name": name, "password": pwd, "email": email}
+    try:
+        # إرسال البيانات للجوجل شيت لحفظ مستخدم جديد
+        response = requests.post(SCRIPT_URL, json=payload)
+        return response.text == "Success"
+    except: return False
+
+def login_user(user_input, pwd_input):
+    try:
+        # جلب قائمة المستخدمين والتحقق منهم
+        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
+        if response.status_code == 200:
+            users = response.json()
+            for u in users:
+                n, p, e = str(u.get('Name','')), str(u.get('Password','')), str(u.get('Email',''))
+                if (user_input.strip().lower() in [n.lower(), e.lower()]) and str(pwd_input) == p:
+                    return n
+        return None
+    except: return None
+
+# 4. نظام الدخول والاشتراك (المرتبط بالشيت)
+if not st.session_state.auth:
+    st.markdown("<h1 style='text-align:center;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    tab_log, tab_sign = st.tabs(["🔐 دخول", "📝 اشتراك"])
+    
+    with tab_log:
+        u_in = st.text_input("الأسم أو الجيميل")
+        p_in = st.text_input("كلمة السر", type="password")
+        if st.button("دخول 🚀"):
+            if p_in == "2026": # كود طوارئ
+                st.session_state.auth, st.session_state.current_user = True, "Admin"
+                st.rerun()
+            else:
+                user = login_user(u_in, p_in)
+                if user:
+                    st.session_state.auth, st.session_state.current_user = True, user
+                    st.rerun()
+                else: st.error("خطأ في البيانات أو المستخدم غير مسجل")
+
+    with tab_sign:
+        reg_n = st.text_input("الأسم الكامل")
+        reg_e = st.text_input("الجيميل")
+        reg_p = st.text_input("كلمة السر الجديدة", type="password")
+        if st.button("تأكيد التسجيل ✅"):
+            if reg_n and reg_e and reg_p:
+                if signup_user(reg_n, reg_p, reg_e):
+                    st.success("تم تسجيلك! يمكنك الآن الدخول.")
+                else: st.error("حدث خطأ في الاتصال بالشيت")
+    st.stop()
+
+# 5. تحميل بيانات المشاريع والمطورين
 @st.cache_data(ttl=60)
 def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -85,25 +103,36 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# 4. نظام الدخول
-if not st.session_state.auth:
-    st.markdown("<h1 style='text-align:center; margin-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    with st.container():
-        u = st.text_input("الأسم أو الجيميل")
-        p = st.text_input("كلمة السر", type="password")
-        if st.button("دخول للنظام 🚀"):
-            if p == "2026": 
-                st.session_state.auth = True; st.rerun()
-            else: st.error("بيانات الدخول غير صحيحة")
-    st.stop()
-
-# 5. القائمة الرئيسية
+# 6. المنيو الرئيسي
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
     icons=["robot", "search", "building", "calculator"], orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-# 6. عرض التفاصيل (عند اختيار مشروع أو مطور)
-if st.session_state.selected_item is not None:
+# 7. الأقسام
+if menu == "المشاريع":
+    st.title("🏢 دليل المشاريع")
+    search = st.text_input("🔍 ابحث عن مشروع")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    for i, r in dff.head(8).iterrows():
+        if st.button(f"🏢 {r['ProjectName']} | {r['Location']}", key=f"p_{i}"):
+            st.session_state.selected_item = r
+    
+elif menu == "المساعد الذكي":
+    st.title("🤖 مساعد المبيعات")
+    wa = st.text_input("رقم واتساب العميل")
+    loc = st.selectbox("📍 المنطقة", sorted(df_p['Location'].unique()))
+    if st.button("🎯 ترشيح وإرسال"):
+        res = df_p[df_p['Location'] == loc].head(3)
+        for _, r in res.iterrows():
+            msg = f"أهلاً.. أرشح لك {r['ProjectName']}."
+            st.markdown(f"[📲 إرسال الواتساب لبـ {r['ProjectName']}](https://wa.me/{wa}?text={urllib.parse.quote(msg)})")
+
+elif menu == "أدوات البروكر":
+    st.title("🛠️ حسابات مالية")
+    price = st.number_input("إجمالي السعر", value=1000000)
+    st.metric("القسط الشهري (على 8 سنين)", f"{(price*0.9)/(8*12):,.0f}")
+
+st.markdown(f"<p style='text-align:center; margin-top:50px;'>أهلاً بك يا {st.session_state.current_user} | 2026</p>", unsafe_allow_html=True)
     item = st.session_state.selected_item
     if st.button("⬅️ عودة للقائمة"):
         st.session_state.selected_item = None; st.rerun()
@@ -185,3 +214,4 @@ elif menu == "أدوات البروكر":
 
 # 8. الفوتر
 st.markdown("<br><hr style='border-color:#233554;'><p style='text-align:center; color:#4f5b7d;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
