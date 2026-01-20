@@ -11,29 +11,24 @@ from streamlit_option_menu import option_menu
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- إضافة JavaScript لمنع الخروج بالخطأ عند الضغط على Back في الموبايل ---
+# --- منع الخروج بالخطأ عند الضغط على Back في الموبايل ---
 st.components.v1.html("""
 <script>
-    window.onbeforeunload = function() {
-        return "هل أنت متأكد أنك تريد مغادرة المنصة؟";
-    };
-    // منع الرجوع للخلف وإجبار المستخدم على البقاء داخل التطبيق
+    window.onbeforeunload = function() { return "هل تريد المغادرة؟"; };
     history.pushState(null, null, location.href);
-    window.onpopstate = function () {
-        history.go(1);
-    };
+    window.onpopstate = function () { history.go(1); };
 </script>
 """, height=0)
 
-# 2. التنسيق الجمالي (CSS) - ألوان سوبر واضحة
+# 2. التنسيق الجمالي (CSS) - تم وضع كل شيء داخل القالب لضمان عدم حدوث IndentationError
 st.markdown("""
-    <style>
+<style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
     .block-container { padding-top: 0rem !important; }
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
     
-    /* الخلفية والخطوط */
+    /* الخلفية */
     [data-testid="stAppViewContainer"] { 
         background-color: #0a192f; 
         direction: rtl !important; 
@@ -41,70 +36,117 @@ st.markdown("""
         font-family: 'Cairo', sans-serif; 
     }
     
-    /* جعل كل النصوص بيضاء وواضحة جداً */
-    p, span, label, .stWrite, .stMetric div { 
+    /* نصوص واضحة جداً (أبيض ناصع) */
+    p, span, label, .stWrite { 
         color: #ffffff !important; 
         font-weight: 600 !important; 
     }
     
-    /* العناوين بالذهبي الفاتح */
-    h1, h2, h3, h4 { 
+    /* عناوين ذهبية */
+    h1, h2, h3 { 
         color: #f59e0b !important; 
         font-weight: 900 !important; 
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
 
-    /* كروت المشاريع (تعديل الألوان لتكون الكتابة واضحة) */
+    /* كروت المشاريع - كتابة بيضاء واضحة */
     div.stButton > button {
-        background: linear-gradient(145deg, #112240, #0d1e36) !important;
+        background: linear-gradient(145deg, #112240, #0a192f) !important;
         color: #ffffff !important;
         border: 1px solid #233554 !important;
         border-right: 6px solid #f59e0b !important;
         border-radius: 12px !important;
-        min-height: 120px !important;
+        min-height: 110px !important;
         width: 100% !important;
         font-size: 16px !important;
         font-weight: bold !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+        margin-bottom: 10px !important;
     }
     
     div.stButton > button:hover {
         border-color: #f59e0b !important;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(245,158,11,0.2) !important;
+        color: #f59e0b !important;
     }
 
-    /* الصناديق الذكية */
+    /* صناديق المحتوى */
     .smart-box { 
         background: #112240; 
         border: 1px solid #233554; 
-        padding: 25px; 
-        border-radius: 20px; 
-        border-right: 6px solid #f59e0b; 
-        margin-bottom: 20px;
+        padding: 20px; 
+        border-radius: 15px; 
+        border-right: 5px solid #f59e0b; 
+        margin-bottom: 15px;
     }
 
-    /* حقول الإدخال - جعل النص المكتوب بداخلها أبيض */
-    input { color: #ffffff !important; background-color: #0d1e36 !important; }
-    .stSelectbox div[data-baseweb="select"] { background-color: #0d1e36 !important; color: white !important; }
-    
-    /* شريط الأخبار */
-    .ticker-wrap { background: #112240; border-bottom: 2px solid #f59e0b; padding: 10px; }
-    .ticker { color: #f59e0b !important; font-weight: bold; }
-
-    /* تعديل التبويبات (Tabs) */
-    .stTabs [data-baseweb="tab"] { color: #ffffff !important; font-size: 18px !important; }
-    .stTabs [aria-selected="true"] { color: #f59e0b !important; border-bottom: 3px solid #f59e0b !important; }
-    </style>
+    /* تحسين شكل المدخلات */
+    input { color: white !important; background-color: #0d1e36 !important; }
+</style>
 """, unsafe_allow_html=True)
 
-# (باقي وظائف الكود ثابتة كما هي لضمان الربط)
+# 3. الثوابت وإدارة الحالة
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
+
+# 4. جلب البيانات
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("---")
+        p.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
+        return p
+    except: return pd.DataFrame()
+
+df_p = load_data()
+
+# 5. نظام الدخول
+if not st.session_state.auth:
+    st.markdown("<h1 style='text-align:center; padding-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    _, c2, _ = st.columns([1,1.5,1])
+    with c2:
+        u_in = st.text_input("الأسم")
+        p_in = st.text_input("كلمة السر", type="password")
+        if st.button("دخول للنظام 🚀"):
+            if p_in == "2026":
+                st.session_state.auth, st.session_state.current_user = True, "Admin"
+                st.rerun()
+    st.stop()
+
+# 6. المنيو الرئيسي
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
+    icons=["robot", "search", "building", "briefcase"], orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+
+# 7. عرض المحتوى
+if st.session_state.selected_item is not None:
+    if st.button("⬅️ عودة للقائمة"):
+        st.session_state.selected_item = None
+        st.rerun()
+    item = st.session_state.selected_item
+    st.markdown(f"<div class='smart-box'><h2>{item['ProjectName']}</h2><p>الموقع: {item['Location']}</p></div>", unsafe_allow_html=True)
+
+elif menu == "المشاريع":
+    search = st.text_input("🔍 ابحث عن مشروع...")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    
+    # عرض المشاريع في كروت واضحة
+    for i in range(0, len(dff.head(6)), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i+j < len(dff):
+                row = dff.iloc[i+j]
+                if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row['Location']}", key=f"btn_{i+j}"):
+                    st.session_state.selected_item = row
+                    st.rerun()
+
+elif menu == "أدوات البروكر":
+    st.title("🛠️ حقيبة البروكر")
+    v = st.number_input("سعر الوحدة", 1000000)
+    st.metric("القسط الشهري التقريبي", f"{v/96:,.0f}")
+
+st.markdown("<p style='text-align:center; color:#555;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
 
 egypt_tz = pytz.timezone('Africa/Cairo')
 egypt_now = datetime.now(egypt_tz)
@@ -454,5 +496,6 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+
 
 
