@@ -8,7 +8,7 @@ import pytz
 import time
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة الفخمة
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
@@ -65,7 +65,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS) - وضوح عالٍ 2026
+# 4. التنسيق الجمالي (CSS) - الألوان الأصلية مع وضوح فائق
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -74,7 +74,7 @@ st.markdown(f"""
     [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
     
     .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 20px; }}
-    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #FFFFFF; font-size: 14px; font-weight: bold; }}
+    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #FFFFFF; font-size: 13px; font-weight: bold; }}
     @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
 
     p, span, div, label {{ color: #FFFFFF !important; font-weight: 600 !important; }}
@@ -91,6 +91,7 @@ st.markdown(f"""
     div.stButton > button[key*="card_"]:hover {{ transform: translateY(-5px) !important; border-right: 8px solid #f59e0b !important; box-shadow: 0 10px 20px rgba(245,158,11,0.2) !important; }}
     
     .smart-box {{ background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; border-right: 5px solid #f59e0b; color: white; }}
+    .side-card {{ background: #161616; padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 10px; }}
     .tool-card {{ background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 4px solid #f59e0b; text-align: center; height: 100%; }}
     .stSelectbox label, .stTextInput label, .stNumberInput label {{ color: #f59e0b !important; font-weight: bold !important; }}
     </style>
@@ -111,18 +112,21 @@ if not st.session_state.auth:
                 if user_name:
                     st.session_state.auth = True
                     st.session_state.current_user = user_name
-                    st.query_params["u"] = user_name # حفظ في الرابط للريفريش
+                    st.query_params["u"] = user_name 
                     st.rerun()
                 else: st.error("بيانات الدخول غير صحيحة")
     with tab_signup:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
-            reg_name = st.text_input("الأسم بالكامل"); reg_pass = st.text_input("كلمة السر", type="password")
-            reg_email = st.text_input("الجيميل"); reg_wa = st.text_input("رقم الواتساب")
+            reg_name = st.text_input("الأسم بالكامل")
+            reg_pass = st.text_input("كلمة السر", type="password")
+            reg_email = st.text_input("الجيميل")
+            reg_wa = st.text_input("رقم الواتساب")
             reg_co = st.text_input("الشركة")
             if st.button("تأكيد الاشتراك ✅"):
-                if signup_user(reg_name, reg_pass, reg_email, reg_wa, reg_co): st.success("تم التسجيل!")
-                else: st.error("خطأ في الاتصال")
+                if signup_user(reg_name, reg_pass, reg_email, reg_wa, reg_co):
+                    st.success("تم تسجيلك بنجاح!")
+                else: st.error("حدث خطأ في الاتصال بالسيرفر")
     st.stop()
 
 # 6. جلب البيانات
@@ -131,7 +135,8 @@ def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
     try:
-        p = pd.read_csv(u_p).fillna("---"); d = pd.read_csv(u_d).fillna("---")
+        p = pd.read_csv(u_p).fillna("---")
+        d = pd.read_csv(u_d).fillna("---")
         p.rename(columns={'Area': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
         return p, d
     except: return pd.DataFrame(), pd.DataFrame()
@@ -148,7 +153,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 8. شريط المعلومات (مع الساعة الحية JavaScript)
+# 8. شريط المعلومات والساعة الحية
 c_top1, c_top2 = st.columns([0.7, 0.3])
 with c_top1:
     st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
@@ -166,8 +171,10 @@ with c_top2:
             setInterval(updateClock, 1000);
         </script>
     """, unsafe_allow_html=True)
-    if st.button("🚪 خروج", key="logout"):
-        st.session_state.auth = False; st.query_params.clear(); st.rerun()
+    if st.button("🚪 خروج", key="logout"): 
+        st.session_state.auth = False
+        st.query_params.clear()
+        st.rerun()
 
 # 9. المنيو الرئيسي
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
@@ -180,7 +187,7 @@ if st.session_state.selected_item is not None:
     item = st.session_state.selected_item
     st.markdown(f"<div class='smart-box'><h2>{item.get('ProjectName', '---')}</h2><p>📍 الموقع: {item.get('Location', '---')}</p></div>", unsafe_allow_html=True)
 
-# --- صفحات المحتوى (بقية الكود كما هو في نسختك الأصلية) ---
+# --- صفحات المحتوى ---
 elif menu == "المشاريع":
     f1, f2 = st.columns(2)
     search = f1.text_input("🔍 ابحث باسم المشروع")
@@ -210,4 +217,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#888; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+
 
