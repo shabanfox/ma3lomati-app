@@ -1,81 +1,79 @@
 import streamlit as st
 import pandas as pd
 import requests
-import feedparser
 import time
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة ودعم الروابط (لزر الرجوع)
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide")
 
-# إدارة التنقل عبر الروابط (Query Params) لدعم زر "الباك" في الهاتف
-query_params = st.query_params
-if "page" not in query_params:
-    st.query_params["page"] = "home"
+# إدارة التنقل لزر الرجوع
+if "page" not in st.query_params:
+    st.query_params["page"] = "المشاريع"
 
-# 2. البيانات والربط
+# 2. روابط البيانات والربط
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
 if 'auth' not in st.session_state: st.session_state.auth = False
-if 'current_user' not in st.session_state: st.session_state.current_user = None
 
-# --- نظام الألوان (Ultra High Contrast) ---
+# --- نظام الألوان الاحترافي (Elite Dark Mode) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
-    /* خلفية سوداء 100% */
+    /* الخلفية الاحترافية */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #000000 !important;
+        background-color: #0E1117 !important;
         direction: rtl;
         text-align: right;
         font-family: 'Cairo', sans-serif;
     }
 
-    /* نصوص بيضاء ناصعة وعناوين صفراء فوسفورية */
-    h1, h2, h3, b, strong { color: #FFFF00 !important; font-weight: 900 !important; }
-    p, span, label { color: #FFFFFF !important; font-weight: 800 !important; font-size: 18px !important; }
+    /* نصوص هادئة وواضحة */
+    h1, h2, h3 { color: #FFFFFF !important; font-weight: 900 !important; }
+    p, span, label { color: #E0E0E0 !important; font-weight: 600 !important; font-size: 16px !important; }
     
-    /* الكروت ببرواز أبيض سميك للوضوح */
+    /* الكروت: رمادي داكن مع حافة زرقاء رقيقة */
     div.stButton > button {
-        background-color: #000000 !important;
+        background-color: #161B22 !important;
         color: #FFFFFF !important;
-        border: 3px solid #FFFFFF !important;
+        border: 1px solid #30363D !important;
+        border-right: 5px solid #1E90FF !important;
         border-radius: 8px !important;
-        padding: 20px !important;
-        font-size: 18px !important;
+        padding: 15px !important;
+        transition: 0.3s all;
+        text-align: right !important;
         width: 100% !important;
-        font-weight: 900 !important;
-        margin-bottom: 10px;
     }
     
-    /* عند الضغط على الزرار */
-    div.stButton > button:active, div.stButton > button:focus {
-        background-color: #FFFF00 !important;
-        color: #000000 !important;
-        border: 3px solid #FFFF00 !important;
+    div.stButton > button:hover {
+        border-color: #1E90FF !important;
+        background-color: #1C2128 !important;
+        transform: translateY(-2px);
     }
 
-    /* تحسين شكل الفلاتر والمدخلات */
+    /* تحسين شكل الفلاتر */
     .stTextInput input, .stSelectbox div, .stMultiSelect div {
-        background-color: #000000 !important;
+        background-color: #0D1117 !important;
         color: #FFFFFF !important;
-        border: 2px solid #FFFF00 !important;
-        font-size: 18px !important;
+        border: 1px solid #30363D !important;
         border-radius: 5px !important;
     }
-    
-    /* إخفاء شريط الأدوات الافتراضي لزيادة التركيز */
-    footer {visibility: hidden;}
+
+    /* زرار الخروج بلون أحمر هادئ */
+    button[key="logout_btn"] {
+        background-color: #DA3633 !important;
+        border: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. وظائف الدخول
+# 3. وظيفة الدخول
 def login_user(u, p):
     try:
         res = requests.get(f"{SCRIPT_URL}?nocache={time.time()}").json()
         for user in res:
-            if (u.lower() == str(user.get('Name')).lower() or u.lower() == str(user.get('Email')).lower()) and str(p) == str(user.get('Password')):
+            if (u.lower() == str(user.get('Name')).lower()) and str(p) == str(user.get('Password')):
                 return user.get('Name')
         return None
     except: return None
@@ -93,98 +91,72 @@ def load_data():
 
 # --- شاشة الدخول ---
 if not st.session_state.auth:
-    st.markdown("<h1 style='text-align:center;'>MA3LOMATI PRO 2026</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
     with st.container():
-        u = st.text_input("الأسم أو البريد")
+        u = st.text_input("اسم المستخدم")
         p = st.text_input("كلمة السر", type="password")
-        if st.button("دخول للمنصة 🚀"):
+        if st.button("دخول آمن 🔒"):
             if p == "2026": 
                 st.session_state.auth = True; st.session_state.current_user = "Admin"; st.rerun()
             user = login_user(u, p)
             if user:
                 st.session_state.auth = True; st.session_state.current_user = user; st.rerun()
-            else: st.error("❌ بيانات الدخول غير صحيحة")
+            else: st.error("عفواً، البيانات غير صحيحة")
     st.stop()
 
 df_p, df_d = load_data()
 
-# --- القائمة الرئيسية ---
-# نستخدم Query Params لتغيير الصفحة حتى يعمل زر الباك
-current_page = st.query_params.get("page", "المشاريع")
-
+# --- المنيو العلوي ---
 menu = option_menu(None, ["المشاريع", "المساعد الذكي", "المطورين", "الأدوات"], 
     icons=["building", "robot", "people", "calculator"], 
-    default_index=0,
-    orientation="horizontal",
+    default_index=0, orientation="horizontal",
     styles={
-        "container": {"background-color": "#000"},
-        "nav-link": {"color": "#FFF", "font-size": "14px", "text-align": "center"},
-        "nav-link-selected": {"background-color": "#FFFF00", "color": "#000", "font-weight": "bold"}
+        "container": {"background-color": "#161B22", "border": "1px solid #30363D"},
+        "nav-link-selected": {"background-color": "#1E90FF", "color": "white"}
     })
 
-# تحديث الرابط عند تغيير القائمة
-if menu != st.query_params.get("page"):
-    st.query_params["page"] = menu
-
 # --- محتوى الصفحات ---
-
 if menu == "المشاريع":
-    st.markdown("### 🔍 بحث متقدم")
+    st.markdown("### 🔍 تصفية النتائج")
     c1, c2 = st.columns(2)
-    f_loc = c1.multiselect("📍 المناطق", options=df_p['Location'].unique())
-    f_search = c2.text_input("🔍 ابحث عن اسم المشروع...")
+    f_loc = c1.multiselect("📍 المنطقة", options=sorted(df_p['Location'].unique()))
+    f_search = c2.text_input("🔍 ابحث عن مشروع...")
     
     res = df_p.copy()
     if f_loc: res = res[res['Location'].isin(f_loc)]
     if f_search: res = res[res['ProjectName'].str.contains(f_search, case=False)]
     
     for i, row in res.iterrows():
-        with st.container():
-            # جعل الكارت كبير وواضح جداً
-            if st.button(f"🏢 {row['ProjectName']} | 📍 {row['Location']}\n🏗️ المطور: {row['Developer']}", key=f"p_{i}"):
-                st.session_state.selected_item = row
-                st.query_params["item"] = row['ProjectName']
-                st.rerun()
+        if st.button(f"🏢 {row['ProjectName']} — {row['Location']}\n🏗️ مطور: {row['Developer']}", key=f"p_{i}"):
+            st.session_state.selected_item = row
+            st.query_params["item"] = row['ProjectName']
+            st.rerun()
 
 elif menu == "الأدوات":
-    st.markdown("### 🛠️ حواسب البروكر الذكية")
+    st.markdown("### 🛠️ الحاسبة العقارية")
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("<div style='border:2px solid #FFFF00; padding:15px; border-radius:10px;'>", unsafe_allow_html=True)
-        st.write("💰 **حاسبة القسط**")
-        price = st.number_input("سعر الوحدة", value=1000000, step=100000)
+        st.write("💰 **حساب القسط**")
+        price = st.number_input("السعر الإجمالي", value=1000000)
         years = st.slider("السنين", 1, 15, 8)
-        st.warning(f"القسط الشهري: {price/(years*12):,.0f} ج.م")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.info(f"القسط الشهري التقديري: {price/(years*12):,.0f} ج.م")
     with col2:
-        st.markdown("<div style='border:2px solid #FFFF00; padding:15px; border-radius:10px;'>", unsafe_allow_html=True)
-        st.write("📈 **حاسبة العمولة**")
-        deal = st.number_input("الصفقة", value=2000000)
+        st.write("📈 **حساب العمولات**")
+        deal = st.number_input("قيمة الصفقة", value=2000000)
         pct = st.slider("النسبة %", 1.0, 5.0, 1.5)
-        st.success(f"عمولتك: {deal*(pct/100):,.0f} ج.م")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.success(f"صافي الربح: {deal*(pct/100):,.0f} ج.م")
 
-elif menu == "المساعد الذكي":
-    st.markdown("### 🤖 المساعد الذكي")
-    req = st.text_area("أدخل طلب العميل هنا (مثلاً: شقة في التجمع بـ 5 مليون ومقدم 10%)")
-    if st.button("🎯 استخراج الترشيحات"):
-        st.write("✅ جاري تحليل البيانات ومطابقتها...")
-        time.sleep(1)
-        st.info("تم العثور على 3 مشاريع مطابقة لطلبك!")
-
-# عرض تفاصيل المشروع (Popup)
+# تفاصيل المشروع (تظهر عند الضغط)
 if "item" in st.query_params:
     st.markdown("---")
-    st.markdown("<div style='border:4px solid #FFFF00; padding:20px; background-color:#111;'>", unsafe_allow_html=True)
-    st.header(f"✨ تفاصيل المشروع")
-    # البحث عن المشروع المختار في الداتا
     item_details = df_p[df_p['ProjectName'] == st.query_params["item"]].iloc[0]
-    st.write(item_details)
-    if st.button("⬅️ عودة للمشاريع"):
-        del st.query_params["item"]
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.expander("📄 تفاصيل المشروع كاملة", expanded=True):
+        st.write(item_details)
+        if st.button("اغلاق التفاصيل ❌"):
+            del st.query_params["item"]
+            st.rerun()
 
-if st.button("🚪 خروج من النظام"):
+if st.button("تسجيل خروج", key="logout_btn"):
     st.session_state.auth = False
     st.rerun()
+
