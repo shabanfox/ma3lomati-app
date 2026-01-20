@@ -5,16 +5,14 @@ import plotly.graph_objects as go
 import requests
 import urllib.parse
 import time
-from datetime import datetime
-import pytz
 from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. التنسيق الجمالي الموحد
+# 2. التنسيق الجمالي (Midnight & Gold)
 st.markdown("""
-    <style>
+<style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     .block-container { padding-top: 1rem !important; }
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
@@ -28,13 +26,14 @@ st.markdown("""
         min-height: 80px !important; width: 100% !important; transition: 0.3s all ease !important;
     }
     .smart-box { background: #112240; border: 1px solid #233554; padding: 25px; border-radius: 20px; border-right: 6px solid #f59e0b; margin-bottom: 20px; }
-    .metric-card { background: #172a45; padding: 15px; border-radius: 12px; border: 1px solid #233554; text-align: center; }
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
 # 3. إدارة الحالة والروابط
-if 'auth' not in st.session_state: st.session_state.auth = False
-if 'current_user' not in st.session_state: st.session_state.current_user = None
+if 'auth' not in st.session_state:
+    st.session_state.auth = False
+if 'current_user' not in st.session_state:
+    st.session_state.current_user = None
 
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
@@ -43,67 +42,86 @@ def login_user(u_in, p_in):
         res = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
         if res.status_code == 200:
             for u in res.json():
-                if (u_in.strip().lower() in [str(u.get('Name','')).lower(), str(u.get('Email','')).lower()]) and str(p_in) == str(u.get('Password','')):
-                    return str(u.get('Name'))
+                name = str(u.get('Name',''))
+                passw = str(u.get('Password',''))
+                email = str(u.get('Email',''))
+                if (u_in.strip().lower() in [name.lower(), email.lower()]) and str(p_in) == passw:
+                    return name
         return None
-    except: return None
+    except:
+        return None
 
 # 4. نظام الدخول
 if not st.session_state.auth:
     st.markdown("<h1 style='text-align:center; padding-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    u_log = st.text_input("الأسم أو الجيميل")
-    p_log = st.text_input("كلمة السر", type="password")
+    u_log = st.text_input("الأسم أو الجيميل", key="user_input")
+    p_log = st.text_input("كلمة السر", type="password", key="pass_input")
     if st.button("دخول للنظام 🚀"):
         if p_log == "2026":
-            st.session_state.auth, st.session_state.current_user = True, "Admin"
+            st.session_state.auth = True
+            st.session_state.current_user = "Admin"
             st.rerun()
         else:
-            user_found = login_user(u_log, p_log)
-            if user_found:
-                st.session_state.auth, st.session_state.current_user = True, user_found
+            found_name = login_user(u_log, p_log)
+            if found_name:
+                st.session_state.auth = True
+                st.session_state.current_user = found_name
                 st.rerun()
             else:
                 st.error("بيانات الدخول غير صحيحة")
     st.stop()
 
 # 5. القائمة الرئيسية
-menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "البروكر المحترف", "أدوات البروكر"], 
-    icons=["robot", "search", "building", "stars", "calculator"], orientation="horizontal",
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "البروكر المحترف", "أدوات البروكر"], 
+    icons=["robot", "search", "stars", "calculator"], orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-# 6. قسم البروكر المحترف
+# 6. قسم البروكر المحترف (المحاكي)
 if menu == "البروكر المحترف":
     st.title("🏆 أدوات البروكر المحترف")
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-    st.subheader("💡 محاكي الثروة (عقار vs ذهب vs بنك)")
+    st.subheader("💡 محاكي نمو الاستثمار العقاري")
     
-    c_in, c_ch = st.columns([1, 2])
-    with c_in:
-        inv = st.number_input("المبلغ المستثمر", 1000000, value=5000000)
-        y = st.slider("عدد السنوات", 1, 10, 5)
-        g = st.slider("زيادة العقار السنوية %", 10, 50, 25)
-        c_wa = st.text_input("رقم العميل لإرسال التحليل")
+    col_input, col_chart = st.columns([1, 2])
     
-    # حسابات المحاكاة
+    with col_input:
+        inv = st.number_input("المبلغ المستثمر (EGP)", 1000000, value=5000000)
+        y = st.slider("مدة الاستثمار (سنين)", 1, 10, 5)
+        g = st.slider("نسبة زيادة العقار سنوياً %", 10, 50, 25)
+        client_phone = st.text_input("رقم واتساب العميل")
+
+    # الحسابات الرياضية
     t = np.arange(0, y + 1)
-    p_v = inv * (1 + (g/100)) ** t
-    g_v = inv * (1 + 0.20) ** t # ذهب
-    b_v = inv * (1 + 0.18) ** t # بنك
-    
-    with c_ch:
+    v_prop = inv * (1 + (g/100)) ** t
+    v_gold = inv * (1 + 0.20) ** t
+    v_bank = inv * (1 + 0.18) ** t
+
+    with col_chart:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=t, y=p_v, name="عقار", line=dict(color='#f59e0b', width=4)))
-        fig.add_trace(go.Scatter(x=t, y=g_v, name="ذهب", line=dict(dash='dash', color='yellow')))
-        fig.add_trace(go.Scatter(x=t, y=b_v, name="بنك", line=dict(dash='dot', color='green')))
+        fig.add_trace(go.Scatter(x=t, y=v_prop, name="عقار", line=dict(color='#f59e0b', width=4)))
+        fig.add_trace(go.Scatter(x=t, y=v_gold, name="ذهب", line=dict(dash='dash', color='yellow')))
+        fig.add_trace(go.Scatter(x=t, y=v_bank, name="بنك", line=dict(dash='dot', color='green')))
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
         st.plotly_chart(fig, use_container_width=True)
+
+    if st.button("📲 إرسال التحليل للعميل"):
+        profit_val = v_prop[-1] - inv
+        wa_msg = f"تحليل مالي من MA3LOMATI PRO:\nاستثمارك بقيمة {inv:,.0f} جنيه متوقع وصوله لـ {v_prop[-1]:,.0f} جنيه بعد {y} سنوات بعائد ربح {profit_val:,.0f} جنيه."
+        st.markdown(f"[اضغط هنا للإرسال](https://wa.me/{client_phone}?text={urllib.parse.quote(wa_msg)})")
     
-    if st.button("📲 إرسال التحليل المالي للعميل"):
-        profit = p_v[-1] - inv
-        msg = f"تحليل مالي من MA3LOMATI PRO:\nاستثمارك بقيمة {inv:,.0f} سيعود بـ {p_v[-1]:,.0f} بعد {y} سنوات بعائد ربح {profit:,.0f}."
-        st.markdown(f"[إرسال الآن](https://wa.me/{c_wa}?text={urllib.parse.quote(msg)})")
     st.markdown("</div>", unsafe_allow_html=True)
 
+# 7. الأقسام الأخرى (هياكل جاهزة)
+elif menu == "المشاريع":
+    st.title("🏢 دليل المشاريع الذكي")
+    st.info("سيتم ربط بيانات المشاريع هنا فوراً من الجوجل شيت")
+
+elif menu == "أدوات البروكر":
+    st.title("🛠️ الحاسبة السريعة")
+    val = st.number_input("سعر الوحدة", value=1000000)
+    st.metric("القسط الشهري التقريبي", f"{(val*0.9)/(8*12):,.0f}")
+
+st.markdown(f"<p style='text-align:center;'>المستخدم الحالي: {st.session_state.current_user} | 2026</p>", unsafe_allow_html=True)
 elif menu == "أدوات البروكر":
     st.title("🛠️ الحاسبة المالية")
     val = st.number_input("قيمة العقار", value=1000000)
@@ -356,6 +374,7 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
 
 
