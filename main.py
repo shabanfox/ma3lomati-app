@@ -127,6 +127,29 @@ elif menu == "أدوات البروكر":
     st.metric("القسط الشهري التقديري (8 سنوات)", f"{(val*0.9)/(8*12):,.0f}")
 
 st.markdown(f"<p style='text-align:center; color:#4f5b7d;'>مرحباً بك يا {st.session_state.current_user} في MA3LOMATI PRO</p>", unsafe_allow_html=True)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=t, y=prop, name="عقار", line=dict(color='#f59e0b', width=4)))
+        fig.add_trace(go.Scatter(x=t, y=gold, name="ذهب", line=dict(dash='dash', color='yellow')))
+        fig.add_trace(go.Scatter(x=t, y=bank, name="بنك", line=dict(dash='dot', color='green')))
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
+        st.plotly_chart(fig, use_container_width=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+# 7. باقي الأقسام
+elif menu == "المشاريع":
+    search = st.text_input("🔍 ابحث عن مشروع")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    for i, r in dff.head(10).iterrows():
+        if st.button(f"🏢 {r['ProjectName']} | {r['Location']}", key=f"p_{i}"):
+            st.info(f"تفاصيل مشروع {r['ProjectName']} قيد التحميل...")
+
+elif menu == "أدوات البروكر":
+    st.title("🛠️ الحاسبة المالية")
+    val = st.number_input("قيمة العقار", value=1000000)
+    st.metric("القسط الشهري التقديري (8 سنوات)", f"{(val*0.9)/(8*12):,.0f}")
+
+st.markdown(f"<p style='text-align:center; color:#4f5b7d;'>مرحباً بك يا {st.session_state.current_user} في MA3LOMATI PRO</p>", unsafe_allow_html=True)
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
             reg_name = st.text_input("الأسم بالكامل")
@@ -327,5 +350,6 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
 
