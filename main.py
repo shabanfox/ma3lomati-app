@@ -1,4 +1,4 @@
-Import streamlit as st
+import streamlit as st
 import pandas as pd
 import requests
 import feedparser
@@ -313,55 +313,4 @@ elif menu == "أدوات البروكر":
         st.write(f"الفائدة التقديرية (20%): {loan*0.20:,.0f}/سنة")
         st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)    locs = ["الكل"] + sorted(df_p['Location'].unique().tolist()) if not df_p.empty else ["الكل"]
-    loc = st.selectbox("📍 المنطقة", locs)
-    wa = st.text_input("واتساب العميل")
-    if st.button("🎯 ترشيح"):
-        res = df_p[df_p['Location'] == loc] if loc != "الكل" else df_p
-        for _, r in res.head(5).iterrows():
-            st.write(f"🏢 **{r['ProjectName']}**")
-            msg = f"أرشح لك {r['ProjectName']} في {r['Location']}."
-            st.markdown(f"[📲 إرسال](https://wa.me/{wa}?text={urllib.parse.quote(msg)})")
-
-elif menu == "المشاريع":
-    search = st.text_input("🔍 ابحث عن مشروع")
-    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
-    start = st.session_state.p_idx * 6
-    for i, r in dff.iloc[start:start+6].iterrows():
-        if st.button(f"🏢 {r['ProjectName']}\n📍 {r['Location']}", key=f"card_p_{i}"):
-            st.session_state.selected_item = r
-            st.rerun()
-    c1, _, c2 = st.columns([1,2,1])
-    if st.session_state.p_idx > 0:
-        if c1.button("السابق"): st.session_state.p_idx -= 1; st.rerun()
-    if start + 6 < len(dff):
-        if c2.button("التالي"): st.session_state.p_idx += 1; st.rerun()
-
-elif menu == "المطورين":
-    search_d = st.text_input("🔍 ابحث عن مطور")
-    # ميزة إضافية: فلتر المنطقة للمطورين
-    loc_d = st.selectbox("📍 فلتر مطوري منطقة معينة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
-    
-    # ربط المطورين بالمشاريع لإيجاد مطوري المنطقة
-    if loc_d != "الكل":
-        devs_in_loc = df_p[df_p['Location'] == loc_d]['Developer'].unique()
-        dfd_f = df_d[df_d['Developer'].isin(devs_in_loc)]
-    else:
-        dfd_f = df_d
-        
-    if search_d:
-        dfd_f = dfd_f[dfd_f['Developer'].str.contains(search_d, case=False)]
-        
-    for i, r in dfd_f.head(10).iterrows():
-        if st.button(f"🏗️ {r['Developer']}", key=f"card_d_{i}"):
-            st.session_state.selected_item = r
-            st.rerun()
-
-elif menu == "أدوات البروكر":
-    st.title("🛠️ أدوات مالية")
-    v = st.number_input("السعر", value=1000000)
-    d = st.number_input("المقدم", value=100000)
-    st.metric("القسط الشهري (8 سنين)", f"{(v-d)/(8*12):,.0f}")
-
-st.markdown(f"<p style='text-align:center; color:#555;'>MA3LOMATI PRO © 2026 | {egypt_now.strftime('%I:%M %p')}</p>", unsafe_allow_html=True)
-
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
