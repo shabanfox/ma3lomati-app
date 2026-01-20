@@ -8,13 +8,22 @@ import pytz
 import time
 from streamlit_option_menu import option_menu
 
-# 1. إعدادات الصفحة الفخمة
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
+# --- ميزة حماية الموبايل (منع الخروج بزر الرجوع) ---
+st.components.v1.html("""
+<script>
+    window.onbeforeunload = function() { return "هل تريد مغادرة المنصة؟"; };
+    history.pushState(null, null, location.href);
+    window.onpopstate = function () { history.go(1); };
+</script>
+""", height=0)
+
+# 2. الروابط الأساسية
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
-# 3. إدارة الحالة والتوقيت المصري
+# 3. إدارة الحالة
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
@@ -24,7 +33,7 @@ if 'selected_item' not in st.session_state: st.session_state.selected_item = Non
 egypt_tz = pytz.timezone('Africa/Cairo')
 egypt_now = datetime.now(egypt_tz)
 
-# --- وظائف الربط مع جوجل شيت (الخلفية) ---
+# --- وظائف قاعدة البيانات ---
 def signup_user(name, pwd, email, wa, comp):
     payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
     try:
@@ -46,7 +55,6 @@ def login_user(user_input, pwd_input):
         return None
     except: return None
 
-# 3. جلب الأخبار العقارية
 @st.cache_data(ttl=1800)
 def get_real_news():
     try:
@@ -54,57 +62,123 @@ def get_real_news():
         feed = feedparser.parse(rss_url)
         news = [item.title for item in feed.entries[:10]]
         return "  •  ".join(news) if news else "سوق العقارات المصري: متابعة مستمرة لآخر المستجدات."
-    except: return "MA3LOMATI PRO: منصتك العقارية الأولى في مصر لعام 2026."
+    except: return "MA3LOMATI PRO 2026"
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS) - تصميم 2026
+# 4. التنسيق الجمالي (White & Gold UI)
 st.markdown(f"""
-    <style>
+<style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     .block-container {{ padding-top: 0rem !important; }}
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
     
-    .ticker-wrap {{ width: 100%; background: transparent; padding: 5px 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; margin-bottom: 20px; }}
-    .ticker {{ display: inline-block; animation: ticker 150s linear infinite; color: #aaa; font-size: 13px; }}
-    @keyframes ticker {{ 0% {{ transform: translateX(100%); }} 100% {{ transform: translateX(-100%); }} }}
-
-    div.stButton > button {{ border-radius: 12px !important; font-family: 'Cairo', sans-serif !important; transition: 0.3s !important; }}
-    div.stButton > button[key*="card_"] {{
-        background-color: white !important; color: #111 !important;
-        min-height: 140px !important; text-align: right !important;
-        font-weight: bold !important; font-size: 15px !important;
-        border: none !important; margin-bottom: 10px !important;
-        display: block !important; width: 100% !important;
+    /* نصوص بيضاء ناصعة */
+    p, span, label, .stWrite, .stMetric div, .stMarkdown {{ 
+        color: #ffffff !important; 
+        font-weight: 600 !important; 
     }}
-    div.stButton > button[key*="card_"]:hover {{ transform: translateY(-5px) !important; border-right: 8px solid #f59e0b !important; box-shadow: 0 10px 20px rgba(245,158,11,0.2) !important; }}
     
-    .smart-box {{ background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; border-right: 5px solid #f59e0b; color: white; }}
-    .side-card {{ background: #161616; padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 10px; }}
-    .tool-card {{ background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 4px solid #f59e0b; text-align: center; height: 100%; }}
-    .stSelectbox label, .stTextInput label, .stNumberInput label {{ color: #f59e0b !important; font-weight: bold !important; }}
-    </style>
+    h1, h2, h3, h4 {{ color: #f59e0b !important; font-weight: 900 !important; }}
+
+    /* الأزرار المعدلة */
+    div.stButton > button {{ 
+        border-radius: 12px !important; 
+        background: #111 !important;
+        color: #ffffff !important;
+        border: 2px solid #f59e0b !important;
+        transition: 0.3s !important;
+    }}
+    
+    /* كروت المشاريع */
+    div.stButton > button[key*="card_"], div.stButton > button[key*="ready_"] {{
+        background: linear-gradient(145deg, #111, #1a1a1a) !important;
+        color: #ffffff !important;
+        min-height: 130px !important;
+        border-right: 8px solid #f59e0b !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+    }}
+    
+    div.stButton > button:hover {{ 
+        background: #f59e0b !important; 
+        color: #000 !important; 
+    }}
+    
+    .smart-box {{ background: #111; border: 1px solid #333; padding: 20px; border-radius: 20px; border-right: 5px solid #f59e0b; color: white; }}
+    .ticker-wrap {{ background: #111; border-bottom: 1px solid #222; padding: 8px; }}
+    .ticker {{ color: #f59e0b !important; font-weight: bold; }}
+</style>
 """, unsafe_allow_html=True)
 
-# 5. شاشة الدخول والاشتراك (تم دمجها بربط الجوجل شيت)
+# 5. شاشة الدخول
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:50px;'><h1 style='color:#f59e0b; font-size:60px;'>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
-    
-    tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 اشتراك جديد"])
-    
+    st.markdown("<h1 style='text-align:center; padding-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    tab_login, tab_signup = st.tabs(["🔐 دخول", "📝 اشتراك"])
     with tab_login:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
-            u_input = st.text_input("الأسم أو الجيميل", key="log_user")
-            p_input = st.text_input("كلمة السر", type="password", key="log_pass")
-            # دعم كود الدخول المباشر القديم كخيار إضافي
+            u_in = st.text_input("الأسم أو الجيميل")
+            p_in = st.text_input("كلمة السر", type="password")
             if st.button("دخول للمنصة 🚀"):
-                if p_input == "2026": # الكود المباشر
-                    st.session_state.auth = True
-                    st.session_state.current_user = "Admin"
+                if p_in == "2026":
+                    st.session_state.auth, st.session_state.current_user = True, "Admin"
                     st.rerun()
                 else:
+                    verified = login_user(u_in, p_in)
+                    if verified:
+                        st.session_state.auth, st.session_state.current_user = True, verified
+                        st.rerun()
+    st.stop()
+
+# 6. جلب البيانات
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("---")
+        d = pd.read_csv(u_d).fillna("---")
+        p.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
+        return p, d
+    except: return pd.DataFrame(), pd.DataFrame()
+
+df_p, df_d = load_data()
+
+# 7. الهيدر
+st.markdown(f"<div class='smart-box' style='text-align:center;'><h1>MA3LOMATI PRO</h1><p>مرحباً {st.session_state.current_user}</p></div>", unsafe_allow_html=True)
+st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
+
+# 8. المنيو
+menu = option_menu(None, ["المساعد الذكي", "المشاريع", "أدوات البروكر"], 
+    icons=["robot", "search", "briefcase"], orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+
+# 9. تفاصيل المشروع
+if st.session_state.selected_item is not None:
+    if st.button("⬅️ عودة"): st.session_state.selected_item = None; st.rerun()
+    item = st.session_state.selected_item
+    st.markdown(f"<div class='smart-box'><h2>{item.get('ProjectName')}</h2><p>📍 الموقع: {item.get('Location')}</p></div>", unsafe_allow_html=True)
+
+# 10. الأقسام
+elif menu == "المشاريع":
+    search = st.text_input("🔍 ابحث عن مشروع")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    for i in range(0, len(dff.head(6)), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i+j < len(dff):
+                row = dff.iloc[i+j]
+                if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row['Location']}", key=f"card_p_{i+j}"):
+                    st.session_state.selected_item = row; st.rerun()
+
+elif menu == "أدوات البروكر":
+    c1, c2 = st.columns(2)
+    with c1:
+        v = st.number_input("إجمالي السعر", 1000000)
+        st.metric("القسط (8 سنين)", f"{v/96:,.0f}")
+
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
                     user_verified = login_user(u_input, p_input)
                     if user_verified:
                         st.session_state.auth = True
@@ -314,4 +388,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
