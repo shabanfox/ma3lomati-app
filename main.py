@@ -14,8 +14,16 @@ st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sid
 # 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
-# 3. إدارة الحالة والتوقيت المصري
-if 'auth' not in st.session_state: st.session_state.auth = False
+# 3. إدارة الحالة والتوقيت المصري (معدلة لدعم الريفريش)
+if 'auth' not in st.session_state:
+    # التحقق من وجود مستخدم مسجل في الرابط عند الريفريش
+    query_params = st.query_params
+    if "u" in query_params:
+        st.session_state.auth = True
+        st.session_state.current_user = query_params["u"]
+    else:
+        st.session_state.auth = False
+
 if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
@@ -98,20 +106,20 @@ if not st.session_state.auth:
         with c2:
             u_input = st.text_input("الأسم أو الجيميل", key="log_user")
             p_input = st.text_input("كلمة السر", type="password", key="log_pass")
-            # دعم كود الدخول المباشر القديم كخيار إضافي
             if st.button("دخول للمنصة 🚀"):
                 if p_input == "2026": # الكود المباشر
-                    st.session_state.auth = True
-                    st.session_state.current_user = "Admin"
-                    st.rerun()
+                    user_verified = "Admin"
                 else:
                     user_verified = login_user(u_input, p_input)
-                    if user_verified:
-                        st.session_state.auth = True
-                        st.session_state.current_user = user_verified
-                        st.rerun()
-                    else:
-                        st.error("بيانات الدخول غير صحيحة")
+                
+                if user_verified:
+                    st.session_state.auth = True
+                    st.session_state.current_user = user_verified
+                    # حفظ اسم المستخدم في الرابط لمنع الخروج عند الريفريش
+                    st.query_params["u"] = user_verified
+                    st.rerun()
+                else:
+                    st.error("بيانات الدخول غير صحيحة")
 
     with tab_signup:
         _, c2, _ = st.columns([1,1.5,1])
@@ -163,14 +171,17 @@ with c_top2:
     st.markdown(f"""<div style='text-align: left; padding: 5px; color: #aaa; font-size: 14px;'>
                 📅 {egypt_now.strftime('%Y-%m-%d')} | 🕒 {egypt_now.strftime('%I:%M %p')} 
                 <span style='cursor:pointer; color:#f59e0b; margin-right:15px;' onclick='window.location.reload()'>🔄</span></div>""", unsafe_allow_html=True)
-    if st.button("🚪 خروج", key="logout"): st.session_state.auth = False; st.rerun()
+    if st.button("🚪 خروج", key="logout"): 
+        st.session_state.auth = False
+        st.query_params.clear() # مسح الرابط عند الخروج
+        st.rerun()
 
 # 9. المنيو الرئيسي
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
     icons=["robot", "search", "building", "briefcase"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
-# 10. تفاصيل المشروع (صفحة منبثقة)
+# 10. تفاصيل المشروع
 if st.session_state.selected_item is not None:
     if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
     item = st.session_state.selected_item
