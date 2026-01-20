@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 import requests
 import urllib.parse
 import time
+from datetime import datetime
+import pytz
 from streamlit_option_menu import option_menu
 
 # 1. إعدادات الصفحة
@@ -19,91 +21,112 @@ st.markdown("""
     [data-testid="stAppViewContainer"] { background-color: #0a192f; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }
     h1, h2, h3 { color: #f59e0b !important; }
     p, span, label { color: #ccd6f6 !important; font-weight: bold; }
+    div.stButton > button {
+        background: linear-gradient(145deg, #112240, #0a192f) !important;
+        color: #ffffff !important; border: 1px solid #233554 !important;
+        border-right: 5px solid #f59e0b !important; border-radius: 12px !important;
+        min-height: 80px !important; width: 100% !important; transition: 0.3s all ease !important;
+    }
     .smart-box { background: #112240; border: 1px solid #233554; padding: 25px; border-radius: 20px; border-right: 6px solid #f59e0b; margin-bottom: 20px; }
     .metric-card { background: #172a45; padding: 15px; border-radius: 12px; border: 1px solid #233554; text-align: center; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. إدارة الحالة (الدخول مثبت للتجربة)
-if 'auth' not in st.session_state: st.session_state.auth = True # مؤقتاً للتجربة
-if 'current_user' not in st.session_state: st.session_state.current_user = "البروكر المحترف"
+# 3. إدارة الحالة والروابط
+if 'auth' not in st.session_state: st.session_state.auth = False
+if 'current_user' not in st.session_state: st.session_state.current_user = None
+if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-# 4. المنيو الرئيسي (تم إضافة البروكر المحترف)
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+
+# --- وظائف الربط ---
+def login_user(u_in, p_in):
+    try:
+        res = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
+        if res.status_code == 200:
+            for u in res.json():
+                if (u_in.strip().lower() in [str(u.get('Name','')).lower(), str(u.get('Email','')).lower()]) and str(p_in) == str(u.get('Password','')):
+                    return str(u.get('Name'))
+        return None
+    except: return None
+
+@st.cache_data(ttl=60)
+def load_data():
+    u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    u_d = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+    try:
+        p = pd.read_csv(u_p).fillna("---")
+        d = pd.read_csv(u_d).fillna("---")
+        p.rename(columns={'Area':'Location','الموقع':'Location','Project Name':'ProjectName'}, inplace=True)
+        return p, d
+    except: return pd.DataFrame(), pd.DataFrame()
+
+# 4. نظام الدخول
+if not st.session_state.auth:
+    st.markdown("<h1 style='text-align:center; padding-top:50px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    with st.container():
+        u_log = st.text_input("الأسم أو الجيميل")
+        p_log = st.text_input("كلمة السر", type="password")
+        if st.button("دخول للنظام 🚀"):
+            if p_log == "2026":
+                st.session_state.auth, st.session_state.current_user = True, "Admin"
+                st.rerun()
+            else:
+                user_found = login_user(u_log, p_log)
+                if user_found:
+                    st.session_state.auth, st.session_state.current_user = True, user_found
+                    st.rerun()
+                else:
+                    st.error("بيانات الدخول غير صحيحة")
+    st.stop()
+
+# 5. القائمة الرئيسية
+df_p, df_d = load_data()
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "البروكر المحترف", "أدوات البروكر"], 
     icons=["robot", "search", "building", "stars", "calculator"], orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-# --- 5. قسم البروكر المحترف (المحاكي المالي) ---
+# 6. قسم البروكر المحترف (المحاكي المالي)
 if menu == "البروكر المحترف":
     st.title("🏆 أدوات البروكر المحترف")
-    st.subheader("💡 محاكي القرار المالي الذكي (عقار vs ذهب vs بنك)")
+    st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
+    st.subheader("💡 محاكي نمو الثروة العقارية")
     
-    with st.container():
-        st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
+    col_a, col_b = st.columns([1, 2])
+    with col_a:
+        amount = st.number_input("مبلغ الاستثمار", 1000000, value=5000000)
+        years = st.slider("السنوات", 1, 10, 5)
+        growth = st.slider("زيادة العقار السنوية %", 10, 50, 25)
+    
+    with col_b:
+        t = np.arange(0, years + 1)
+        prop = amount * (1 + (growth/100)) ** t
+        gold = amount * (1 + 0.20) ** t
+        bank = amount * (1 + 0.18) ** t
         
-        invest_amount = c1.number_input("المبلغ المراد استثماره (EGP)", value=5000000, step=100000)
-        years = c2.slider("مدة الاستثمار (سنوات)", 1, 10, 5)
-        expected_growth = c3.slider("زيادة العقار السنوية المتوقعة (%)", 10, 50, 25)
-        
-        # معادلات المحاكاة التقديرية (بناءً على السوق المصري 2026)
-        bank_rate = 0.18  # فائدة البنك
-        gold_rate = 0.20  # زيادة الذهب المتوقعة
-        real_estate_rate = expected_growth / 100
-        
-        time_axis = np.arange(0, years + 1)
-        bank_values = invest_amount * (1 + bank_rate) ** time_axis
-        gold_values = invest_amount * (1 + gold_rate) ** time_axis
-        property_values = invest_amount * (1 + real_estate_rate) ** time_axis
-
-        # رسم بياني احترافي
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=time_axis, y=property_values, name='الاستثمار العقاري', line=dict(color='#f59e0b', width=4)))
-        fig.add_trace(go.Scatter(x=time_axis, y=gold_values, name='الذهب', line=dict(color='#ffeb3b', dash='dash')))
-        fig.add_trace(go.Scatter(x=time_axis, y=bank_values, name='شهادات البنك', line=dict(color='#4caf50', dash='dot')))
-        
-        fig.update_layout(
-            title="توقعات نمو الثروة على مدار السنوات",
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="white", family="Cairo"),
-            xaxis=dict(title="السنوات", gridcolor='#233554'),
-            yaxis=dict(title="القيمة الإجمالية", gridcolor='#233554'),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        
+        fig.add_trace(go.Scatter(x=t, y=prop, name="عقار", line=dict(color='#f59e0b', width=4)))
+        fig.add_trace(go.Scatter(x=t, y=gold, name="ذهب", line=dict(dash='dash', color='yellow')))
+        fig.add_trace(go.Scatter(x=t, y=bank, name="بنك", line=dict(dash='dot', color='green')))
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
         st.plotly_chart(fig, use_container_width=True)
-        
-        # ملخص النتائج
-        st.markdown("### 📊 تحليل الجدوى الاقتصادية")
-        res1, res2, res3 = st.columns(3)
-        res1.markdown(f"<div class='metric-card'><h4>قيمة العقار بعد {years} سنوات</h4><h2 style='color:#f59e0b;'>{property_values[-1]:,.0f}</h2></div>", unsafe_allow_html=True)
-        res2.markdown(f"<div class='metric-card'><h4>العائد الصافي المتوقع</h4><h2 style='color:#10b981;'>{property_values[-1] - invest_amount:,.0f}</h2></div>", unsafe_allow_html=True)
-        res3.markdown(f"<div class='metric-card'><h4>نسبة الربح الإجمالية</h4><h2 style='color:#f59e0b;'>{((property_values[-1]/invest_amount)-1)*100:,.1f}%</h2></div>", unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    st.info("💡 نصيحة احترافية: العقار ليس مجرد جدران، هو وعاء ادخاري يحمي قيمة المال من التضخم بشكل أفضل من الشهادات البنكية.")
-
-# --- الأقسام القديمة (لضمان عمل الكود) ---
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+# 7. باقي الأقسام
 elif menu == "المشاريع":
-    st.title("🏢 دليل المشاريع")
-    st.info("سيتم هنا عرض المشاريع من جوجل شيت بنفس التنسيق المطور...")
+    search = st.text_input("🔍 ابحث عن مشروع")
+    dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+    for i, r in dff.head(10).iterrows():
+        if st.button(f"🏢 {r['ProjectName']} | {r['Location']}", key=f"p_{i}"):
+            st.info(f"تفاصيل مشروع {r['ProjectName']} قيد التحميل...")
 
 elif menu == "أدوات البروكر":
-    st.title("🛠️ أدوات البروكر المساعدة")
-    st.write("حاسبة العمولات والضرائب والتمويل العقاري...")
+    st.title("🛠️ الحاسبة المالية")
+    val = st.number_input("قيمة العقار", value=1000000)
+    st.metric("القسط الشهري التقديري (8 سنوات)", f"{(val*0.9)/(8*12):,.0f}")
 
-# (باقي الكود يكمل الأقسام السابقة...)
-                else:
-                    user_verified = login_user(u_input, p_input)
-                    if user_verified:
-                        st.session_state.auth = True
-                        st.session_state.current_user = user_verified
-                        st.rerun()
-                    else:
-                        st.error("بيانات الدخول غير صحيحة")
-
-    with tab_signup:
+st.markdown(f"<p style='text-align:center; color:#4f5b7d;'>مرحباً بك يا {st.session_state.current_user} في MA3LOMATI PRO</p>", unsafe_allow_html=True)
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
             reg_name = st.text_input("الأسم بالكامل")
@@ -304,4 +327,5 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
+
 
