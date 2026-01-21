@@ -7,9 +7,14 @@ from datetime import datetime
 import pytz
 import time
 from streamlit_option_menu import option_menu
+# إضافة مكتبة التحديث التلقائي
+from streamlit_autorefresh import st_autorefresh
 
 # 1. إعدادات الصفحة الفخمة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
+
+# تحديث الصفحة تلقائياً كل 30 ثانية لتحديث الساعة والأخبار
+st_autorefresh(interval=30000, key="clock_refresh")
 
 # 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
@@ -128,7 +133,6 @@ if not st.session_state.auth:
                 else: st.warning("Please fill Name, Password, and Email")
     st.stop()
 
-# باقي الكود كما هو بدون أي تغيير نهائياً
 # 6. جلب البيانات
 @st.cache_data(ttl=60)
 def load_data():
@@ -155,7 +159,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 8. شريط المعلومات العلوي
+# 8. شريط المعلومات العلوي (الساعة محدثة تلقائياً)
 c_top1, c_top2 = st.columns([0.7, 0.3])
 with c_top1:
     st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
@@ -170,7 +174,7 @@ menu = option_menu(None, ["المساعد الذكي", "المشاريع", "ال
     icons=["robot", "search", "building", "briefcase"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
-# 10. تفاصيل المشروع
+# (باقي أجزاء الكود الخاص بك تظل كما هي تماماً...)
 if st.session_state.selected_item is not None:
     if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
     item = st.session_state.selected_item
@@ -181,8 +185,6 @@ if st.session_state.selected_item is not None:
         <p>💰 تفاصيل السعر: {item.get('Starting Price (EGP)', 'تواصل للاستفسار')}</p>
         <hr><p>{item.get('Payment Plan', 'خطط سداد متنوعة متاحة عند التواصل')}</p>
     </div>""", unsafe_allow_html=True)
-
-# 11. المساعد الذكي
 elif menu == "المساعد الذكي":
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
     st.title("🤖 مساعد الربط العقاري الذكي")
@@ -206,8 +208,6 @@ elif menu == "المساعد الذكي":
                     c_btn.markdown(f"[📲 إرسال للعميل]({link})")
         else: st.warning("لا توجد نتائج مطابقة تماماً، جرب تغيير الفلاتر.")
     st.markdown("</div>", unsafe_allow_html=True)
-
-# 12. المشاريع
 elif menu == "المشاريع":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -235,8 +235,6 @@ elif menu == "المشاريع":
         p1, _, p2 = st.columns([1,2,1])
         if st.session_state.p_idx > 0 and p1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
         if start + 6 < len(dff) and p2.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
-
-# 13. المطورين
 elif menu == "المطورين":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -259,8 +257,6 @@ elif menu == "المطورين":
         d1, _, d2 = st.columns([1,2,1])
         if st.session_state.d_idx > 0 and d1.button("⬅️ السابق ", key="d_prev"): st.session_state.d_idx -= 1; st.rerun()
         if start_d + 6 < len(dfd_f) and d2.button("التالي ➡️ ", key="d_next"): st.session_state.d_idx += 1; st.rerun()
-
-# 14. أدوات البروكر
 elif menu == "أدوات البروكر":
     st.title("🛠️ حقيبة البروكر الاحترافية")
     r1_c1, r1_c2, r1_c3 = st.columns(3)
