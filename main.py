@@ -87,20 +87,19 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 5. شاشة الدخول والاشتراك (تم دمجها بربط الجوجل شيت)
+# 5. شاشة الدخول والاشتراك (English Version)
 if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:50px;'><h1 style='color:#f59e0b; font-size:60px;'>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
     
-    tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 اشتراك جديد"])
+    tab_login, tab_signup = st.tabs(["🔐 SIGN IN", "📝 CREATE ACCOUNT"])
     
     with tab_login:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
-            u_input = st.text_input("الأسم أو الجيميل", key="log_user")
-            p_input = st.text_input("كلمة السر", type="password", key="log_pass")
-            # دعم كود الدخول المباشر القديم كخيار إضافي
-            if st.button("دخول للمنصة 🚀"):
-                if p_input == "2026": # الكود المباشر
+            u_input = st.text_input("Username or Email", key="log_user")
+            p_input = st.text_input("Password", type="password", key="log_pass")
+            if st.button("LOGIN TO PLATFORM 🚀"):
+                if p_input == "2026": 
                     st.session_state.auth = True
                     st.session_state.current_user = "Admin"
                     st.rerun()
@@ -111,24 +110,25 @@ if not st.session_state.auth:
                         st.session_state.current_user = user_verified
                         st.rerun()
                     else:
-                        st.error("بيانات الدخول غير صحيحة")
+                        st.error("Invalid Login Credentials")
 
     with tab_signup:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
-            reg_name = st.text_input("الأسم بالكامل")
-            reg_pass = st.text_input("كلمة السر المرجوة", type="password")
-            reg_email = st.text_input("الجيميل")
-            reg_wa = st.text_input("رقم الواتساب")
-            reg_co = st.text_input("الشركة")
-            if st.button("تأكيد الاشتراك ✅"):
+            reg_name = st.text_input("Full Name")
+            reg_pass = st.text_input("Desired Password", type="password")
+            reg_email = st.text_input("Email (Gmail)")
+            reg_wa = st.text_input("WhatsApp Number")
+            reg_co = st.text_input("Company Name")
+            if st.button("CONFIRM SIGN UP ✅"):
                 if reg_name and reg_pass and reg_email:
                     if signup_user(reg_name, reg_pass, reg_email, reg_wa, reg_co):
-                        st.success("تم تسجيلك بنجاح! اذهب الآن لتبويب تسجيل الدخول.")
-                    else: st.error("حدث خطأ في الاتصال بالسيرفر")
-                else: st.warning("يرجى ملء الاسم وكلمة السر والإيميل")
+                        st.success("Registration Successful! Please switch to Login tab.")
+                    else: st.error("Server connection error")
+                else: st.warning("Please fill Name, Password, and Email")
     st.stop()
 
+# باقي الكود كما هو بدون أي تغيير نهائياً
 # 6. جلب البيانات
 @st.cache_data(ttl=60)
 def load_data():
@@ -170,7 +170,7 @@ menu = option_menu(None, ["المساعد الذكي", "المشاريع", "ال
     icons=["robot", "search", "building", "briefcase"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
-# 10. تفاصيل المشروع (صفحة منبثقة)
+# 10. تفاصيل المشروع
 if st.session_state.selected_item is not None:
     if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
     item = st.session_state.selected_item
@@ -182,7 +182,7 @@ if st.session_state.selected_item is not None:
         <hr><p>{item.get('Payment Plan', 'خطط سداد متنوعة متاحة عند التواصل')}</p>
     </div>""", unsafe_allow_html=True)
 
-# --- 11. المساعد الذكي ---
+# 11. المساعد الذكي
 elif menu == "المساعد الذكي":
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
     st.title("🤖 مساعد الربط العقاري الذكي")
@@ -191,9 +191,7 @@ elif menu == "المساعد الذكي":
     sel_loc = col_f1.selectbox("📍 المنطقة المستهدفة", ["الكل"] + locs)
     sel_type = col_f2.selectbox("🏠 نوع الوحدة", ["الكل", "شقق", "فيلات", "تجاري", "إداري", "طبي"])
     sel_budget = col_f3.number_input("💰 المقدم المتاح (EGP)", 0, step=50000)
-    
     client_wa = st.text_input("رقم واتساب العميل (بدون أصفار لإرسال المقترح فوراً)")
-    
     if st.button("🎯 استخراج أفضل الترشيحات"):
         res = df_p.copy()
         if sel_loc != "الكل": res = res[res['Location'] == sel_loc]
@@ -209,7 +207,7 @@ elif menu == "المساعد الذكي":
         else: st.warning("لا توجد نتائج مطابقة تماماً، جرب تغيير الفلاتر.")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 12. المشاريع ---
+# 12. المشاريع
 elif menu == "المشاريع":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -218,14 +216,12 @@ elif menu == "المشاريع":
         for i, r in ready.iterrows():
             if st.button(f"✅ {r['ProjectName']}", key=f"ready_{i}"):
                 st.session_state.selected_item = r; st.rerun()
-
     with m_col:
         f1, f2 = st.columns(2)
         search = f1.text_input("🔍 ابحث باسم المشروع")
         area_f = f2.selectbox("📍 فلتر بالمنطقة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
         dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
         if area_f != "الكل": dff = dff[dff['Location'] == area_f]
-        
         start = st.session_state.p_idx * 6
         page = dff.iloc[start:start+6]
         for i in range(0, len(page), 2):
@@ -235,20 +231,18 @@ elif menu == "المشاريع":
                     row = page.iloc[i+j]
                     if cols[j].button(f"🏢 {row['ProjectName']}\n📍 {row['Location']}\n🏗️ {row['Developer']}", key=f"card_p_{start+i+j}"):
                         st.session_state.selected_item = row; st.rerun()
-        
         st.markdown("---")
         p1, _, p2 = st.columns([1,2,1])
         if st.session_state.p_idx > 0 and p1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
         if start + 6 < len(dff) and p2.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
 
-# --- 13. المطورين ---
+# 13. المطورين
 elif menu == "المطورين":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
         st.markdown("<h4 style='color:#f59e0b; text-align:center;'>🏆 أفضل 10 مطورين</h4>", unsafe_allow_html=True)
         for i, r in df_d.head(10).iterrows():
             st.markdown(f"""<div class='side-card'><b>{i+1}. {r['Developer']}</b><br><small>الفئة: {r.get('Developer Category','A')}</small></div>""", unsafe_allow_html=True)
-
     with m_col:
         search_d = st.text_input("🔍 ابحث عن مطور")
         dfd_f = df_d[df_d['Developer'].str.contains(search_d, case=False)] if search_d else df_d
@@ -261,18 +255,16 @@ elif menu == "المطورين":
                     row = page_d.iloc[i+j]
                     if cols[j].button(f"🏗️ {row['Developer']}\n⭐ الفئة: {row.get('Developer Category','A')}\n💼 المالك: {row.get('Owner','---')}", key=f"card_d_{start_d+i+j}"):
                         st.session_state.selected_item = row; st.rerun()
-        
         st.markdown("---")
         d1, _, d2 = st.columns([1,2,1])
         if st.session_state.d_idx > 0 and d1.button("⬅️ السابق ", key="d_prev"): st.session_state.d_idx -= 1; st.rerun()
         if start_d + 6 < len(dfd_f) and d2.button("التالي ➡️ ", key="d_next"): st.session_state.d_idx += 1; st.rerun()
 
-# --- 14. حقيبة البروكر ---
+# 14. أدوات البروكر
 elif menu == "أدوات البروكر":
     st.title("🛠️ حقيبة البروكر الاحترافية")
     r1_c1, r1_c2, r1_c3 = st.columns(3)
     r2_c1, r2_c2, r2_c3 = st.columns(3)
-    
     with r1_c1:
         st.markdown("<div class='tool-card'><h3>💳 القسط</h3>", unsafe_allow_html=True)
         v = st.number_input("إجمالي السعر", 1000000, key="t1")
@@ -280,33 +272,28 @@ elif menu == "أدوات البروكر":
         y = st.slider("السنين", 1, 15, 8, key="t3")
         st.metric("القسط الشهري", f"{(v-d)/(y*12):,.0f}")
         st.markdown("</div>", unsafe_allow_html=True)
-        
     with r1_c2:
         st.markdown("<div class='tool-card'><h3>💰 العمولة</h3>", unsafe_allow_html=True)
         deal = st.number_input("قيمة الصفقة", 1000000, key="t4")
         pct = st.slider("النسبة %", 0.5, 5.0, 1.5, key="t5")
         st.metric("صافي الربح", f"{deal*(pct/100):,.0f}")
         st.markdown("</div>", unsafe_allow_html=True)
-        
     with r1_c3:
         st.markdown("<div class='tool-card'><h3>📈 العائد ROI</h3>", unsafe_allow_html=True)
         buy = st.number_input("سعر الشراء", 1000000, key="t6")
         rent = st.number_input("الإيجار السنوي", 100000, key="t7")
         st.metric("نسبة العائد", f"{(rent/buy)*100:,.1f}%")
         st.markdown("</div>", unsafe_allow_html=True)
-        
     with r2_c1:
         st.markdown("<div class='tool-card'><h3>📐 المساحة</h3>", unsafe_allow_html=True)
         m2 = st.number_input("المساحة بالمتر", 100.0, key="t8")
         st.write(f"القدم المربع: {m2 * 10.76:,.2f}")
         st.markdown("</div>", unsafe_allow_html=True)
-        
     with r2_c2:
         st.markdown("<div class='tool-card'><h3>📝 الضريبة</h3>", unsafe_allow_html=True)
         tax_v = st.number_input("قيمة العقار", 1000000, key="t9")
         st.write(f"تصرفات (2.5%): {tax_v*0.025:,.0f}")
         st.markdown("</div>", unsafe_allow_html=True)
-        
     with r2_c3:
         st.markdown("<div class='tool-card'><h3>🏦 التمويل</h3>", unsafe_allow_html=True)
         loan = st.number_input("قرض التمويل", 500000, key="t10")
@@ -314,4 +301,3 @@ elif menu == "أدوات البروكر":
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
-
