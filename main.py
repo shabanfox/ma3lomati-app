@@ -7,29 +7,29 @@ from datetime import datetime
 import pytz
 import time
 from streamlit_option_menu import option_menu
-# إضافة مكتبة التحديث التلقائي
 from streamlit_autorefresh import st_autorefresh
 
-# 1. إعدادات الصفحة الفخمة
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# تحديث الصفحة تلقائياً كل 30 ثانية لتحديث الساعة والأخبار
-st_autorefresh(interval=30000, key="clock_refresh")
+# تحديث الصفحة تلقائياً كل ثانية لضمان حركة الساعة
+st_autorefresh(interval=1000, key="live_clock")
 
-# 2. الرابط الخاص بك لربط الجوجل شيت (الـ Apps Script)
+# 2. التوقيت المصري الحي
+egypt_tz = pytz.timezone('Africa/Cairo')
+egypt_now = datetime.now(egypt_tz)
+
+# 3. الروابط الأساسية
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 
-# 3. إدارة الحالة والتوقيت المصري
+# 4. إدارة الحالة
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 
-egypt_tz = pytz.timezone('Africa/Cairo')
-egypt_now = datetime.now(egypt_tz)
-
-# --- وظائف الربط مع جوجل شيت (الخلفية) ---
+# --- وظائف الدخول والاشتراك (لا تغيير في المنطق) ---
 def signup_user(name, pwd, email, wa, comp):
     payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
     try:
@@ -51,7 +51,6 @@ def login_user(user_input, pwd_input):
         return None
     except: return None
 
-# 3. جلب الأخبار العقارية
 @st.cache_data(ttl=1800)
 def get_real_news():
     try:
@@ -63,7 +62,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# 4. التنسيق الجمالي (CSS) - تصميم 2026
+# 5. التنسيق الجمالي (CSS)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -92,12 +91,10 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 5. شاشة الدخول والاشتراك (English Version)
+# 6. شاشة الدخول (English)
 if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:50px;'><h1 style='color:#f59e0b; font-size:60px;'>MA3LOMATI PRO</h1></div>", unsafe_allow_html=True)
-    
     tab_login, tab_signup = st.tabs(["🔐 SIGN IN", "📝 CREATE ACCOUNT"])
-    
     with tab_login:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
@@ -114,9 +111,7 @@ if not st.session_state.auth:
                         st.session_state.auth = True
                         st.session_state.current_user = user_verified
                         st.rerun()
-                    else:
-                        st.error("Invalid Login Credentials")
-
+                    else: st.error("Invalid Login Credentials")
     with tab_signup:
         _, c2, _ = st.columns([1,1.5,1])
         with c2:
@@ -133,7 +128,7 @@ if not st.session_state.auth:
                 else: st.warning("Please fill Name, Password, and Email")
     st.stop()
 
-# 6. جلب البيانات
+# 7. جلب البيانات
 @st.cache_data(ttl=60)
 def load_data():
     u_p = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -149,7 +144,7 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# 7. الهيدر البصري المطور
+# 8. الهيدر الرئيسي
 st.markdown(f"""
     <div style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1600&q=80'); 
                 height: 200px; background-size: cover; background-position: center; border-radius: 0 0 30px 30px; 
@@ -159,22 +154,27 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 8. شريط المعلومات العلوي (الساعة محدثة تلقائياً)
+# 9. شريط المعلومات (الساعة الحية بتوقيت مصر)
 c_top1, c_top2 = st.columns([0.7, 0.3])
 with c_top1:
     st.markdown(f'<div class="ticker-wrap"><div class="ticker">🔥 {news_text}</div></div>', unsafe_allow_html=True)
 with c_top2:
-    st.markdown(f"""<div style='text-align: left; padding: 5px; color: #aaa; font-size: 14px;'>
-                📅 {egypt_now.strftime('%Y-%m-%d')} | 🕒 {egypt_now.strftime('%I:%M %p')} 
-                <span style='cursor:pointer; color:#f59e0b; margin-right:15px;' onclick='window.location.reload()'>🔄</span></div>""", unsafe_allow_html=True)
+    # تنسيق الساعة لتظهر ثانية بثانية
+    clock_html = f"""
+    <div style='text-align: left; padding: 5px; color: #aaa; font-size: 14px;'>
+        <span style='color: #f59e0b;'>📅</span> {egypt_now.strftime('%Y-%m-%d')} | 
+        <span style='color: #f59e0b;'>🕒</span> {egypt_now.strftime('%I:%M:%S %p')}
+    </div>
+    """
+    st.markdown(clock_html, unsafe_allow_html=True)
     if st.button("🚪 خروج", key="logout"): st.session_state.auth = False; st.rerun()
 
-# 9. المنيو الرئيسي
+# 10. المنيو الرئيسي
 menu = option_menu(None, ["المساعد الذكي", "المشاريع", "المطورين", "أدوات البروكر"], 
     icons=["robot", "search", "building", "briefcase"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
-# (باقي أجزاء الكود الخاص بك تظل كما هي تماماً...)
+# --- عرض المحتوى (باقي الكود كما هو بدون تغيير) ---
 if st.session_state.selected_item is not None:
     if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
     item = st.session_state.selected_item
@@ -185,6 +185,7 @@ if st.session_state.selected_item is not None:
         <p>💰 تفاصيل السعر: {item.get('Starting Price (EGP)', 'تواصل للاستفسار')}</p>
         <hr><p>{item.get('Payment Plan', 'خطط سداد متنوعة متاحة عند التواصل')}</p>
     </div>""", unsafe_allow_html=True)
+
 elif menu == "المساعد الذكي":
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
     st.title("🤖 مساعد الربط العقاري الذكي")
@@ -208,6 +209,7 @@ elif menu == "المساعد الذكي":
                     c_btn.markdown(f"[📲 إرسال للعميل]({link})")
         else: st.warning("لا توجد نتائج مطابقة تماماً، جرب تغيير الفلاتر.")
     st.markdown("</div>", unsafe_allow_html=True)
+
 elif menu == "المشاريع":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -235,6 +237,7 @@ elif menu == "المشاريع":
         p1, _, p2 = st.columns([1,2,1])
         if st.session_state.p_idx > 0 and p1.button("⬅️ السابق"): st.session_state.p_idx -= 1; st.rerun()
         if start + 6 < len(dff) and p2.button("التالي ➡️"): st.session_state.p_idx += 1; st.rerun()
+
 elif menu == "المطورين":
     m_col, s_col = st.columns([0.7, 0.3])
     with s_col:
@@ -257,6 +260,7 @@ elif menu == "المطورين":
         d1, _, d2 = st.columns([1,2,1])
         if st.session_state.d_idx > 0 and d1.button("⬅️ السابق ", key="d_prev"): st.session_state.d_idx -= 1; st.rerun()
         if start_d + 6 < len(dfd_f) and d2.button("التالي ➡️ ", key="d_next"): st.session_state.d_idx += 1; st.rerun()
+
 elif menu == "أدوات البروكر":
     st.title("🛠️ حقيبة البروكر الاحترافية")
     r1_c1, r1_c2, r1_c3 = st.columns(3)
