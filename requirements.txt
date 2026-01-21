@@ -25,3 +25,12 @@ feedparser
 pytz
 streamlit-option-menu
 streamlit-autorefresh
+streamlit-autorefresh
+
+pytz
+
+feedparser
+
+pandas
+
+requests
