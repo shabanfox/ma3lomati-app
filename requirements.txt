@@ -18,3 +18,10 @@ streamlit-option_menu
 gspread
 google-auth
 requests
+streamlit
+pandas
+requests
+feedparser
+pytz
+streamlit-option-menu
+streamlit-autorefresh
