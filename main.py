@@ -17,19 +17,22 @@ if 'page_num' not in st.session_state: st.session_state.page_num = 0
 if 'view' not in st.session_state: st.session_state.view = "grid" 
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "Projects"
+if 'messages' not in st.session_state: st.session_state.messages = []
 
 trans = {
     "EN": {
         "logout": "Logout", "back": "🏠 Back to List",
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
         "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
-        "det_title": "Project Specifications"
+        "det_title": "Project Specifications", "ai_welcome": "How can I help you today?",
+        "tool_title": "Professional Broker Tools"
     },
     "AR": {
         "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
         "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
-        "det_title": "مواصفات وتفاصيل المشروع"
+        "det_title": "مواصفات وتفاصيل المشروع", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
+        "tool_title": "أدوات البروكر المحترف"
     }
 }
 
@@ -61,9 +64,9 @@ st.markdown(f"""
         text-align: {"right" if direction=="rtl" else "left"} !important;
         font-size: 16px !important; line-height: 1.6 !important;
     }}
-    .detail-card {{
-        background: rgba(20, 20, 20, 0.95); padding: 40px; border-radius: 25px;
-        border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 20px;
+    .detail-card, .tool-card {{
+        background: rgba(20, 20, 20, 0.95); padding: 30px; border-radius: 20px;
+        border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 10px;
     }}
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 18px; margin-top: 20px; }}
     .val-white {{ color: white; font-size: 20px; margin-bottom: 10px; }}
@@ -93,7 +96,6 @@ with c_menu:
     menu_selection = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
         styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
     
-    # ⚡ RESET LOGIC: If menu changed, go back to grid view
     if menu_selection != st.session_state.last_menu:
         st.session_state.view = "grid"
         st.session_state.page_num = 0
@@ -106,78 +108,94 @@ with c_lang:
 with c_out:
     if st.button(f"🚪 {L['logout']}", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-# --- 6. Dataset Assignment ---
-if menu_selection in ["Projects", "المشاريع"]: 
-    active_df, col_main_name = df_p, 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
-elif menu_selection in ["Launches", "اللونشات"]: 
-    active_df, col_main_name = df_l, 'Project' if 'Project' in df_l.columns else df_l.columns[0]
-else: 
-    active_df, col_main_name = df_d, 'Developer' if 'Developer' in df_d.columns else df_d.columns[0]
+# --- 6. View Logic ---
 
-# --- 7. View Logic ---
+# A. TOOLS SECTION
+if menu_selection in ["Tools", "الأدوات"]:
+    st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
+    t1, t2, t3 = st.columns(3)
+    with t1:
+        with st.container(border=True):
+            st.subheader("🧮 Mortgage / القسط")
+            p = st.number_input("Amount", 0, key="t1_p")
+            y = st.number_input("Years", 1, 20, 7)
+            if p > 0: st.warning(f"Monthly: {p/(y*12):,.2f}")
+        with st.container(border=True):
+            st.subheader("📏 Area / المساحة")
+            m = st.number_input("SQM / متر", 0.0)
+            st.info(f"SQFT: {m * 10.76:.2f}")
+    with t2:
+        with st.container(border=True):
+            st.subheader("📈 ROI / العائد")
+            c = st.number_input("Cost", 1)
+            r = st.number_input("Annual Rent", 0)
+            st.warning(f"ROI: {(r/c)*100:.2f}%")
+        with st.container(border=True):
+            st.subheader("💰 Commission / العمولة")
+            v = st.number_input("Deal Value", 0)
+            perc = st.slider("%", 1.0, 5.0, 2.5)
+            st.info(f"Earn: {v*(perc/100):,.0f}")
+    with t3:
+        with st.container(border=True):
+            st.subheader("🌍 Currency / العملة")
+            u = st.number_input("USD Amount", 0.0)
+            rate = st.number_input("Rate", 40.0, 70.0, 50.0)
+            st.warning(f"EGP: {u*rate:,.2f}")
+        with st.container(border=True):
+            st.subheader("✍️ AI Script / نص بيعي")
+            proj = st.text_input("Project Name")
+            if st.button("Create Script"): st.code(f"Invest now in {proj}! Exclusive luxury units available.")
 
-# A. DETAILS VIEW (Clean & No "Next" button)
-if st.session_state.view == "details":
-    item = active_df.iloc[st.session_state.current_index]
-    
-    # Only Back Button
-    if st.button(L["back"], use_container_width=True): 
-        st.session_state.view = "grid"
+# B. AI ASSISTANT SECTION
+elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
+    st.markdown(f"<div class='tool-card'><h3>🤖 MA3LOMATI AI</h3><p>{L['ai_welcome']}</p></div>", unsafe_allow_html=True)
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]): st.write(m["content"])
+    if prompt := st.chat_input("Ask about market trends..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.messages.append({"role": "assistant", "content": f"Analyzing market data for: {prompt}..."})
         st.rerun()
 
-    st.markdown(f"""
-    <div class="detail-card">
-        <h1 style="color:#f59e0b; margin-bottom:0;">{item[col_main_name]}</h1>
-        <p style="color:#888; font-size:18px;">{L['det_title']}</p>
-        <hr style="border: 0.5px solid #333;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-            <div>
-                <p class="label-gold">📍 Location / المنطقة</p><p class="val-white">{item.get('Area', item.get('Location', '---'))}</p>
-                <p class="label-gold">🏢 Developer / المطور</p><p class="val-white">{item.get('Developer', '---')}</p>
-                <p class="label-gold">💰 Price & Payment / السعر ونظام السداد</p><p class="val-white">{item.get('Price & Payment', '---')}</p>
-            </div>
-            <div>
-                <p class="label-gold">📝 Full Details / التفاصيل الكاملة</p>
-                <p class="val-white" style="line-height:1.8;">{item.get('Unique Selling Points (USP)', item.get('Notes', '---'))}</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# B. GRID VIEW (70/30)
+# C. DATA SECTIONS (Projects, Devs, Launches)
 else:
-    col_main, col_side = st.columns([0.7, 0.3])
-    
-    with col_main:
-        search = st.text_input(L["search"])
-        filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
-        
-        start_idx = st.session_state.page_num * ITEMS_PER_PAGE
-        display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
+    # Dataset Assignment
+    if menu_selection in ["Projects", "المشاريع"]: 
+        active_df, col_main_name = df_p, 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
+    elif menu_selection in ["Launches", "اللونشات"]: 
+        active_df, col_main_name = df_l, 'Project' if 'Project' in df_l.columns else df_l.columns[0]
+    else: 
+        active_df, col_main_name = df_d, 'Developer' if 'Developer' in df_d.columns else df_d.columns[0]
 
-        grid = st.columns(2)
-        for i, (orig_idx, r) in enumerate(display_df.iterrows()):
-            with grid[i % 2]:
-                card_text = f"✨ {r[col_main_name]}\n📍 {r.get('Area', 'Premium Area')}\n🏢 {r.get('Developer', 'Elite')}\n💰 View full specs..."
-                if st.button(card_text, key=f"card_{orig_idx}"):
-                    st.session_state.current_index = orig_idx
-                    st.session_state.view = "details"
-                    st.rerun()
-
-        # Pagination for Grid
-        st.write("---")
-        p1, p2 = st.columns(2)
-        with p1:
-            if st.session_state.page_num > 0:
-                if st.button("⬅ Previous Page", use_container_width=True): st.session_state.page_num -= 1; st.rerun()
-        with p2:
+    if st.session_state.view == "details":
+        item = active_df.iloc[st.session_state.current_index]
+        if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
+        st.markdown(f"""<div class="detail-card">
+            <h1 style="color:#f59e0b;">{item[col_main_name]}</h1><hr>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div><p class="label-gold">📍 Location</p><p class="val-white">{item.get('Area','---')}</p></div>
+                <div><p class="label-gold">💰 Payment</p><p class="val-white">{item.get('Price & Payment','---')}</p></div>
+            </div>
+            <p class="label-gold">📝 Description</p><p class="val-white">{item.get('Notes', 'Full specifications inside the portal.')}</p>
+        </div>""", unsafe_allow_html=True)
+    else:
+        col_main, col_side = st.columns([0.7, 0.3])
+        with col_main:
+            search = st.text_input(L["search"])
+            filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
+            start_idx = st.session_state.page_num * ITEMS_PER_PAGE
+            display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
+            grid = st.columns(2)
+            for i, (orig_idx, r) in enumerate(display_df.iterrows()):
+                with grid[i % 2]:
+                    card_text = f"✨ {r[col_main_name]}\n📍 {r.get('Area', 'Premium Area')}\n🏢 {r.get('Developer', 'Elite')}\n💰 View Details"
+                    if st.button(card_text, key=f"card_{orig_idx}"):
+                        st.session_state.current_index = orig_idx; st.session_state.view = "details"; st.rerun()
+            st.write("---")
             if (start_idx + ITEMS_PER_PAGE) < len(filtered):
                 if st.button("Next Page ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
-
-    with col_side:
-        st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
-        for _, s_item in active_df.head(4).iterrows():
-            st.markdown(f"""<div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; border:1px solid #333; margin-bottom:10px;">
-                <b style="color:white;">💎 {s_item[col_main_name]}</b><br><small style="color:#f59e0b;">Verified Partner</small></div>""", unsafe_allow_html=True)
+        with col_side:
+            st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
+            for _, s_item in active_df.head(4).iterrows():
+                st.markdown(f"<div class='tool-card'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
