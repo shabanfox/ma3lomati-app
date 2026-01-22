@@ -10,22 +10,23 @@ HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 ITEMS_PER_PAGE = 6
 
-# --- 2. Session State ---
+# --- 2. Session State Initialization ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'lang' not in st.session_state: st.session_state.lang = "AR"
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'view' not in st.session_state: st.session_state.view = "grid" # grid or details
+if 'view' not in st.session_state: st.session_state.view = "grid" 
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
+if 'last_menu' not in st.session_state: st.session_state.last_menu = "Projects"
 
 trans = {
     "EN": {
-        "logout": "Logout", "back": "🏠 Back to Grid", "next": "Next →", "prev": "← Previous",
+        "logout": "Logout", "back": "🏠 Back to List",
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
         "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
         "det_title": "Project Specifications"
     },
     "AR": {
-        "logout": "خروج", "back": "🏠 العودة للشبكة", "next": "التالي ←", "prev": "← السابق",
+        "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
         "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
         "det_title": "مواصفات وتفاصيل المشروع"
@@ -41,42 +42,29 @@ st.markdown(f"""
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     .block-container {{ padding-top: 0rem !important; }}
-    
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(rgba(0,0,0,0.97), rgba(0,0,0,0.97)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
         direction: {direction} !important; text-align: {"right" if direction=="rtl" else "left"} !important; 
         font-family: 'Cairo', sans-serif;
     }}
-    
     .royal-header {{
         background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{HEADER_IMG}');
         background-size: cover; background-position: center;
         border-bottom: 2px solid #f59e0b; padding: 40px 20px; text-align: center;
         border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
-
-    /* Luxury Card Grid */
     div.stButton > button[key*="card_"] {{
-        background: rgba(30, 30, 30, 0.9) !important;
-        color: #FFFFFF !important;
-        border-left: 5px solid #f59e0b !important;
-        border-radius: 15px !important;
-        height: 200px !important;
-        width: 100% !important;
+        background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
+        border-left: 5px solid #f59e0b !important; border-radius: 15px !important;
+        height: 200px !important; width: 100% !important;
         text-align: {"right" if direction=="rtl" else "left"} !important;
-        font-size: 16px !important;
-        line-height: 1.6 !important;
+        font-size: 16px !important; line-height: 1.6 !important;
     }}
-    
-    /* Details Page Styling */
     .detail-card {{
-        background: rgba(20, 20, 20, 0.9);
-        padding: 40px; border-radius: 25px;
-        border: 1px solid #333; border-top: 5px solid #f59e0b;
-        margin-top: 20px;
+        background: rgba(20, 20, 20, 0.95); padding: 40px; border-radius: 25px;
+        border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 20px;
     }}
-    
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 18px; margin-top: 20px; }}
     .val-white {{ color: white; font-size: 20px; margin-bottom: 10px; }}
     </style>
@@ -96,47 +84,47 @@ def load_all_data():
 
 df_p, df_d, df_l = load_all_data()
 
-# --- 5. Navigation & Header ---
+# --- 5. Main Layout ---
 st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
 
+# Navigation Bar
 c_menu, c_lang, c_out = st.columns([0.7, 0.15, 0.15])
 with c_menu:
-    menu = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
+    menu_selection = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
         styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+    
+    # ⚡ RESET LOGIC: If menu changed, go back to grid view
+    if menu_selection != st.session_state.last_menu:
+        st.session_state.view = "grid"
+        st.session_state.page_num = 0
+        st.session_state.last_menu = menu_selection
+        st.rerun()
+
 with c_lang:
     if st.button("🌐 EN/AR", use_container_width=True):
         st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
 with c_out:
     if st.button(f"🚪 {L['logout']}", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-# --- 6. Active Dataset Selection ---
-if menu in ["Projects", "المشاريع"]: 
+# --- 6. Dataset Assignment ---
+if menu_selection in ["Projects", "المشاريع"]: 
     active_df, col_main_name = df_p, 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
-elif menu in ["Launches", "اللونشات"]: 
+elif menu_selection in ["Launches", "اللونشات"]: 
     active_df, col_main_name = df_l, 'Project' if 'Project' in df_l.columns else df_l.columns[0]
 else: 
     active_df, col_main_name = df_d, 'Developer' if 'Developer' in df_d.columns else df_d.columns[0]
 
-# --- 7. MAIN VIEW LOGIC ---
+# --- 7. View Logic ---
 
-# A. DETAILS VIEW
+# A. DETAILS VIEW (Clean & No "Next" button)
 if st.session_state.view == "details":
     item = active_df.iloc[st.session_state.current_index]
     
-    # Nav Buttons: Back | Prev | Next
-    b1, b2, b3 = st.columns([0.3, 0.4, 0.3])
-    with b1: 
-        if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
-    with b2:
-        prev_col, next_col = st.columns(2)
-        with prev_col:
-            if st.session_state.current_index > 0:
-                if st.button(L["prev"], use_container_width=True): st.session_state.current_index -= 1; st.rerun()
-        with next_col:
-            if st.session_state.current_index < len(active_df) - 1:
-                if st.button(L["next"], use_container_width=True): st.session_state.current_index += 1; st.rerun()
+    # Only Back Button
+    if st.button(L["back"], use_container_width=True): 
+        st.session_state.view = "grid"
+        st.rerun()
 
-    # Layout for Full Details
     st.markdown(f"""
     <div class="detail-card">
         <h1 style="color:#f59e0b; margin-bottom:0;">{item[col_main_name]}</h1>
@@ -170,7 +158,7 @@ else:
         grid = st.columns(2)
         for i, (orig_idx, r) in enumerate(display_df.iterrows()):
             with grid[i % 2]:
-                card_text = f"✨ {r[col_main_name]}\n📍 {r.get('Area', 'Premium Area')}\n🏢 {r.get('Developer', 'Elite')}\n💰 Click for more..."
+                card_text = f"✨ {r[col_main_name]}\n📍 {r.get('Area', 'Premium Area')}\n🏢 {r.get('Developer', 'Elite')}\n💰 View full specs..."
                 if st.button(card_text, key=f"card_{orig_idx}"):
                     st.session_state.current_index = orig_idx
                     st.session_state.view = "details"
@@ -187,10 +175,9 @@ else:
                 if st.button("Next Page ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
 
     with col_side:
-        st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
-        # Display side items (static for luxury feel)
+        st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
         for _, s_item in active_df.head(4).iterrows():
             st.markdown(f"""<div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; border:1px solid #333; margin-bottom:10px;">
-                <b style="color:white;">💎 {s_item[col_main_name]}</b><br><small style="color:#f59e0b;">Verified Property</small></div>""", unsafe_allow_html=True)
+                <b style="color:white;">💎 {s_item[col_main_name]}</b><br><small style="color:#f59e0b;">Verified Partner</small></div>""", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
