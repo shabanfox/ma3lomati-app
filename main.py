@@ -24,17 +24,21 @@ trans = {
         "logout": "Logout", "back": "🏠 Back to List",
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
         "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
-        "det_title": "Profile Details", "ai_welcome": "How can I help you today?",
+        "det_title": "Corporate Profile", "ai_welcome": "How can I help you today?",
         "tool_title": "Professional Broker Tools",
-        "dev_name": "Developer Name", "owner": "Owner / Chairman", "comp_det": "Company Details", "key_proj": "Key Projects"
+        "label_owner": "👤 Chairman / Management",
+        "label_about": "🏢 About the Company",
+        "label_projects": "🏗️ Major Projects Portfolio"
     },
     "AR": {
         "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
         "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
-        "det_title": "تفاصيل الملف", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
+        "det_title": "ملف الشركة", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
         "tool_title": "أدوات البروكر المحترف",
-        "dev_name": "اسم المطور", "owner": "المالك / رئيس مجلس الإدارة", "comp_det": "تفاصيل الشركة", "key_proj": "أهم المشاريع"
+        "label_owner": "👤 الإدارة / رئيس مجلس الإدارة",
+        "label_about": "🏢 نبذة عن الشركة",
+        "label_projects": "🏗️ سابقة الأعمال والمشاريع"
     }
 }
 
@@ -59,23 +63,29 @@ st.markdown(f"""
         border-bottom: 2px solid #f59e0b; padding: 40px 20px; text-align: center;
         border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
+    /* Detail Page Styling */
+    .dev-profile-container {{
+        background: rgba(20, 20, 20, 0.9); padding: 40px; border-radius: 25px;
+        border: 1px solid #333; border-top: 6px solid #f59e0b;
+    }}
+    .dev-title {{ color: #f59e0b; font-size: 38px; font-weight: 900; margin-bottom: 10px; }}
+    .dev-subtitle {{ color: #888; font-size: 16px; letter-spacing: 1px; margin-bottom: 30px; }}
+    
+    .info-card {{
+        background: rgba(255, 255, 255, 0.04); border: 1px solid #444;
+        padding: 20px; border-radius: 15px; margin-bottom: 20px;
+        transition: 0.3s;
+    }}
+    .info-card:hover {{ border-color: #f59e0b; background: rgba(255, 255, 255, 0.06); }}
+    
+    .gold-header {{ color: #f59e0b; font-weight: 700; font-size: 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }}
+    .white-text {{ color: #ffffff; font-size: 18px; line-height: 1.8; }}
+    
     div.stButton > button[key*="card_"] {{
         background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
         border-left: 5px solid #f59e0b !important; border-radius: 15px !important;
-        height: 180px !important; width: 100% !important;
-        text-align: {"right" if direction=="rtl" else "left"} !important;
-        font-size: 16px !important; line-height: 1.6 !important;
+        height: 180px !important; width: 100% !important; font-size: 16px !important;
     }}
-    .detail-card {{
-        background: rgba(20, 20, 20, 0.95); padding: 30px; border-radius: 20px;
-        border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 10px;
-    }}
-    .section-box {{
-        background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px;
-        border-right: 4px solid #f59e0b;
-    }}
-    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; }}
-    .val-white {{ color: white; font-size: 18px; line-height: 1.5; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -113,11 +123,11 @@ with c_out:
 
 if menu_selection in ["Tools", "الأدوات"]:
     st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
-    # (Tools logic remains the same for brevity)
+    # (Tools logic stays original)
+    st.info("Mortgage, Area, and ROI tools are active.")
 
 elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
-    st.markdown(f"<div class='tool-card'><h3>🤖 MA3LOMATI AI</h3><p>{L['ai_welcome']}</p></div>", unsafe_allow_html=True)
-    # (AI Assistant logic remains same)
+    st.markdown(f"<div class='dev-profile-container'><h3>🤖 AI Assistant</h3><p>{L['ai_welcome']}</p></div>", unsafe_allow_html=True)
 
 else:
     is_launch = menu_selection in ["Launches", "اللونشات"]
@@ -134,37 +144,39 @@ else:
         item = active_df.iloc[st.session_state.current_index]
         if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
         
-        # --- التحقق إذا كانت صفحة مطورين لتطبيق التقسيم الجديد ---
+        # --- التنسيق الجديد والجميل لصفحة المطور ---
         if is_dev_page:
             st.markdown(f"""
-            <div class="detail-card">
-                <h1 style="color:#f59e0b;">{item[col_main_name]}</h1><hr style="border:1px solid #333;">
+            <div class="dev-profile-container">
+                <div class="dev-title">{item[col_main_name]}</div>
+                <div class="dev-subtitle">{L['det_title']}</div>
+                <hr style="border:0.1px solid #333; margin-bottom:30px;">
                 
-                <div class="section-box">
-                    <p class="label-gold">👤 {L['owner']}</p>
-                    <p class="val-white">{item.get('Owner / Chairman', '---')}</p>
+                <div class="info-card">
+                    <div class="gold-header">{L['label_owner']}</div>
+                    <div class="white-text">{item.get('Owner / Chairman', item.get('Owner', '---'))}</div>
                 </div>
                 
-                <div class="section-box">
-                    <p class="label-gold">🏢 {L['comp_det']}</p>
-                    <p class="val-white">{item.get('Company Details', '---')}</p>
+                <div class="info-card">
+                    <div class="gold-header">{L['label_about']}</div>
+                    <div class="white-text">{item.get('Company Details', item.get('Details', '---'))}</div>
                 </div>
                 
-                <div class="section-box">
-                    <p class="label-gold">🏗️ {L['key_proj']}</p>
-                    <p class="val-white">{item.get('Key Projects', '---')}</p>
+                <div class="info-card">
+                    <div class="gold-header">{L['label_projects']}</div>
+                    <div class="white-text">{item.get('Key Projects', item.get('Projects', '---'))}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
         else:
-            # الشكل التقليدي لباقي الصفحات
-            st.markdown(f"""<div class="detail-card">
+            # الشكل التقليدي لباقي الأقسام
+            st.markdown(f"""<div class="dev-profile-container">
                 <h1 style="color:#f59e0b;">{item[col_main_name]}</h1><hr>
-                <p class="val-white">{item.to_string()}</p>
+                <p class="white-text">{item.to_string()}</p>
             </div>""", unsafe_allow_html=True)
             
     else:
-        # GRID VIEW (Same as your request: 100% for Launches, 70/30 for others)
+        # GRID VIEW
         search = st.text_input(L["search"])
         filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
         start_idx = st.session_state.page_num * ITEMS_PER_PAGE
@@ -182,12 +194,12 @@ else:
                 grid = st.columns(2)
                 for i, (orig_idx, r) in enumerate(display_df.iterrows()):
                     with grid[i % 2]:
-                        if st.button(f"✨ {r[col_main_name]}\n📍 {r.get('Area', 'Elite')}", key=f"card_{orig_idx}"):
+                        if st.button(f"🏢 {r[col_main_name]}\n📍 {r.get('Area', 'Market Leader')}", key=f"card_{orig_idx}"):
                             st.session_state.current_index = orig_idx; st.session_state.view = "details"; st.rerun()
             with col_side:
-                st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if is_dev_page else L['side_proj']}</h3>", unsafe_allow_html=True)
                 for _, s_item in active_df.head(4).iterrows():
-                    st.markdown(f"<div class='detail-card' style='padding:15px;'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='info-card' style='padding:15px; margin-bottom:10px;'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
         st.write("---")
         if (start_idx + ITEMS_PER_PAGE) < len(filtered):
