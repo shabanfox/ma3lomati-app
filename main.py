@@ -23,6 +23,7 @@ if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
 if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
+if 'last_menu' not in st.session_state: st.session_state.last_menu = "اللونشات"
 
 egypt_tz = pytz.timezone('Africa/Cairo')
 egypt_now = datetime.now(egypt_tz)
@@ -62,9 +63,9 @@ st.markdown(f"""
     
     .main-header {{
         background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80');
-        height: 180px; background-size: cover; background-position: center;
+        height: 160px; background-size: cover; background-position: center;
         border-radius: 0 0 40px 40px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b; margin-bottom: 20px;
+        align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b; margin-bottom: 10px;
     }}
 
     div.stButton > button {{ border-radius: 12px !important; font-family: 'Cairo' !important; transition: 0.3s !important; }}
@@ -99,7 +100,7 @@ if not st.session_state.auth:
                 else: st.error("بيانات الدخول غير صحيحة")
     st.stop()
 
-# --- 7. التحميل والعرض ---
+# --- 7. التحميل والهيدر ---
 df_p, df_d, df_l = load_all_data()
 
 st.markdown(f'<div class="main-header"><h1>MA3LOMATI PRO</h1><p>مرحباً بك يا {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
@@ -108,18 +109,28 @@ c_logout, _ = st.columns([0.15, 0.85])
 with c_logout:
     if st.button("🚪 خروج"): st.session_state.auth = False; st.rerun()
 
+# --- 8. المنيو الرئيسي (يظهر دائماً في الأعلى) ---
 menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"], 
     icons=["briefcase", "building", "search", "robot", "rocket"], 
     default_index=4, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-# --- 8. منطق عرض التفاصيل ---
+# إذا تغير القسم من المنيو، نقوم بتصفير العنصر المختار تلقائياً
+if menu != st.session_state.last_menu:
+    st.session_state.selected_item = None
+    st.session_state.last_menu = menu
+
+# --- 9. منطق العرض (تفاصيل أو قائمة) ---
+
+# حالة 1: عرض التفاصيل (إذا كان هناك عنصر مختار)
 if st.session_state.selected_item is not None:
     it = st.session_state.selected_item
-    if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("⬅️ عودة للقائمة السابقة"): 
+        st.session_state.selected_item = None
+        st.rerun()
     
     st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-    # التحقق من نوع البيانات المعروضة (مشروع، مطور، أو لونش)
     title = it.get('ProjectName', it.get('Project', it.get('Developer', 'التفاصيل')))
     st.markdown(f"<h1 style='color:#f59e0b;'>{title}</h1>", unsafe_allow_html=True)
     
@@ -131,13 +142,12 @@ if st.session_state.selected_item is not None:
         if 'Price & Payment' in it: st.markdown(f"<p class='label'>💰 السعر والسداد</p><p class='value'>{it['Price & Payment']}</p>", unsafe_allow_html=True)
         if 'Developer Category' in it: st.markdown(f"<p class='label'>⭐ الفئة</p><p class='value'>{it['Developer Category']}</p>", unsafe_allow_html=True)
     
-    # عرض الـ USP أو الملاحظات إن وجدت
-    usp = it.get('Unique Selling Points (USP)', it.get('Notes', '---'))
+    usp = it.get('Unique Selling Points (USP)', it.get('Notes', it.get('Owner', '---')))
     if usp != '---':
-        st.markdown(f"<hr style='border-color:#333;'><p class='label'>🌟 تفاصيل إضافية</p><p style='font-size:17px; line-height:1.7;'>{usp}</p>", unsafe_allow_html=True)
+        st.markdown(f"<hr style='border-color:#333;'><p class='label'>🌟 معلومات إضافية</p><p style='font-size:17px; line-height:1.7;'>{usp}</p>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 9. منطق القوائم ---
+# حالة 2: عرض القوائم العادية (حسب اختيار المنيو)
 else:
     if menu == "اللونشات":
         st.markdown("<h2 style='text-align:center;'>🚀 أحدث لونشات 2026</h2>", unsafe_allow_html=True)
@@ -180,5 +190,18 @@ else:
                 c1, c2 = st.columns(2)
                 if start_d > 0 and c1.button("السابق "): st.session_state.d_idx -= 1; st.rerun()
                 if start_d+6 < len(dfd) and c2.button("التالي "): st.session_state.d_idx += 1; st.rerun()
+
+    elif menu == "المساعد الذكي":
+        st.markdown("<div class='smart-box'><h2>🤖 المساعد الذكي</h2><p>أدخل متطلبات العميل للبحث التلقائي...</p></div>", unsafe_allow_html=True)
+
+    elif menu == "أدوات البروكر":
+        st.markdown("<h2 style='text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("<div class='smart-box'><h3>💳 القسط</h3></div>", unsafe_allow_html=True)
+        with c2:
+            st.markdown("<div class='smart-box'><h3>💰 العمولة</h3></div>", unsafe_allow_html=True)
+        with c3:
+            st.markdown("<div class='smart-box'><h3>📐 المساحة</h3></div>", unsafe_allow_html=True)
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
