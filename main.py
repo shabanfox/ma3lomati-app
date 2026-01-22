@@ -57,29 +57,38 @@ st.markdown(f"""
         font-size: 18px !important; font-weight: 900 !important;
     }}
     .sidebar-box {{
-        background: rgba(245, 158, 11, 0.05); padding: 15px; border-radius: 15px;
-        border: 1px solid rgba(245, 158, 11, 0.3); margin-bottom: 10px;
+        background: rgba(245, 158, 11, 0.08); padding: 15px; border-radius: 15px;
+        border: 1px solid rgba(245, 158, 11, 0.3); margin-bottom: 12px;
+        transition: 0.3s;
     }}
-    .page-btn button {{ background: #111 !important; color: #f59e0b !important; border: 1px solid #f59e0b !important; }}
+    .sidebar-box:hover {{ background: rgba(245, 158, 11, 0.15); }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 4. Data Loading ---
 @st.cache_data(ttl=60)
 def load_all_data():
+    URL_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    URL_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRdikcTfH9AzB57igcbyJ2IBT2h5xkGZzSNbd240DO44lKXJlWhxgeLUCYVtpRG4QMxVr7DGPzhRP/pub?output=csv"
+    URL_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
+    
     try:
         p = pd.read_csv(URL_P).fillna("---")
         d = pd.read_csv(URL_D).fillna("---")
         l = pd.read_csv(URL_L).fillna("---")
-        p.rename(columns={'Area': 'Location', 'Project Name': 'ProjectName'}, inplace=True)
+        # توحيد أسماء الأعمدة داخلياً لتجنب الـ KeyError
+        p.columns = [c.strip() for c in p.columns]
+        d.columns = [c.strip() for c in d.columns]
+        l.columns = [c.strip() for c in l.columns]
         return p, d, l
     except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
 df_p, df_d, df_l = load_all_data()
 
-# --- 5. Main Interface ---
-st.markdown(f'<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1><p style="color:white;">{L["subtitle"] if "subtitle" in L else ""}</p></div>', unsafe_allow_html=True)
+# --- 5. Main Header ---
+st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900; font-size: 50px;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
 
+# Navigation
 c_menu, c_lang, c_out = st.columns([0.7, 0.15, 0.15])
 with c_menu:
     menu = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
@@ -90,71 +99,64 @@ with c_lang:
 with c_out:
     if st.button(f"🚪 {L['logout']}", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-# --- 6. 70/30 Layout Logic ---
+# --- 6. 70/30 Layout ---
 col_main, col_side = st.columns([0.7, 0.3])
 
-# --- Content Selection ---
+# Logical Setup based on Menu
 if menu in ["Projects", "المشاريع"]: 
     active_df = df_p
     side_title = L["side_proj"]
-    side_items = df_p[df_p['Location'].str.contains("Zayed|Settlement", case=False)].head(5) # Sample logic for "Ready"
+    col_name = 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
+    side_items = df_p.head(5) # يمكن تعديلها بفلتر الاستلام الفوري
 elif menu in ["Launches", "اللونشات"]: 
     active_df = df_l
-    side_title = "🔥 NEW"
+    side_title = "🔥 LAUNCHING NOW"
+    col_name = 'Project' if 'Project' in df_l.columns else df_l.columns[0]
     side_items = df_l.head(5)
 else: 
     active_df = df_d
     side_title = L["side_dev"]
+    col_name = 'Developer' if 'Developer' in df_d.columns else df_d.columns[0]
     side_items = df_d.head(5)
 
 # --- MAIN SECTION (70%) ---
 with col_main:
-    search = st.text_input(L["search"], key="main_search")
-    col_name = 'ProjectName' if 'ProjectName' in active_df.columns else ('Project' if 'Project' in active_df.columns else 'Developer')
-    filtered = active_df[active_df[col_name].str.contains(search, case=False)] if search else active_df
+    search = st.text_input(L["search"])
+    filtered = active_df[active_df[col_name].astype(str).str.contains(search, case=False)] if search else active_df
     
-    # Pagination Logic
+    # Pagination
     start_idx = st.session_state.page_num * ITEMS_PER_PAGE
     end_idx = start_idx + ITEMS_PER_PAGE
     display_df = filtered.iloc[start_idx:end_idx]
 
-    # Grid Display (6 Items)
+    # Grid (6 items)
     grid = st.columns(2)
     for i, (orig_idx, r) in enumerate(display_df.iterrows()):
         with grid[i % 2]:
-            if st.button(f"🏢 {r[col_name]}\n📍 {r.get('Location', 'HQ')}", key=f"card_{i}"):
+            if st.button(f"🏗️ {r[col_name]}", key=f"card_{i}"):
                 st.session_state.selected_item = r
     
-    # Navigation Buttons
+    # Prev/Next Buttons
     st.write("---")
     nb1, nb2 = st.columns(2)
     with nb1:
         if st.session_state.page_num > 0:
-            if st.button(L["prev"], key="prev_page", use_container_width=True):
-                st.session_state.page_num -= 1; st.rerun()
+            if st.button(L["prev"], use_container_width=True): st.session_state.page_num -= 1; st.rerun()
     with nb2:
         if end_idx < len(filtered):
-            if st.button(L["next"], key="next_page", use_container_width=True):
-                st.session_state.page_num += 1; st.rerun()
+            if st.button(L["next"], use_container_width=True): st.session_state.page_num += 1; st.rerun()
 
 # --- SIDE SECTION (30%) ---
 with col_side:
-    st.markdown(f"<h3 style='color:#f59e0b;'>{side_title}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 10px;'>{side_title}</h3>", unsafe_allow_html=True)
     for _, s_item in side_items.iterrows():
-        s_name = s_item.get('ProjectName', s_item.get('Project', s_item.get('Developer')))
+        s_name = s_item[col_name]
         st.markdown(f"""
             <div class="sidebar-box">
-                <b style="color:white;">{s_name}</b><br>
-                <small style="color:#aaa;">{s_item.get('Location', 'Premium')}</small>
+                <b style="color:white; font-size:16px;">✨ {s_name}</b><br>
+                <small style="color:#f59e0b;">Premium Choice</small>
             </div>
         """, unsafe_allow_html=True)
 
-# --- Detail Overlay ---
-if st.session_state.selected_item is not None:
-    it = st.session_state.selected_item
-    st.divider()
-    if st.button(L["back"]): st.session_state.selected_item = None; st.rerun()
-    st.info(f"Viewing: {it[col_name]}")
-    # (Detail expansion here...)
-
+# Footer
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
