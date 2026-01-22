@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفاصيل العقارات</title>
+    <title>تفاصيل العقارات</t
     <style>
         body {
             font-family: sans-serif;
@@ -184,4 +184,5 @@
 
 </body>
 </html>
+
 
