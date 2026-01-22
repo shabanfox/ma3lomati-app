@@ -3,107 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلوماتي العقارية - تفاصيل المشروعات</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>تفاصيل العقارات</title>
     <style>
-        :root {
-            --primary-color: #0f172a;
-            --accent-color: #d4af37;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-        }
-
         body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .main-title {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 40px;
-            border-bottom: 3px solid var(--accent-color);
-            display: inline-block;
-            padding-bottom: 10px;
-        }
-
-        /* حاوية المشاريع */
-        #projects-container {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        /* بطاقة المشروع الكبيرة */
-        .project-section {
-            background: var(--card-bg);
-            border-radius: 20px;
+        .card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
+            border: 1px solid #eee;
         }
 
-        /* رأس بطاقة المشروع */
-        .project-header {
-            background: var(--primary-color);
+        .card-title {
+            background: #2c3e50;
             color: white;
-            padding: 20px 30px;
+            padding: 15px;
+            margin: 0;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .project-header h2 { margin: 0; font-size: 1.5rem; }
-        .developer-tag { background: var(--accent-color); color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; }
-
-        /* شبكة التفاصيل */
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1px;
-            background: #e2e8f0; /* لون الخطوط الفاصلة */
-        }
-
-        .detail-item {
-            background: white;
-            padding: 20px;
-            text-align: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f9f9f9;
         }
 
         .label {
-            display: block;
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
+            color: #7f8c8d;
+            font-weight: bold;
+            font-size: 14px;
         }
 
         .value {
-            display: block;
+            color: #2c3e50;
             font-weight: bold;
-            color: var(--primary-color);
-            font-size: 1.1rem;
+            font-size: 14px;
+            text-align: left;
         }
 
-        /* تمييز السعر ونظام السداد */
-        .highlight-price { color: #16a34a !important; }
-        .payment-box {
-            grid-column: 1 / -1;
-            background: #fffbeb;
-            border-top: 2px dashed var(--accent-color);
+        .price-box {
+            background: #eafaf1;
+            padding: 10px;
+            text-align: center;
+            border-top: 1px solid #d5f5e3;
         }
 
-        @media (max-width: 768px) {
-            .project-header { flex-direction: column; text-align: center; gap: 10px; }
+        .price-value {
+            color: #27ae60;
+            font-size: 18px;
+            font-weight: bold;
         }
+
+        .payment-info {
+            background: #fef9e7;
+            padding: 10px;
+            font-size: 13px;
+            color: #9c640c;
+            text-align: center;
+            border-top: 1px solid #fcf3cf;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content"></div>
+
+<script>
+    // هذه هي بياناتك مقسمة وجاهزة
+    const projects = [
+        { name: "La Vista City", dev: "La Vista", region: "العاصمة الإدارية", price: "17.95M", payment: "10 Years (Equal)", units: "Villas Only", finish: "Semi Finished" },
+        { name: "Lush Valley", dev: "City Edge", region: "التجمع الخامس", price: "5.67M", payment: "8 Years (5%+5%)", units: "Apts, Loft, Mansio", finish: "Semi Finished" },
+        { name: "Grand Lane", dev: "HDP", region: "التجمع السادس", price: "3.5M", payment: "Up to 10 Years", units: "Apts & Villas", finish: "Semi Finished" }
+    ];
+
+    const container = document.getElementById('content');
+
+    projects.forEach(p => {
+        container.innerHTML += `
+            <div class="card">
+                <h2 class="card-title">${p.name}</h2>
+                <div class="detail-row">
+                    <span class="label">المطور:</span>
+                    <span class="value">${p.dev}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">المنطقة:</span>
+                    <span class="value">${p.region}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">نوع الوحدات:</span>
+                    <span class="value">${p.units}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">التشطيب:</span>
+                    <span class="value">${p.finish}</span>
+                </div>
+                <div class="price-box">
+                    <span class="label">يبدأ من: </span>
+                    <span class="price-value">${p.price}</span>
+                </div>
+                <div class="payment-info">
+                    💳 نظام السداد: ${p.payment}
+                </div>
+            </div>
+        `;
+    });
+</script>
+
+</body>
+</html>
     </style>
 </head>
 <body>
@@ -167,3 +184,4 @@
 
 </body>
 </html>
+
