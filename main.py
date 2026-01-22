@@ -1,14 +1,12 @@
 import streamlit as st
 import pandas as pd
 import requests
-import feedparser
-import urllib.parse
+import time
 from datetime import datetime
 import pytz
-import time
 from streamlit_option_menu import option_menu
 
-# --- 1. إعدادات الصفحة ---
+# --- 1. إعدادات الصفحة الفخمة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
 # --- 2. روابط البيانات ---
@@ -21,28 +19,44 @@ URL_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8l
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
-if 'p_idx' not in st.session_state: st.session_state.p_idx = 0
-if 'd_idx' not in st.session_state: st.session_state.d_idx = 0
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "اللونشات"
 
-egypt_tz = pytz.timezone('Africa/Cairo')
-egypt_now = datetime.now(egypt_tz)
+# --- 4. التنسيق الجمالي المتطور (CSS) ---
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    
+    /* خلفية الموقع الكاملة */
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
+        url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+        background-size: cover; background-attachment: fixed;
+        direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
+    }
 
-# --- 4. وظائف الربط مع جوجل شيت ---
-def login_user_from_sheet(u_in, p_in):
-    try:
-        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
-        if response.status_code == 200:
-            users = response.json()
-            for user in users:
-                u_name = str(user.get('Name', user.get('name', ''))).strip().lower()
-                u_email = str(user.get('Email', user.get('email', ''))).strip().lower()
-                u_pass = str(user.get('Password', user.get('password', ''))).strip()
-                if (u_in.strip().lower() == u_name or u_in.strip().lower() == u_email) and str(p_in).strip() == u_pass:
-                    return user.get('Name', user.get('name', 'User'))
-        return None
-    except: return None
+    /* الهيدر الزجاجي */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+        border-radius: 0 0 30px 30px; padding: 30px; text-align: center;
+        border-bottom: 2px solid #f59e0b; margin-bottom: 20px;
+    }
 
+    /* تصميم الكروت */
+    div.stButton > button[key*="card_"] {
+        background: rgba(20, 20, 20, 0.9) !important; color: white !important;
+        border: 1px solid #333 !important; border-top: 4px solid #f59e0b !important;
+        border-radius: 15px !important; min-height: 140px !important; transition: 0.4s !important;
+    }
+    div.stButton > button:hover { transform: scale(1.02); border-color: #f59e0b !important; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2); }
+
+    /* المساعد الذكي */
+    .ai-box { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 20px; padding: 20px; }
+    
+    .stMetric { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid #333; }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 5. وظائف الداتا ---
 @st.cache_data(ttl=60)
 def load_all_data():
     try:
@@ -54,154 +68,172 @@ def load_all_data():
         return p, d, l
     except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 5. التنسيق الجمالي (CSS) ---
-st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    [data-testid="stAppViewContainer"] {{ background-color: #050505; direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif; }}
-    
-    .main-header {{
-        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80');
-        height: 160px; background-size: cover; background-position: center;
-        border-radius: 0 0 40px 40px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; border-bottom: 4px solid #f59e0b; margin-bottom: 10px;
-    }}
+def login_user(u, p):
+    if p == "2026": return "Admin"
+    try:
+        r = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
+        if r.status_code == 200:
+            for user in r.json():
+                if (u.lower() == str(user.get('Email','')).lower() or u == str(user.get('Name',''))) and str(p) == str(user.get('Password','')):
+                    return user.get('Name','User')
+    except: pass
+    return None
 
-    div.stButton > button {{ border-radius: 12px !important; font-family: 'Cairo' !important; transition: 0.3s !important; }}
-    div.stButton > button[key*="card_"] {{
-        background: #161616 !important; color: white !important;
-        min-height: 130px !important; border: 1px solid #333 !important;
-        border-top: 5px solid #f59e0b !important; font-weight: bold !important;
-        display: block !important; width: 100% !important; white-space: pre-line !important;
-    }}
-    div.stButton > button:hover {{ transform: translateY(-5px) !important; border-color: #f59e0b !important; }}
-
-    .smart-box {{ background: #111; padding: 25px; border-radius: 20px; border-right: 6px solid #f59e0b; color: white; margin-bottom: 15px; }}
-    .label {{ color: #f59e0b; font-weight: bold; font-size: 14px; margin-bottom: 2px; }}
-    .value {{ color: #fff; font-size: 18px; margin-bottom: 15px; }}
-    </style>
-""", unsafe_allow_html=True)
-
-# --- 6. شاشة الدخول ---
+# --- 6. الصفحة الافتتاحية (Login) ---
 if not st.session_state.auth:
-    st.markdown("<div style='text-align:center; padding-top:60px;'><h1 style='color:#f59e0b; font-size:55px;'>MA3LOMATI</h1><p style='color:#777;'>PRO 2026</p></div>", unsafe_allow_html=True)
-    _, col_mid, _ = st.columns([1, 1.4, 1])
-    with col_mid:
-        u_input = st.text_input("اسم المستخدم أو الإيميل")
-        p_input = st.text_input("كلمة المرور", type="password")
-        if st.button("دخول للمنصة 🚀", use_container_width=True):
-            if p_input == "2026": 
-                st.session_state.auth = True; st.session_state.current_user = "Admin"; st.rerun()
-            else:
-                user_name = login_user_from_sheet(u_input, p_input)
-                if user_name:
-                    st.session_state.auth = True; st.session_state.current_user = user_name; st.rerun()
-                else: st.error("بيانات الدخول غير صحيحة")
+    _, col_login, _ = st.columns([1, 1.2, 1])
+    with col_login:
+        st.markdown("""
+            <div style='background: rgba(0,0,0,0.6); padding: 40px; border-radius: 30px; border: 1px solid #f59e0b; text-align: center; margin-top: 50px;'>
+                <h1 style='color: #f59e0b; font-size: 45px; margin-bottom: 10px;'>MA3LOMATI PRO</h1>
+                <p style='color: #ccc; font-size: 18px;'>الجيل القادم من منصات إدارة العقارات</p>
+                <hr style='border-color: #333;'>
+            </div>
+        """, unsafe_allow_html=True)
+        u = st.text_input("اسم المستخدم")
+        p = st.text_input("كلمة المرور", type="password")
+        if st.button("دخول للمنصة الملكية 👑", use_container_width=True):
+            user = login_user(u, p)
+            if user: st.session_state.auth = True; st.session_state.current_user = user; st.rerun()
+            else: st.error("بيانات الدخول غير صحيحة")
     st.stop()
 
-# --- 7. التحميل والهيدر ---
+# --- 7. واجهة المنصة بعد الدخول ---
 df_p, df_d, df_l = load_all_data()
 
-st.markdown(f'<div class="main-header"><h1>MA3LOMATI PRO</h1><p>مرحباً بك يا {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+# الهيدر السينمائي
+st.markdown(f"""
+    <div class="glass-header">
+        <h1 style="color: white; margin: 0; letter-spacing: 2px;">MA3LOMATI <span style="color:#f59e0b;">PRO</span></h1>
+        <p style="color: #aaa; margin-top: 10px;">أهلاً بك يا {st.session_state.current_user} | {datetime.now().strftime('%Y-%m-%d')}</p>
+    </div>
+""", unsafe_allow_html=True)
 
-c_logout, _ = st.columns([0.15, 0.85])
-with c_logout:
+# زر الخروج والمنيو
+c_ex, c_menu = st.columns([0.15, 0.85])
+with c_ex:
     if st.button("🚪 خروج"): st.session_state.auth = False; st.rerun()
+with c_menu:
+    menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"], 
+        icons=["briefcase", "building", "search", "robot", "rocket"], 
+        default_index=4, orientation="horizontal",
+        styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
-# --- 8. المنيو الرئيسي (يظهر دائماً في الأعلى) ---
-menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"], 
-    icons=["briefcase", "building", "search", "robot", "rocket"], 
-    default_index=4, orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
-
-# إذا تغير القسم من المنيو، نقوم بتصفير العنصر المختار تلقائياً
 if menu != st.session_state.last_menu:
     st.session_state.selected_item = None
     st.session_state.last_menu = menu
 
-# --- 9. منطق العرض (تفاصيل أو قائمة) ---
+# --- 8. الأقسام المتطورة ---
 
-# حالة 1: عرض التفاصيل (إذا كان هناك عنصر مختار)
-if st.session_state.selected_item is not None:
-    it = st.session_state.selected_item
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("⬅️ عودة للقائمة السابقة"): 
-        st.session_state.selected_item = None
-        st.rerun()
+# 1. المساعد الذكي (تم التعديل ليعمل بقوة)
+if menu == "المساعد الذكي":
+    st.markdown("<div class='ai-box'><h2>🤖 مساعد الربط العقاري الذكي</h2>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    loc = c1.selectbox("📍 المنطقة المستهدفة", ["الكل"] + sorted(df_p['Location'].unique().tolist()))
+    bud = c2.number_input("💰 المقدم المتاح (EGP)", 0, step=100000)
+    typ = c3.selectbox("🏠 نوع الوحدات", ["سكني", "تجاري", "إداري", "الكل"])
     
-    st.markdown("<div class='smart-box'>", unsafe_allow_html=True)
-    title = it.get('ProjectName', it.get('Project', it.get('Developer', 'التفاصيل')))
-    st.markdown(f"<h1 style='color:#f59e0b;'>{title}</h1>", unsafe_allow_html=True)
-    
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
-        if 'Developer' in it: st.markdown(f"<p class='label'>🏢 المطور</p><p class='value'>{it['Developer']}</p>", unsafe_allow_html=True)
-        if 'Location' in it: st.markdown(f"<p class='label'>📍 الموقع</p><p class='value'>{it['Location']}</p>", unsafe_allow_html=True)
-    with col_d2:
-        if 'Price & Payment' in it: st.markdown(f"<p class='label'>💰 السعر والسداد</p><p class='value'>{it['Price & Payment']}</p>", unsafe_allow_html=True)
-        if 'Developer Category' in it: st.markdown(f"<p class='label'>⭐ الفئة</p><p class='value'>{it['Developer Category']}</p>", unsafe_allow_html=True)
-    
-    usp = it.get('Unique Selling Points (USP)', it.get('Notes', it.get('Owner', '---')))
-    if usp != '---':
-        st.markdown(f"<hr style='border-color:#333;'><p class='label'>🌟 معلومات إضافية</p><p style='font-size:17px; line-height:1.7;'>{usp}</p>", unsafe_allow_html=True)
+    if st.button("تحليل ومطابقة البيانات 🎯", use_container_width=True):
+        with st.spinner("جاري فحص قاعدة البيانات..."):
+            time.sleep(1)
+            results = df_p.copy()
+            if loc != "الكل": results = results[results['Location'] == loc]
+            # هنا يمكنك إضافة فلترة الميزانية لو الشيت يحتوي على خانة "المقدم"
+            
+            if not results.empty:
+                st.success(f"تم إيجاد {len(results.head(6))} ترشيحات مثالية لعميلك:")
+                grid = st.columns(3)
+                for i, r in results.head(6).reset_index().iterrows():
+                    with grid[i % 3]:
+                        st.markdown(f"""<div style='background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; border-right:4px solid #f59e0b;'>
+                            <h4 style='margin:0;'>{r['ProjectName']}</h4>
+                            <p style='color:#f59e0b; font-size:12px;'>{r['Developer']}</p>
+                        </div>""", unsafe_allow_html=True)
+            else:
+                st.warning("لم نجد نتائج مطابقة تماماً، جرب تغيير الفلاتر.")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# حالة 2: عرض القوائم العادية (حسب اختيار المنيو)
+# 2. أدوات البروكر (تعمل بقوة الآن)
+elif menu == "أدوات البروكر":
+    st.markdown("<h2 style='text-align:center;'>🛠️ الحقيبة الحسابية الاحترافية</h2>", unsafe_allow_html=True)
+    t1, t2, t3 = st.tabs(["💳 حاسبة الأقساط", "💰 حاسبة العمولة", "📐 تحويل المساحات"])
+    
+    with t1:
+        cc1, cc2 = st.columns(2)
+        total = cc1.number_input("إجمالي سعر الوحدة", 1000000, step=50000)
+        down = cc2.number_input("قيمة المقدم", 100000, step=10000)
+        years = st.slider("عدد سنوات التقسيط", 1, 15, 8)
+        
+        rem = total - down
+        monthly = rem / (years * 12)
+        quarterly = rem / (years * 4)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_res1, col_res2 = st.columns(2)
+        col_res1.metric("القسط الشهري", f"{monthly:,.0f} EGP")
+        col_res2.metric("القسط الربع سنوي", f"{quarterly:,.0f} EGP")
+
+    with t2:
+        deal = st.number_input("قيمة الصفقة الإجمالية", 1000000)
+        comm = st.slider("نسبة العمولة %", 0.5, 10.0, 2.5)
+        tax = st.checkbox("خصم ضرائب (14%)")
+        
+        net = deal * (comm / 100)
+        if tax: net = net * 0.86
+        
+        st.metric("صافي الربح المتوقع", f"{net:,.0f} EGP")
+
+    with t3:
+        m2 = st.number_input("المساحة بالمتر المربع (M²)", 100)
+        st.info(f"المساحة بالقدم المربع: {m2 * 10.76:,.2f} Ft²")
+        st.info(f"المساحة بالفدان: {m2 / 4200:,.4f} فدان")
+
+# باقي الأقسام (المشاريع، المطورين، اللونشات) بنفس منطق "التفاصيل" القوي
+elif st.session_state.selected_item is not None:
+    it = st.session_state.selected_item
+    if st.button("⬅️ عودة للقائمة"): st.session_state.selected_item = None; st.rerun()
+    st.markdown(f"""
+        <div style='background: rgba(20,20,20,0.8); padding: 30px; border-radius: 20px; border: 1px solid #f59e0b;'>
+            <h1 style='color:#f59e0b;'>{it.get('ProjectName', it.get('Project', it.get('Developer')))}</h1>
+            <hr>
+            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px;'>
+                <div><p style='color:#aaa;'>📍 الموقع</p><h3>{it.get('Location','---')}</h3></div>
+                <div><p style='color:#aaa;'>🏢 المطور</p><h3>{it.get('Developer','---')}</h3></div>
+                <div><p style='color:#aaa;'>💰 السعر/السداد</p><h3>{it.get('Price & Payment','---')}</h3></div>
+                <div><p style='color:#aaa;'>⭐ الفئة</p><h3>{it.get('Developer Category','---')}</h3></div>
+            </div>
+            <br>
+            <p style='color:#f59e0b; font-weight:bold;'>🌟 نقاط القوة (USP):</p>
+            <p style='font-size:18px;'>{it.get('Unique Selling Points (USP)', it.get('Notes','---'))}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
 else:
+    # عرض الشبكة (Grid) لباقي الأقسام
     if menu == "اللونشات":
-        st.markdown("<h2 style='text-align:center;'>🚀 أحدث لونشات 2026</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:white;'>🚀 حصريات 2026</h2>", unsafe_allow_html=True)
         cols = st.columns(3)
         for i, r in df_l.iterrows():
             with cols[i % 3]:
-                if st.button(f"🏢 {r['Developer']}\n{r['Project']}\n📍 {r['Location']}", key=f"card_l_{i}"):
+                if st.button(f"🔥 {r['Developer']}\n{r['Project']}\n📍 {r['Location']}", key=f"card_l_{i}"):
+                    st.session_state.selected_item = r; st.rerun()
+    
+    elif menu == "المشاريع":
+        search = st.text_input("🔍 ابحث في قاعدة بيانات مشاريع مصر...")
+        dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
+        grid = st.columns(3)
+        for i, r in dff.head(12).reset_index().iterrows():
+            with grid[i % 3]:
+                if st.button(f"🏗️ {r['ProjectName']}\n📍 {r['Location']}", key=f"card_p_{i}"):
                     st.session_state.selected_item = r; st.rerun()
 
-    elif menu == "المشاريع":
-        m_col, s_col = st.columns([0.7, 0.3])
-        with s_col: st.markdown("<div class='smart-box'><h4>📌 مناطق ساخنة</h4><p>التجمع<br>العاصمة<br>أكتوبر</p></div>", unsafe_allow_html=True)
-        with m_col:
-            search = st.text_input("🔍 ابحث عن مشروع")
-            dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
-            start = st.session_state.p_idx * 6
-            grid = st.columns(2)
-            for i, r in dff.iloc[start:start+6].reset_index().iterrows():
-                with grid[i % 2]:
-                    if st.button(f"🏗️ {r['ProjectName']}\n📍 {r['Location']}\n🏢 {r['Developer']}", key=f"card_p_{i}"):
-                        st.session_state.selected_item = r; st.rerun()
-            if len(dff) > 6:
-                c1, c2 = st.columns(2)
-                if start > 0 and c1.button("السابق"): st.session_state.p_idx -= 1; st.rerun()
-                if start+6 < len(dff) and c2.button("التالي"): st.session_state.p_idx += 1; st.rerun()
-
     elif menu == "المطورين":
-        m_col_d, s_col_d = st.columns([0.7, 0.3])
-        with s_col_d: st.markdown("<div class='smart-box'><h4>🏆 الأفضل</h4><p>مطورين الفئة A</p></div>", unsafe_allow_html=True)
-        with m_col_d:
-            search_d = st.text_input("🔍 ابحث عن مطور")
-            dfd = df_d[df_d['Developer'].str.contains(search_d, case=False)] if search_d else df_d
-            start_d = st.session_state.d_idx * 6
-            grid_d = st.columns(2)
-            for i, r in dfd.iloc[start_d:start_d+6].reset_index().iterrows():
-                with grid_d[i % 2]:
-                    if st.button(f"🏗️ {r['Developer']}\n⭐ الفئة: {r.get('Developer Category','A')}", key=f"card_d_{i}"):
-                        st.session_state.selected_item = r; st.rerun()
-            if len(dfd) > 6:
-                c1, c2 = st.columns(2)
-                if start_d > 0 and c1.button("السابق "): st.session_state.d_idx -= 1; st.rerun()
-                if start_d+6 < len(dfd) and c2.button("التالي "): st.session_state.d_idx += 1; st.rerun()
+        search_d = st.text_input("🔍 ابحث عن مطور...")
+        dfd = df_d[df_d['Developer'].str.contains(search_d, case=False)] if search_d else df_d
+        grid = st.columns(3)
+        for i, r in dfd.head(12).reset_index().iterrows():
+            with grid[i % 3]:
+                if st.button(f"🏆 {r['Developer']}\n⭐ الفئة: {r.get('Developer Category','A')}", key=f"card_d_{i}"):
+                    st.session_state.selected_item = r; st.rerun()
 
-    elif menu == "المساعد الذكي":
-        st.markdown("<div class='smart-box'><h2>🤖 المساعد الذكي</h2><p>أدخل متطلبات العميل للبحث التلقائي...</p></div>", unsafe_allow_html=True)
-
-    elif menu == "أدوات البروكر":
-        st.markdown("<h2 style='text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("<div class='smart-box'><h3>💳 القسط</h3></div>", unsafe_allow_html=True)
-        with c2:
-            st.markdown("<div class='smart-box'><h3>💰 العمولة</h3></div>", unsafe_allow_html=True)
-        with c3:
-            st.markdown("<div class='smart-box'><h3>📐 المساحة</h3></div>", unsafe_allow_html=True)
-
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026 | THE FUTURE OF REAL ESTATE</p>", unsafe_allow_html=True)
