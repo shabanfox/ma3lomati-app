@@ -5,141 +5,134 @@ from streamlit_option_menu import option_menu
 # --- 1. Page Config ---
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CONSTANTS ---
-HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
-BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
-ITEMS_PER_PAGE = 6
-
-# --- 2. Session State ---
-if 'lang' not in st.session_state: st.session_state.lang = "AR"
-if 'view' not in st.session_state: st.session_state.view = "grid"
-if 'current_index' not in st.session_state: st.session_state.current_index = 0
-if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'last_menu' not in st.session_state: st.session_state.last_menu = "Projects"
-
-trans = {
-    "EN": {
-        "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
-        "back": "⬅ Back", "search": "Search...",
-        "owner": "Chairman / Owner", "about": "Company Details", "projects": "Key Projects"
-    },
-    "AR": {
-        "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
-        "back": "⬅ العودة للقائمة", "search": "ابحث عن المطور أو المشروع...",
-        "owner": "المالك / رئيس مجلس الإدارة", "about": "عن الشركة", "projects": "أهم المشاريع"
-    }
-}
-L = trans[st.session_state.lang]
-direction = "rtl" if st.session_state.lang == "AR" else "ltr"
-
-# --- 3. Custom CSS (The Cards) ---
-st.markdown(f"""
+# --- 2. Luxury CSS (إجبار التنسيق على شكل كروت) ---
+st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] {{ visibility: hidden; }}
-    [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('{BG_IMG}');
-        background-size: cover; direction: {direction}; font-family: 'Cairo', sans-serif;
-    }}
-    /* The Developer Card Styling */
-    .dev-card {{
-        background: rgba(30, 30, 30, 0.8);
-        border: 1px solid #444;
+    
+    /* إخفاء الهيدر الافتراضي */
+    header, [data-testid="stHeader"] { visibility: hidden; height: 0px; }
+    
+    body, [data-testid="stAppViewContainer"] {
+        background-color: #0e1117;
+        direction: rtl;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    /* تنسيق الكارت */
+    .dev-card-ui {
+        background: #1d2129;
+        border: 1px solid #383e4b;
         border-right: 5px solid #f59e0b;
-        border-radius: 15px;
+        border-radius: 12px;
         padding: 20px;
-        margin-bottom: 15px;
-        transition: 0.3s;
-    }}
-    .dev-card:hover {{
-        background: rgba(45, 45, 45, 1);
-        transform: translateY(-5px);
+        margin-bottom: 10px;
+        transition: 0.3s ease;
+    }
+    .dev-card-ui:hover {
         border-color: #f59e0b;
-    }}
-    .dev-card-title {{ color: #f59e0b; font-size: 22px; font-weight: 900; margin-bottom: 5px; }}
-    .dev-card-owner {{ color: #bbb; font-size: 14px; }}
-    
-    /* Detail Page Container */
-    .detail-container {{
-        background: rgba(20, 20, 20, 0.95);
-        padding: 40px; border-radius: 20px;
-        border-top: 6px solid #f59e0b;
-    }}
-    .detail-section-title {{
-        color: #f59e0b; font-size: 20px; font-weight: 700;
-        margin-top: 30px; margin-bottom: 10px;
-        display: flex; align-items: center; gap: 10px;
-    }}
-    .detail-text {{ color: #fff; font-size: 18px; line-height: 1.8; text-align: justify; }}
-    
-    /* Buttons Customization */
-    div.stButton > button {{ width: 100% !important; }}
+        background: #252a34;
+        transform: translateY(-2px);
+    }
+    .card-title { color: #f59e0b; font-size: 20px; font-weight: 900; margin-bottom: 5px; }
+    .card-subtitle { color: #888; font-size: 14px; }
+
+    /* تنسيق صفحة التفاصيل */
+    .detail-box {
+        background: #161b22;
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid #30363d;
+    }
+    .section-header {
+        color: #f59e0b;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 5px;
+    }
+    .section-content {
+        color: #ffffff;
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. Load Data ---
-@st.cache_data(ttl=60)
-def load_data():
-    URL_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
+# --- 3. Data Loading ---
+@st.cache_data(ttl=10)
+def load_dev_data():
+    # الرابط اللي بعته للمطورين
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
     try:
-        df = pd.read_csv(URL_D).fillna("---")
+        df = pd.read_csv(url).fillna("---")
         df.columns = [c.strip() for c in df.columns]
         return df
-    except: return pd.DataFrame()
+    except:
+        return pd.DataFrame(columns=['Developer', 'Owner / Chairman', 'Company Details', 'Key Projects'])
 
-df_d = load_data()
+df_d = load_dev_data()
+
+# --- 4. Session State ---
+if 'view' not in st.session_state: st.session_state.view = "grid"
+if 'selected_idx' not in st.session_state: st.session_state.selected_idx = 0
 
 # --- 5. Navigation ---
-menu_selection = option_menu(None, L["menu"], default_index=1, orientation="horizontal",
+st.markdown("<h1 style='text-align:center; color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+menu = option_menu(None, ["الأدوات", "المطورين", "المشاريع", "اللونشات"], 
+    icons=['tools', 'building', 'house', 'rocket'], 
+    default_index=1, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
-if menu_selection != st.session_state.last_menu:
-    st.session_state.view = "grid"; st.session_state.last_menu = menu_selection; st.rerun()
+# --- 6. Logic ---
 
-# --- 6. View Logic ---
-if menu_selection in ["Developers", "المطورين"]:
-    
+if menu == "المطورين":
     if st.session_state.view == "details":
-        # صفحة التفاصيل المقسمة
-        item = df_d.iloc[st.session_state.current_index]
-        if st.button(L["back"]): st.session_state.view = "grid"; st.rerun()
+        # --- صفحة التفاصيل ---
+        item = df_d.iloc[st.session_state.selected_idx]
+        if st.button("⬅ عودة للقائمة"):
+            st.session_state.view = "grid"
+            st.rerun()
         
         st.markdown(f"""
-        <div class="detail-container">
-            <h1 style="color:#f59e0b; text-align:center; font-size:40px;">{item.get('Developer', '---')}</h1>
-            <hr style="border-color:#333;">
+        <div class="detail-box">
+            <h1 style="color:#f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom:10px;">{item['Developer']}</h1>
             
-            <div class="detail-section-title">👤 {L['owner']}</div>
-            <div class="detail-text">{item.get('Owner / Chairman', '---')}</div>
+            <div class="section-header">👤 المالك / رئيس مجلس الإدارة</div>
+            <div class="section-content">{item['Owner / Chairman']}</div>
             
-            <div class="detail-section-title">🏢 {L['about']}</div>
-            <div class="detail-text">{item.get('Company Details', '---')}</div>
+            <div class="section-header">🏢 عن الشركة</div>
+            <div class="section-content">{item['Company Details']}</div>
             
-            <div class="detail-section-title">🏗️ {L['projects']}</div>
-            <div class="detail-text">{item.get('Key Projects', '---')}</div>
+            <div class="section-header">🏗️ أهم المشاريع</div>
+            <div class="section-content">{item['Key Projects']}</div>
         </div>
         """, unsafe_allow_html=True)
-        
+
     else:
-        # صفحة الكروت (Grid)
-        search = st.text_input(L["search"])
-        filtered = df_d[df_d['Developer'].astype(str).str.contains(search, case=False)] if search else df_d
+        # --- صفحة الكروت (الشبكة) ---
+        search = st.text_input("🔍 ابحث عن مطور...")
+        filtered_df = df_d[df_d['Developer'].str.contains(search, case=False)] if search else df_d
         
-        cols = st.columns(2)
-        for i, (orig_idx, row) in enumerate(filtered.iterrows()):
-            with cols[i % 2]:
-                # رسم الكارت باستخدام HTML
+        # توزيع الكروت في صفين
+        col1, col2 = st.columns(2)
+        for i, (idx, row) in enumerate(filtered_df.iterrows()):
+            target_col = col1 if i % 2 == 0 else col2
+            with target_col:
+                # عرض تصميم الكارت
                 st.markdown(f"""
-                <div class="dev-card">
-                    <div class="dev-card-title">{row['Developer']}</div>
-                    <div class="dev-card-owner">📍 {row.get('Owner / Chairman', '---')[:50]}...</div>
+                <div class="dev-card-ui">
+                    <div class="card-title">{row['Developer']}</div>
+                    <div class="card-subtitle">📍 {str(row['Owner / Chairman'])[:40]}...</div>
                 </div>
                 """, unsafe_allow_html=True)
-                # زر الشفافية فوق الكارت للدخول للتفاصيل
-                if st.button(f"عرض تفاصيل {row['Developer']}", key=f"btn_{orig_idx}"):
-                    st.session_state.current_index = orig_idx
+                
+                # زرار خفي فوق الكارت عشان يفتحه
+                if st.button(f"تفاصيل {row['Developer']}", key=f"btn_{idx}"):
+                    st.session_state.selected_idx = idx
                     st.session_state.view = "details"
                     st.rerun()
-
 else:
-    st.warning("هذا القسم قيد التجهيز بمجرد ربط الشيتات الأخرى.")
+    st.info("القسم قيد التجهيز.. اختر 'المطورين' لتجربة الكروت الجديدة.")
