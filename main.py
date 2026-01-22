@@ -48,7 +48,7 @@ st.markdown(f"""
     .block-container {{ padding-top: 0rem !important; }}
 
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.95), rgba(0,0,0,0.95)), url('{BG_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
         direction: {direction} !important; 
         text-align: {"right" if direction=="rtl" else "left"} !important; 
@@ -56,7 +56,7 @@ st.markdown(f"""
     }}
 
     .royal-header {{
-        background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{HEADER_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{HEADER_IMG}');
         background-size: cover; background-position: center;
         border-bottom: 3px solid #f59e0b;
         padding: 55px 20px; text-align: center;
@@ -64,16 +64,19 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }}
 
+    /* Balanced Card Design: Bold White Project + Subtle Dev Name */
     div.stButton > button[key*="card_"] {{
-        background: rgba(30, 30, 30, 0.95) !important;
+        background: rgba(35, 35, 35, 0.9) !important;
         color: #FFFFFF !important;
         border: 1px solid #444 !important;
         border-top: 4px solid #f59e0b !important;
-        border-radius: 12px !important;
-        height: 110px !important;
+        border-radius: 15px !important;
+        height: 140px !important; /* Increased height for balance */
         width: 100% !important;
+        white-space: pre-wrap !important; /* To handle the new line */
         font-size: 20px !important;
         font-weight: 900 !important;
+        line-height: 1.4 !important;
         text-shadow: 2px 2px 4px #000;
         transition: 0.3s ease-in-out;
     }}
@@ -128,7 +131,6 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# شريط التنقل - تم إصلاح الأقواس هنا (Single brackets for Python)
 col_menu, col_lang, col_out = st.columns([0.7, 0.15, 0.15])
 with col_menu:
     menu = option_menu(None, L["menu"], default_index=4, orientation="horizontal",
@@ -163,11 +165,14 @@ if st.session_state.selected_item is not None:
         </div>""", unsafe_allow_html=True)
 
 else:
+    # --- Balanced Grid View ---
     if menu in ["Launches", "اللونشات"]:
         grid = st.columns(3)
         for i, r in df_l.iterrows():
             with grid[i % 3]:
-                if st.button(f"{r['Project']}", key=f"card_l_{i}"):
+                # Project Bold + Developer Regular
+                label = f"🚀 {r['Project']}\n───\n🏢 {r['Developer']}"
+                if st.button(label, key=f"card_l_{i}"):
                     st.session_state.selected_item = r; st.rerun()
 
     elif menu in ["Projects", "المشاريع"]:
@@ -178,7 +183,8 @@ else:
             grid = st.columns(3)
             for i, r in dff.head(15).reset_index().iterrows():
                 with grid[i % 3]:
-                    if st.button(f"{r['ProjectName']}", key=f"card_p_{i}"):
+                    label = f"🏗️ {r['ProjectName']}\n───\n📍 {r['Location']}"
+                    if st.button(label, key=f"card_p_{i}"):
                         st.session_state.selected_item = r; st.rerun()
 
     elif menu in ["Developers", "المطورين"]:
@@ -189,7 +195,9 @@ else:
             grid_d = st.columns(3)
             for i, r in dfd.head(15).reset_index().iterrows():
                 with grid_d[i % 3]:
-                    if st.button(f"{r['Developer']}", key=f"card_d_{i}"):
+                    # Dev Name Bold + Category Regular
+                    label = f"🏆 {r['Developer']}\n───\n⭐ Grade: {r.get('Developer Category','A')}"
+                    if st.button(label, key=f"card_d_{i}"):
                         st.session_state.selected_item = r; st.rerun()
 
 st.markdown(f"<p style='text-align:center; color:#555; margin-top:50px;'>{L['title']} PRO © 2026</p>", unsafe_allow_html=True)
