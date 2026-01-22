@@ -19,7 +19,7 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'selected_item' not in st.session_state: st.session_state.selected_item = None
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "Launches"
 
-# --- 4. Professional CSS (English Alignment) ---
+# --- 4. Enhanced UI CSS ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -28,8 +28,8 @@ st.markdown("""
     .block-container { padding-top: 0rem !important; }
 
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
-        url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+        background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+        url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1920&q=80');
         background-size: cover; background-attachment: fixed;
         direction: ltr !important; text-align: left !important; font-family: 'Cairo', sans-serif;
     }
@@ -42,29 +42,35 @@ st.markdown("""
         border-radius: 0 0 60px 60px; margin-bottom: 30px;
     }
 
+    /* Updated Card Styling for Bold White Text */
     div.stButton > button[key*="card_"] {
-        background: rgba(20, 20, 20, 0.85) !important;
-        color: white !important;
-        border: 1px solid #333 !important;
+        background: rgba(25, 25, 25, 0.95) !important;
+        color: #FFFFFF !important; /* Pure White */
+        border: 1px solid #444 !important;
         border-top: 4px solid #f59e0b !important;
         border-radius: 15px !important;
-        min-height: 140px !important;
+        min-height: 150px !important;
         width: 100% !important;
         transition: 0.4s all ease;
-        line-height: 1.6 !important;
-        font-size: 16px !important;
+        line-height: 1.8 !important;
+        
+        /* High Visibility Text Settings */
+        font-size: 18px !important;
+        font-weight: 900 !important; /* Extra Bold */
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
     }
     
     div.stButton > button:hover {
-        transform: translateY(-8px);
+        transform: translateY(-10px);
+        background: rgba(40, 40, 40, 1) !important;
         border-color: #f59e0b !important;
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3) !important;
+        box-shadow: 0 12px 30px rgba(245, 158, 11, 0.4) !important;
     }
 
     .info-card { 
-        background: rgba(255,255,255,0.03); 
+        background: rgba(0, 0, 0, 0.7); 
         padding: 30px; border-radius: 25px; 
-        border: 1px solid #222;
+        border: 1px solid #333;
     }
     
     .label-gold { color: #f59e0b; font-weight: 900; }
@@ -91,29 +97,28 @@ def load_all_data():
         return p, d, l
     except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 6. Login Page ---
+# --- 6. Auth ---
 if not st.session_state.auth:
     _, col_login, _ = st.columns([1, 1.2, 1])
     with col_login:
         st.markdown("<div style='height:150px;'></div>", unsafe_allow_html=True)
         st.markdown("<div class='info-card' style='text-align:center;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-        p_in = st.text_input("Password", type="password")
-        if st.button("Login", use_container_width=True):
+        p_in = st.text_input("Access Password", type="password")
+        if st.button("Enter Platform", use_container_width=True):
             if p_in == "2026": st.session_state.auth = True; st.rerun()
-            else: st.error("Incorrect Password")
+            else: st.error("Access Denied")
     st.stop()
 
-# --- 7. Main Interface ---
+# --- 7. Main Dashboard ---
 df_p, df_d, df_l = load_all_data()
 
 st.markdown("""
     <div class="royal-header">
-        <h1 style="color: #f59e0b; font-size: 55px; margin: 0; font-weight: 900;">MA3LOMATI</h1>
-        <p style="color: #aaa; letter-spacing: 6px; font-size: 16px;">THE REAL ESTATE INTELLIGENCE</p>
+        <h1 style="color: #f59e0b; font-size: 50px; margin: 0; font-weight: 900;">MA3LOMATI</h1>
+        <p style="color: #eee; letter-spacing: 5px; font-size: 15px;">PREMIUM REAL ESTATE INTELLIGENCE</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Controls: Logout Right | Menu Left
 col_menu, col_logout = st.columns([0.85, 0.15])
 with col_logout:
     if st.button("Logout", key="logout_btn", use_container_width=True):
@@ -126,8 +131,7 @@ with col_menu:
 if menu != st.session_state.last_menu:
     st.session_state.selected_item = None; st.session_state.last_menu = menu
 
-# --- 8. Content View ---
-
+# --- 8. Navigation Logic ---
 if st.session_state.selected_item is not None:
     it = st.session_state.selected_item
     if st.button("← Back to List"):
@@ -137,30 +141,30 @@ if st.session_state.selected_item is not None:
     with c1:
         st.markdown(f"""<div class="info-card">
             <h1 style="color:#f59e0b;">{it.get('ProjectName', it.get('Project', it.get('Developer')))}</h1>
-            <hr style="opacity:0.1">
+            <hr style="opacity:0.2">
             <p class="label-gold">Location</p><h3>{it.get('Location','---')}</h3>
-            <p class="label-gold">Details & USP</p><p style="font-size:20px;">{it.get('Unique Selling Points (USP)', it.get('Notes','---'))}</p>
+            <p class="label-gold">Description & USP</p><p style="font-size:20px; line-height:1.7;">{it.get('Unique Selling Points (USP)', it.get('Notes','---'))}</p>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""<div class="info-card">
-            <p class="label-gold">Price & Payment</p><h4>{it.get('Price & Payment','---')}</h4>
             <p class="label-gold">Developer</p><h4>{it.get('Developer','---')}</h4>
+            <p class="label-gold">Payment Plan</p><h4>{it.get('Price & Payment','---')}</h4>
         </div>""", unsafe_allow_html=True)
 
 else:
     if menu == "Launches":
-        st.markdown("<h3 style='color:#f59e0b;'>🚀 Latest Launches 2026</h3>", unsafe_allow_html=True)
         cols = st.columns(3)
         for i, r in df_l.iterrows():
             with cols[i % 3]:
-                if st.button(f"🔥 {r['Project']}\n🏢 {r['Developer']}\n📍 {r['Location']}", key=f"card_l_{i}"):
+                # Text inside button is now bold and white via CSS
+                if st.button(f"🚀 {r['Project']}\n{r['Developer']}\n{r['Location']}", key=f"card_l_{i}"):
                     st.session_state.selected_item = r; st.rerun()
 
     elif menu == "Projects":
         c_m, c_s = st.columns([0.7, 0.3])
         with c_s:
-            st.markdown("<div class='info-card'><h4>Search</h4>", unsafe_allow_html=True)
-            search = st.text_input("Project Name or Area")
+            st.markdown("<div class='info-card'><h4>Filter</h4>", unsafe_allow_html=True)
+            search = st.text_input("Search Projects")
             st.markdown("</div>", unsafe_allow_html=True)
         with c_m:
             dff = df_p[df_p['ProjectName'].str.contains(search, case=False)] if search else df_p
@@ -173,14 +177,14 @@ else:
     elif menu == "Developers":
         c_m, c_s = st.columns([0.7, 0.3])
         with c_s:
-            st.markdown("<div class='info-card'><h4>Developers</h4></div>", unsafe_allow_html=True)
-            search_d = st.text_input("Developer Name")
+            st.markdown("<div class='info-card'><h4>Database</h4></div>", unsafe_allow_html=True)
+            search_d = st.text_input("Search Developers")
         with c_m:
             dfd = df_d[df_d['Developer'].str.contains(search_d, case=False)] if search_d else df_d
             grid_d = st.columns(2)
             for i, r in dfd.head(10).reset_index().iterrows():
                 with grid_d[i % 2]:
-                    if st.button(f"🏆 {r['Developer']}\n⭐ Category: {r.get('Developer Category','A')}", key=f"card_d_{i}"):
+                    if st.button(f"🏆 {r['Developer']}\nGrade: {r.get('Developer Category','A')}", key=f"card_d_{i}"):
                         st.session_state.selected_item = r; st.rerun()
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
