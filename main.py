@@ -1,151 +1,169 @@
-import streamlit as st
-import pandas as pd
-from streamlit_option_menu import option_menu
-
-# --- 1. Page Config ---
-st.set_set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
-
-# --- 2. Custom CSS ---
-st.markdown("""
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معلوماتي العقارية - تفاصيل المشروعات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] { visibility: hidden; display: none; }
-    
-    [data-testid="stAppViewContainer"] {
-        background-color: #0e1117;
-        direction: rtl !important;
-        text-align: right !important;
-        font-family: 'Cairo', sans-serif;
-    }
+        :root {
+            --primary-color: #0f172a;
+            --accent-color: #d4af37;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+        }
 
-    /* أزرار اللغة والخروج الصغيرة تحت بعض في اليمين */
-    .stButton > button[key="btn_lang"], .stButton > button[key="btn_exit"] {
-        font-size: 12px !important;
-        padding: 2px 10px !important;
-        height: 30px !important;
-        min-height: 30px !important;
-        margin-bottom: 5px !important;
-    }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
 
-    /* تصميم الكروت */
-    .card-style {
-        background: #1c2128;
-        border: 1px solid #30363d;
-        border-right: 5px solid #f59e0b;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 10px;
-    }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
 
-    /* صفحة التفاصيل المقسمة */
-    .detail-container {
-        background: #161b22;
-        padding: 25px;
-        border-radius: 15px;
-        border: 1px solid #30363d;
-    }
-    .info-section {
-        margin-bottom: 15px;
-        padding: 12px;
-        background: rgba(245, 158, 11, 0.05);
-        border-radius: 8px;
-        border-right: 3px solid #f59e0b;
-    }
-    .label-gold { color: #f59e0b; font-weight: 900; font-size: 16px; }
-    .val-white { color: #ffffff; font-size: 16px; line-height: 1.6; }
+        .main-title {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 40px;
+            border-bottom: 3px solid var(--accent-color);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        /* حاوية المشاريع */
+        #projects-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* بطاقة المشروع الكبيرة */
+        .project-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* رأس بطاقة المشروع */
+        .project-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-header h2 { margin: 0; font-size: 1.5rem; }
+        .developer-tag { background: var(--accent-color); color: #000; padding: 5px 15px; border-radius: 8px; font-weight: bold; }
+
+        /* شبكة التفاصيل */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1px;
+            background: #e2e8f0; /* لون الخطوط الفاصلة */
+        }
+
+        .detail-item {
+            background: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .label {
+            display: block;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .value {
+            display: block;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* تمييز السعر ونظام السداد */
+        .highlight-price { color: #16a34a !important; }
+        .payment-box {
+            grid-column: 1 / -1;
+            background: #fffbeb;
+            border-top: 2px dashed var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .project-header { flex-direction: column; text-align: center; gap: 10px; }
+        }
     </style>
-""", unsafe_allow_html=True)
+</head>
+<body>
 
-# --- 3. Data Loading ---
-@st.cache_data(ttl=60)
-def load_data():
-    U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
-    U_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
-    try:
-        p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
-        return p.fillna("---"), d.fillna("---"), l.fillna("---")
-    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+<div class="container">
+    <center><h1 class="main-title">دليل المشروعات العقارية</h1></center>
+    
+    <div id="projects-container">
+        </div>
+</div>
 
-df_p, df_d, df_l = load_data()
+<script>
+    // البيانات التي قدمتها أنت
+    const projectsData = [
+        { dev: "La Vista", region: "العاصمة الإدارية", name: "La Vista City", price: "17.95M", payment: "10 Years (Equal)", units: "Villas Only", finishing: "Semi Finished" },
+        { dev: "City Edge", region: "التجمع الخامس", name: "Lush Valley", price: "5.67M", payment: "8 Years (5%+5%)", units: "Apts, Loft, Mansio", finishing: "Semi Finished" },
+        { dev: "HDP", region: "التجمع السادس", name: "Grand Lane", price: "3.5M", payment: "Up to 10 Years", units: "Apts & Villas", finishing: "Semi Finished" },
+        { dev: "Waterway", region: "التجمع السادس", name: "Waterway East", price: "65k/Meter", payment: "9 Years (10% DP)", units: "Apts (G+7)", finishing: "Flexi Finished" },
+        { dev: "Taj Misr", region: "العاصمة (CBD)", name: "Taj Tower 2", price: "4.8M", payment: "Up to 10 Years", units: "Admin (Offices)", finishing: "Fully Finished" },
+        { dev: "Orascom", region: "6 أكتوبر", name: "O Views", price: "7.6M", payment: "10 Years (5% DP)", units: "Sky House, Villas", finishing: "High-end" },
+        { dev: "People&Places", region: "نيو زايد", name: "Hills of One", price: "17.96M", payment: "10 Years (5% DP)", units: "3BD + Garden", finishing: "Fully Finished" }
+    ];
 
-# --- 4. Session State ---
-if 'view' not in st.session_state: st.session_state.view = "grid"
-if 'idx' not in st.session_state: st.session_state.idx = 0
-if 'page_num' not in st.session_state: st.session_state.page_num = 0
+    const container = document.getElementById('projects-container');
 
-# --- 5. UI Layout (Header & Side Buttons) ---
-col_head, col_side = st.columns([0.85, 0.15])
-with col_head:
-    st.markdown("<h1 style='color:#f59e0b;'>MA3LOMATI</h1>", unsafe_allow_html=True)
-with col_side:
-    # الأزرار تحت بعض في أقصى اليمين
-    st.button("🌐 EN/AR", key="btn_lang", use_container_width=True)
-    st.button("🚪 خروج", key="btn_exit", use_container_width=True)
+    // دالة بناء العناصر
+    projectsData.forEach(project => {
+        const card = `
+            <div class="project-section">
+                <div class="project-header">
+                    <h2>${project.name}</h2>
+                    <span class="developer-tag">${project.dev}</span>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="label">📍 المنطقة</span>
+                        <span class="value">${project.region}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">💰 سعر البداية</span>
+                        <span class="value highlight-price">${project.price}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">🏢 أنواع الوحدات</span>
+                        <span class="value">${project.units}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">🏗️ التشطيب</span>
+                        <span class="value">${project.finishing}</span>
+                    </div>
+                    <div class="detail-item payment-box">
+                        <span class="label">💳 نظام السداد</span>
+                        <span class="value">${project.payment}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += card;
+    });
+</script>
 
-menu = option_menu(None, ["الأدوات", "المطورين", "المشاريع", "اللونشات"], 
-    icons=['tools', 'building', 'house', 'rocket'], 
-    default_index=1, orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
-
-# --- 6. Logic Mapping ---
-if menu == "المطورين":
-    active_df, col_main = df_d, 'Developer'
-    mapping = {"👤 المالك / الإدارة": "Owner / Chairman", "🏢 عن الشركة": "Company Details", "🏗️ سابقة الأعمال": "Key Projects"}
-elif menu == "المشاريع":
-    active_df, col_main = df_p, 'Project Name'
-    mapping = {"📍 الموقع": "Area", "📝 وصف المشروع": "Details", "💰 الأسعار": "Price"}
-elif menu == "اللونشات":
-    active_df, col_main = df_l, 'Project'
-    mapping = {"📍 المنطقة": "Area", "📅 موعد الإطلاق": "Launch Date", "🚀 التفاصيل": "Details"}
-else:
-    active_df = pd.DataFrame()
-
-# --- 7. View Logic ---
-if active_df.empty:
-    st.info("القسم قيد التحديث")
-else:
-    if st.session_state.view == "details":
-        item = active_df.iloc[st.session_state.idx]
-        if st.button("⬅ عودة للقائمة"):
-            st.session_state.view = "grid"; st.rerun()
-        
-        st.markdown(f'<div class="detail-container">', unsafe_allow_html=True)
-        st.markdown(f'<h2 style="color:#f59e0b;">{item[col_main]}</h2><hr>', unsafe_allow_html=True)
-        for label, col in mapping.items():
-            st.markdown(f'<div class="info-section"><div class="label-gold">{label}</div><div class="val-white">{item.get(col, "---")}</div></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        # البحث
-        search = st.text_input("🔍 بحث...")
-        filtered = active_df[active_df[col_main].astype(str).str.contains(search, case=False)] if search else active_df
-        
-        # الترقيم (Pagination)
-        limit = 6
-        start = st.session_state.page_num * limit
-        end = start + limit
-        display_df = filtered.iloc[start:end]
-        
-        # عرض الكروت
-        grid = st.columns(2)
-        for i, (orig_idx, row) in enumerate(display_df.iterrows()):
-            with grid[i % 2]:
-                st.markdown(f'<div class="card-style"><div style="color:#f59e0b; font-weight:900;">{row[col_main]}</div><div style="color:#888; font-size:13px;">📍 {str(row.get("Area", "مصر"))[:40]}</div></div>', unsafe_allow_html=True)
-                if st.button(f"فتح {row[col_main]}", key=f"go_{orig_idx}"):
-                    st.session_state.idx = orig_idx; st.session_state.view = "details"; st.rerun()
-
-        # أزرار التنقل (السابق والتالي)
-        st.write("---")
-        nav_prev, nav_page, nav_next = st.columns([1, 2, 1])
-        with nav_prev:
-            if st.session_state.page_num > 0:
-                if st.button("⬅ السابق", use_container_width=True):
-                    st.session_state.page_num -= 1; st.rerun()
-        with nav_page:
-            st.markdown(f"<p style='text-align:center;'>صفحة {st.session_state.page_num + 1}</p>", unsafe_allow_html=True)
-        with nav_next:
-            if end < len(filtered):
-                if st.button("التالي ➡", use_container_width=True):
-                    st.session_state.page_num += 1; st.rerun()
-
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+</body>
+</html>
