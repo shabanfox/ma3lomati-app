@@ -60,9 +60,10 @@ st.markdown(f"""
     /* تصغير خانة البحث */
     [data-testid="stTextInput"] {{ width: 250px !important; margin-bottom: -15px !important; }}
     
-    /* تصغير زر التنقل (Pagination) */
-    .stButton > button[key="next_btn"] {{
-        padding: 5px 15px !important; font-size: 12px !important; height: auto !important; width: 120px !important;
+    /* تنسيق أزرار التنقل (Pagination) */
+    .stButton > button[key="next_btn"], .stButton > button[key="prev_btn"] {{
+        padding: 5px 15px !important; font-size: 12px !important; height: auto !important; width: 100% !important;
+        background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; border: 1px solid #f59e0b !important;
     }}
 
     div.stButton > button[key*="card_"] {{
@@ -183,7 +184,7 @@ else:
             <p class="label-gold">📝 Description</p><p class="val-white">{item.get('Notes', 'Full specifications inside the portal.')}</p>
         </div>""", unsafe_allow_html=True)
     else:
-        # البحث (تم تصغيره عبر CSS)
+        # البحث
         search = st.text_input(L["search"], label_visibility="collapsed")
         filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
         start_idx = st.session_state.page_num * ITEMS_PER_PAGE
@@ -210,10 +211,17 @@ else:
                 for _, s_item in active_df.head(4).iterrows():
                     st.markdown(f"<div class='tool-card'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
-        # Pagination (تم تصغير الزر)
-        if (start_idx + ITEMS_PER_PAGE) < len(filtered):
-            st.write("")
-            if st.button("Next ➡", key="next_btn"): 
-                st.session_state.page_num += 1; st.rerun()
+        # --- Pagination (Next & Previous) ---
+        if len(filtered) > ITEMS_PER_PAGE:
+            st.write("---")
+            col_p, col_empty, col_n = st.columns([0.2, 0.6, 0.2])
+            with col_p:
+                if st.session_state.page_num > 0:
+                    if st.button("⬅ Prev", key="prev_btn"): 
+                        st.session_state.page_num -= 1; st.rerun()
+            with col_n:
+                if (start_idx + ITEMS_PER_PAGE) < len(filtered):
+                    if st.button("Next ➡", key="next_btn"): 
+                        st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
