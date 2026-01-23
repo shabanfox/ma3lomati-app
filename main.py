@@ -13,41 +13,54 @@ USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx8
 # --- 2. Session State ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'lang' not in st.session_state: st.session_state.lang = "AR"
-if 'view' not in st.session_state: st.session_state.view = "grid" 
-if 'last_menu' not in st.session_state: st.session_state.last_menu = "Launches"
 
-# --- 3. CSS Luxury Design ---
+# --- 3. CSS (Mini & Top Aligned Design) ---
+direction = "rtl" if st.session_state.lang == "AR" else "ltr"
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] {{ visibility: hidden; }}
-    .block-container {{ padding-top: 2rem !important; }}
+    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
+    .block-container {{ padding-top: 1rem !important; }}
+    
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
-        font-family: 'Cairo', sans-serif;
+        direction: {direction} !important; font-family: 'Cairo', sans-serif;
     }}
-    /* Login Card Styling */
-    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; width: 100%; }}
+
+    /* تصميم تسجيل الدخول المصغر وفي الأعلى */
+    .auth-wrapper {{ 
+        display: flex; flex-direction: column; align-items: center; 
+        justify-content: flex-start; width: 100%; padding-top: 20px; 
+    }}
     .oval-header {{
-        background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
-        padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900;
-        text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
+        background-color: #000; border: 2px solid #f59e0b; border-radius: 40px;
+        padding: 8px 30px; color: #f59e0b; font-size: 18px; font-weight: 900;
+        text-align: center; z-index: 10; margin-bottom: -18px; min-width: 250px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     }}
     .auth-card {{ 
-        background-color: #ffffff; width: 450px; padding: 60px 40px 40px 40px; 
-        border-radius: 35px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        background-color: #ffffff; width: 320px; padding: 35px 25px 20px 25px; 
+        border-radius: 25px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
     }}
-    /* Inputs Styling */
+    
+    /* تصغير حقول الإدخال */
     div.stTextInput input {{ 
         background-color: #000 !important; color: #fff !important; 
-        border: 1px solid #f59e0b !important; border-radius: 12px !important; 
-        text-align: center !important; height: 45px !important;
+        border: 1px solid #f59e0b !important; border-radius: 10px !important; 
+        text-align: center !important; height: 38px !important; font-size: 14px !important;
     }}
+    
+    /* تصغير الأزرار */
     .stButton button {{ 
         background-color: #000 !important; color: #f59e0b !important; 
-        border: 2px solid #f59e0b !important; border-radius: 12px !important;
-        font-weight: 900 !important; height: 50px !important;
+        border: 1.5px solid #f59e0b !important; border-radius: 10px !important;
+        font-weight: 700 !important; height: 40px !important; font-size: 14px !important;
+    }}
+
+    /* إخفاء أي خطوط أو كروت بيضاء إضافية */
+    div[data-testid="stExpander"], div[data-testid="stTabs"] {{ 
+        background: transparent !important; border: none !important; 
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -61,61 +74,58 @@ def check_auth(u, p):
                      (df['Password'].astype(str).str.strip() == str(p).strip())].empty
     except: return False
 
-# --- 5. UI: LOGIN & REGISTER PAGE ---
+# --- 5. UI: LOGIN & REGISTER ---
 if not st.session_state.auth:
     st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
-    st.markdown("<div class='oval-header'>منصة معلوماتي العقارية</div>", unsafe_allow_html=True)
+    st.markdown("<div class='oval-header'>منصة معلوماتي</div>", unsafe_allow_html=True)
     st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
     
-    mode = st.radio("Select Mode", ["Login / دخول", "Join / اشتراك"], label_visibility="collapsed", horizontal=True)
-    st.write("---")
-
-    if mode == "Login / دخول":
-        st.markdown("<div class='lock-gold'>🔐</div>", unsafe_allow_html=True)
-        u_log = st.text_input("User", placeholder="اسم المستخدم", label_visibility="collapsed", key="u_l")
-        p_log = st.text_input("Pass", type="password", placeholder="كلمة المرور", label_visibility="collapsed", key="p_l")
-        if st.button("دخول الآن", use_container_width=True):
-            if check_auth(u_log, p_log):
-                st.session_state.auth = True; st.rerun()
-            else: st.error("بيانات الدخول غير صحيحة")
-
+    # اختيار بسيط بدون كروت بيضاء
+    mode = st.radio("Choose", ["Login", "Join"], label_visibility="collapsed", horizontal=True)
+    
+    if mode == "Login":
+        st.write("")
+        u_log = st.text_input("U", placeholder="User", label_visibility="collapsed", key="u_l")
+        p_log = st.text_input("P", type="password", placeholder="Pass", label_visibility="collapsed", key="p_l")
+        if st.button("SIGN IN", use_container_width=True):
+            if check_auth(u_log, p_log): st.session_state.auth = True; st.rerun()
+            else: st.error("Wrong info")
     else:
-        st.markdown("<h3 style='color:#000;'>طلب انضمام جديد</h3>", unsafe_allow_html=True)
-        reg_name = st.text_input("Name", placeholder="Name / الاسم الكامل")
-        reg_email = st.text_input("Email", placeholder="Email / البريد الإلكتروني")
-        reg_wa = st.text_input("WhatsApp", placeholder="WhatsApp / رقم الواتساب")
-        reg_comp = st.text_input("Company", placeholder="Company / اسم الشركة")
-        reg_pass = st.text_input("Password", type="password", placeholder="Password (Min 8 chars)")
+        # فورم الاشتراك الكامل
+        r_name = st.text_input("N", placeholder="Full Name", key="r1")
+        r_email = st.text_input("E", placeholder="Email", key="r2")
+        r_wa = st.text_input("W", placeholder="WhatsApp", key="r3")
+        r_comp = st.text_input("C", placeholder="Company", key="r4")
+        r_pass = st.text_input("P", type="password", placeholder="Pass (Min 8)", key="r5")
         
-        if st.button("إرسال طلب الاشتراك", use_container_width=True):
-            # نظام التحقق
-            if not all([reg_name, reg_email, reg_wa, reg_comp, reg_pass]):
-                st.error("يرجى ملء جميع الخانات المطلوبة!")
-            elif len(reg_pass) < 8:
-                st.error("عذراً، يجب أن تكون كلمة المرور 8 أرقام أو حروف على الأقل")
+        if st.button("SUBMIT JOIN", use_container_width=True):
+            if not all([r_name, r_email, r_wa, r_comp, r_pass]):
+                st.error("Fill all fields!")
+            elif len(r_pass) < 8:
+                st.error("Min 8 characters!")
             else:
-                # هنا يتم عرض البيانات التي سيتم إرسالها (يمكن ربطها بـ Google Sheets API لاحقاً)
-                join_date = datetime.now().strftime("%Y-%m-%d %H:%M")
-                st.success(f"تم استلام طلبك يا {reg_name} بنجاح!")
-                st.info(f"Join Date: {join_date}")
-                st.balloons()
+                join_date = datetime.now().strftime("%Y-%m-%d")
+                st.success(f"Success! Joined on {join_date}")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    
+    # زر اللغة المصغر تحت الكارت
     st.write("")
-    if st.button("🌐 English / عربي"):
+    if st.button("🌐 Change Language", key="lang_btn"):
         st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. INTERNAL APP (Simplified Logic for Sample) ---
+# --- 6. INTERNAL APP ---
 else:
-    st.markdown('<div class="royal-header" style="text-align:center; padding:40px;"><h1 style="color:#f59e0b;">MA3LOMATI PRO</h1></div>', unsafe_allow_html=True)
+    # سيتم تحميل صفحة اللونشات مباشرة
+    st.markdown('<h2 style="color:#f59e0b; text-align:center;">MA3LOMATI PRO</h2>', unsafe_allow_html=True)
     
     menu = option_menu(None, ["Tools", "Developers", "Projects", "AI Assistant", "Launches"], 
                        default_index=4, orientation="horizontal",
                        styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
     
-    if st.button("🚪 Logout / خروج"):
+    if st.button("🚪 Logout"):
         st.session_state.auth = False; st.rerun()
     
-    st.info(f"Welcome to {menu} page. Data is loading...")
+    st.success(f"Welcome! Current Page: {menu}")
