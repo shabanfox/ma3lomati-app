@@ -23,14 +23,14 @@ trans = {
     "EN": {
         "logout": "Logout", "back": "🏠 Back to List",
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
-        "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
+        "side_dev": "⭐ TOP DEVS", "side_proj": "🏠 READY", "search": "Search assets...",
         "det_title": "Project Specifications", "ai_welcome": "How can I help you today?",
         "tool_title": "Professional Broker Tools", "next": "Next ➡", "prev": "⬅ Prev"
     },
     "AR": {
         "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
-        "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
+        "side_dev": "⭐ المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
         "det_title": "مواصفات وتفاصيل المشروع", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
         "tool_title": "أدوات البروكر المحترف", "next": "التالي ➡", "prev": "⬅ السابق"
     }
@@ -69,6 +69,12 @@ st.markdown(f"""
         border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 10px;
         color: white; min-height: 200px;
     }}
+    /* كلاس مصغر مخصص فقط للجانب */
+    .mini-side-card {{
+        background: rgba(30, 30, 30, 0.8); padding: 10px; border-radius: 10px;
+        border: 1px solid #444; border-right: 4px solid #f59e0b;
+        margin-bottom: 8px; color: #f59e0b; font-size: 13px; font-weight: bold;
+    }}
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 18px; margin-top: 20px; }}
     .val-white {{ color: white; font-size: 20px; margin-bottom: 10px; }}
     </style>
@@ -91,7 +97,6 @@ df_p, df_d, df_l = load_all_data()
 # --- 5. Main Layout ---
 st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
 
-# Navigation Bar
 c_menu, c_lang, c_out = st.columns([0.7, 0.15, 0.15])
 with c_menu:
     menu_selection = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
@@ -193,7 +198,8 @@ else:
                     if st.button(f"🚀 {r[col_main_name]}\n📍 {r.get('Area','---')}\n🏢 {r.get('Developer','---')}", key=f"card_{orig_idx}"):
                         st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
         else:
-            c_main, c_side = st.columns([0.7, 0.3])
+            # تم تعديل النسبة لتصغير العمود الجانبي أكثر
+            c_main, c_side = st.columns([0.8, 0.2])
             with c_main:
                 grid = st.columns(2)
                 for i, (orig_idx, r) in enumerate(display_df.iterrows()):
@@ -201,11 +207,11 @@ else:
                         if st.button(f"✨ {r[col_main_name]}\n📍 {r.get('Area','---')}\n🏢 {r.get('Developer','---')}", key=f"card_{orig_idx}"):
                             st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
             with c_side:
-                st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
-                for _, s in active_df.head(4).iterrows():
-                    st.markdown(f"<div class='tool-card'>💎 {s[col_main_name]}</div>", unsafe_allow_html=True)
+                st.markdown(f"<p style='color:#f59e0b; font-weight:bold; font-size:14px;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</p>", unsafe_allow_html=True)
+                for _, s in active_df.head(6).iterrows():
+                    # استخدام التصميم المصغر الجديد هنا
+                    st.markdown(f"<div class='mini-side-card'>💎 {s[col_main_name][:20]}</div>", unsafe_allow_html=True)
 
-        # --- أزرار التنقل المضافة ---
         st.write("---")
         nav_c1, nav_c2 = st.columns(2)
         with nav_c1:
