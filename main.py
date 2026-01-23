@@ -57,13 +57,10 @@ st.markdown(f"""
         border-bottom: 2px solid #f59e0b; padding: 40px 20px; text-align: center;
         border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
-    /* تصغير خانة البحث */
     [data-testid="stTextInput"] {{ width: 250px !important; margin-bottom: -15px !important; }}
     
-    /* تنسيق أزرار التنقل */
     .stButton > button[key="next_btn"], .stButton > button[key="prev_btn"] {{
         padding: 5px 15px !important; font-size: 12px !important; height: auto !important; width: 100% !important;
-        background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; border: 1px solid #f59e0b !important;
     }}
 
     div.stButton > button[key*="card_"] {{
@@ -73,19 +70,17 @@ st.markdown(f"""
         text-align: {"right" if direction=="rtl" else "left"} !important;
         font-size: 16px !important; line-height: 1.6 !important;
     }}
-
-    /* --- تصغير خانات الجنب (Mini Side Cards) --- */
-    .mini-side-card {{
-        background: rgba(25, 25, 25, 0.8); padding: 10px 15px; border-radius: 10px;
-        border-right: 3px solid #f59e0b; margin-bottom: 8px; font-size: 13px; color: #eee;
-        transition: 0.3s;
-    }}
-    .mini-side-card:hover {{ background: rgba(245, 158, 11, 0.1); }}
-
     .detail-card, .tool-card {{
         background: rgba(20, 20, 20, 0.95); padding: 30px; border-radius: 20px;
         border: 1px solid #333; border-top: 5px solid #f59e0b; margin-top: 10px;
     }}
+
+    /* --- تصغير خانات الجانب فقط --- */
+    .mini-side-card {{
+        background: rgba(30, 30, 30, 0.7); padding: 12px; border-radius: 10px;
+        border-right: 4px solid #f59e0b; margin-bottom: 8px; font-size: 14px; color: white;
+    }}
+
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 18px; margin-top: 20px; }}
     .val-white {{ color: white; font-size: 20px; margin-bottom: 10px; }}
     </style>
@@ -125,9 +120,11 @@ with c_out:
 # --- 6. View Logic ---
 
 if menu_selection in ["Tools", "الأدوات"]:
-    st.info("Tools Section Under Development")
+    # (Tools logic remains the same)
+    st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
 elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
-    st.info("AI Section Under Development")
+    # (AI logic remains the same)
+    st.markdown(f"<div class='tool-card'><h3>🤖 MA3LOMATI AI</h3></div>", unsafe_allow_html=True)
 else:
     is_launch = menu_selection in ["Launches", "اللونشات"]
     if menu_selection in ["Projects", "المشاريع"]: active_df, col_main_name = df_p, 'Project Name'
@@ -136,8 +133,8 @@ else:
 
     if st.session_state.view == "details":
         item = active_df.iloc[st.session_state.current_index]
-        if st.button(L["back"]): st.session_state.view = "grid"; st.rerun()
-        st.markdown(f"<div class='detail-card'><h2>{item[col_main_name]}</h2></div>", unsafe_allow_html=True)
+        if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
+        st.markdown(f"<div class='detail-card'><h1>{item[col_main_name]}</h1></div>", unsafe_allow_html=True)
     else:
         search = st.text_input(L["search"], label_visibility="collapsed")
         filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
@@ -151,7 +148,7 @@ else:
                     if st.button(f"🚀 {r[col_main_name]}", key=f"card_{orig_idx}"):
                         st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
         else:
-            col_main, col_side = st.columns([0.75, 0.25])
+            col_main, col_side = st.columns([0.7, 0.3])
             with col_main:
                 grid = st.columns(2)
                 for i, (orig_idx, r) in enumerate(display_df.iterrows()):
@@ -159,22 +156,17 @@ else:
                         if st.button(f"✨ {r[col_main_name]}", key=f"card_{orig_idx}"):
                             st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
             with col_side:
-                st.markdown(f"<h5 style='color:#f59e0b; margin-bottom:15px;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h5>", unsafe_allow_html=True)
-                for _, s_item in active_df.head(6).iterrows():
-                    # استخدام الكلاس الجديد mini-side-card لتصغير الحجم
+                st.markdown(f"<h3 style='color:#f59e0b;'>{L['side_dev'] if menu_selection=='Developers' else L['side_proj']}</h3>", unsafe_allow_html=True)
+                for _, s_item in active_df.head(4).iterrows():
+                    # تطبيق التصميم المصغر هنا فقط
                     st.markdown(f"<div class='mini-side-card'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
-        # Pagination
-        if len(filtered) > ITEMS_PER_PAGE:
-            st.write("---")
+        if (start_idx + ITEMS_PER_PAGE) < len(filtered):
             col_p, col_empty, col_n = st.columns([0.2, 0.6, 0.2])
             with col_p:
                 if st.session_state.page_num > 0:
-                    if st.button("⬅ Prev", key="prev_btn"): 
-                        st.session_state.page_num -= 1; st.rerun()
+                    if st.button("⬅ Prev", key="prev_btn"): st.session_state.page_num -= 1; st.rerun()
             with col_n:
-                if (start_idx + ITEMS_PER_PAGE) < len(filtered):
-                    if st.button("Next ➡", key="next_btn"): 
-                        st.session_state.page_num += 1; st.rerun()
+                if st.button("Next ➡", key="next_btn"): st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
