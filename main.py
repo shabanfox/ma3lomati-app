@@ -17,25 +17,15 @@ if 'page_num' not in st.session_state: st.session_state.page_num = 0
 if 'view' not in st.session_state: st.session_state.view = "grid" 
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "Projects"
-if 'messages' not in st.session_state: st.session_state.messages = []
 
 trans = {
-    "EN": {
-        "logout": "Logout", "back": "🏠 Back to List",
-        "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
-        "search": "Search assets...", "tool_title": "Professional Broker Tools"
-    },
-    "AR": {
-        "logout": "خروج", "back": "🏠 العودة للقائمة",
-        "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
-        "search": "بحث سريح...", "tool_title": "أدوات البروكر المحترف"
-    }
+    "EN": {"logout": "Logout", "back": "🏠 Back to List", "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"], "search": "Search assets..."},
+    "AR": {"logout": "خروج", "back": "🏠 العودة للقائمة", "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"], "search": "بحث سريع..."}
 }
-
 L = trans[st.session_state.lang]
 direction = "rtl" if st.session_state.lang == "AR" else "ltr"
 
-# --- 3. Luxury CSS ---
+# --- 3. Improved CSS (Fixed Overflow & Dynamic Height) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -53,20 +43,32 @@ st.markdown(f"""
         border-bottom: 2px solid #f59e0b; padding: 40px 20px; text-align: center;
         border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
+    /* كارت القائمة الأساسي */
     div.stButton > button[key*="card_"] {{
         background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
-        border-left: 5px solid #f59e0b !important; border-radius: 15px !important;
-        height: 200px !important; width: 100% !important;
+        border-left: 5px solid #f59e0b !important; border-radius: 12px !important;
+        height: 180px !important; width: 100% !important;
         text-align: {"right" if direction=="rtl" else "left"} !important;
-        font-size: 16px !important; line-height: 1.6 !important;
+        font-size: 15px !important; line-height: 1.5 !important;
+        overflow: hidden;
     }}
+    /* كروت التفاصيل المحسنة */
     .detail-card-dynamic {{
-        background: rgba(25, 25, 25, 0.95); padding: 25px; border-radius: 15px;
-        border: 1px solid #444; border-top: 4px solid #f59e0b; margin-bottom: 20px; min-height: 300px;
+        background: rgba(20, 20, 20, 0.95); 
+        padding: 20px; 
+        border-radius: 15px;
+        border: 1px solid #444; 
+        border-top: 4px solid #f59e0b; 
+        margin-bottom: 15px; 
+        height: auto !important; /* طول تلقائي */
+        min-height: 250px;
+        word-wrap: break-word; /* كسر الكلام الطويل */
+        overflow-wrap: break-word;
+        color: white;
     }}
     .section-title {{ color: #f59e0b; font-weight: 900; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 8px; }}
-    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 14px; margin-top: 10px; }}
-    .val-white {{ color: white; font-size: 17px; margin-bottom: 5px; }}
+    .label-gold {{ color: #f59e0b; font-weight: 700; font-size: 14px; margin-top: 12px; margin-bottom: 2px; }}
+    .val-white {{ color: #eee; font-size: 15px; line-height: 1.4; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -88,9 +90,8 @@ def load_all_data():
 
 df_p, df_d, df_l = load_all_data()
 
-# --- 5. Main Layout ---
+# --- 5. Navigation ---
 st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
-
 menu_selection = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
 
@@ -99,62 +100,53 @@ if menu_selection != st.session_state.last_menu:
     st.rerun()
 
 # --- 6. View Logic ---
+active_df = df_l if menu_selection in ["Launches", "اللونشات"] else (df_p if menu_selection in ["Projects", "المشاريع"] else df_d)
 
-if menu_selection in ["Tools", "الأدوات"]:
-    st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
-    # كود الأدوات (مختصر)
-elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
-    st.info("AI Assistant Section")
-else:
-    active_df = df_l if menu_selection in ["Launches", "اللونشات"] else (df_p if menu_selection in ["Projects", "المشاريع"] else df_d)
-    
-    if not active_df.empty:
-        cols = active_df.columns
-        main_col = cols[0] # العمود الأول دائماً هو الاسم
+if not active_df.empty:
+    cols = active_df.columns
+    main_col = cols[0]
 
-        if st.session_state.view == "details":
-            item = active_df.iloc[st.session_state.current_index]
-            if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
-            
-            # عرض التفاصيل في 3 كروت
-            c1, c2, c3 = st.columns(3)
-            num_cols = len(cols)
-            s = max(1, num_cols // 3)
+    if st.session_state.view == "details":
+        item = active_df.iloc[st.session_state.current_index]
+        if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
+        
+        # توزيع البيانات على 3 كروت بشكل متناسق
+        c1, c2, c3 = st.columns(3)
+        num_cols = len(cols)
+        s = max(1, num_cols // 3)
 
-            with c1:
-                st.markdown('<div class="detail-card-dynamic"><div class="section-title">💎 الأساسيات</div>', unsafe_allow_html=True)
-                for k in cols[:s]: st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-            with c2:
-                st.markdown('<div class="detail-card-dynamic"><div class="section-title">📍 المواصفات</div>', unsafe_allow_html=True)
-                for k in cols[s:s*2]: st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-            with c3:
-                st.markdown('<div class="detail-card-dynamic"><div class="section-title">💰 إضافات</div>', unsafe_allow_html=True)
-                for k in cols[s*2:]: st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+        with c1:
+            st.markdown('<div class="detail-card-dynamic"><div class="section-title">💎 الأساسيات</div>', unsafe_allow_html=True)
+            for k in cols[:s]:
+                st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown('<div class="detail-card-dynamic"><div class="section-title">📍 المواصفات</div>', unsafe_allow_html=True)
+            for k in cols[s:s*2]:
+                st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown('<div class="detail-card-dynamic"><div class="section-title">💰 إضافات</div>', unsafe_allow_html=True)
+            for k in cols[s*2:]:
+                st.markdown(f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        else:
-            search = st.text_input(L["search"])
-            filtered = active_df[active_df[main_col].astype(str).str.contains(search, case=False)] if search else active_df
-            start_idx = st.session_state.page_num * ITEMS_PER_PAGE
-            display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
+    else:
+        # القائمة الرئيسية (Grid)
+        search = st.text_input(L["search"])
+        filtered = active_df[active_df[main_col].astype(str).str.contains(search, case=False)] if search else active_df
+        display_df = filtered.iloc[st.session_state.page_num * ITEMS_PER_PAGE : (st.session_state.page_num+1) * ITEMS_PER_PAGE]
 
-            grid_size = 3 if menu_selection in ["Launches", "اللونشات"] else 2
-            grid = st.columns(grid_size)
-            
-            for i, (orig_idx, r) in enumerate(display_df.iterrows()):
-                with grid[i % grid_size]:
-                    # هنا الحل: بنستخدم رقم العمود (0, 1, 2) بدل اسمه عشان نتفادى الـ KeyError
-                    name = r.iloc[0]
-                    loc = r.iloc[1] if len(r) > 1 else "---"
-                    dev = r.iloc[2] if len(r) > 2 else "---"
-                    
-                    card_text = f"✨ {name}\n📍 {loc}\n🏢 {dev}\n💰 View Details"
-                    if st.button(card_text, key=f"card_{orig_idx}"):
-                        st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
-
-            if (start_idx + ITEMS_PER_PAGE) < len(filtered):
-                if st.button("Next Page ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+        grid_size = 3 if menu_selection in ["Launches", "اللونشات"] else 2
+        grid = st.columns(grid_size)
+        
+        for i, (orig_idx, r) in enumerate(display_df.iterrows()):
+            with grid[i % grid_size]:
+                name = r.iloc[0]
+                loc = r.iloc[1] if len(r) > 1 else "---"
+                dev = r.iloc[2] if len(r) > 2 else "---"
+                card_text = f"✨ {name}\n📍 {loc}\n🏢 {dev}\n🔍 اضغط للتفاصيل"
+                if st.button(card_text, key=f"card_{orig_idx}"):
+                    st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
