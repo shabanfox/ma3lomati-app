@@ -25,14 +25,14 @@ trans = {
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
         "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
         "det_title": "Project Specifications", "ai_welcome": "How can I help you today?",
-        "tool_title": "Professional Broker Tools"
+        "tool_title": "Professional Broker Tools", "next": "Next Page ➡", "prev": "⬅ Previous Page"
     },
     "AR": {
         "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
         "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
         "det_title": "مواصفات وتفاصيل المشروع", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
-        "tool_title": "أدوات البروكر المحترف"
+        "tool_title": "أدوات البروكر المحترف", "next": "الصفحة التالية ➡", "prev": "⬅ الصفحة السابقة"
     }
 }
 
@@ -115,37 +115,38 @@ with c_out:
 if menu_selection in ["Tools", "الأدوات"]:
     st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
     t1, t2, t3 = st.columns(3)
+    # (Tools code remains the same...)
     with t1:
         with st.container(border=True):
             st.subheader("🧮 Mortgage / القسط")
-            p = st.number_input("Amount", 0, key="t1_p")
-            y = st.number_input("Years", 1, 20, 7)
-            if p > 0: st.warning(f"Monthly: {p/(y*12):,.2f}")
+            p_val = st.number_input("Amount", 0, key="t1_p")
+            y_val = st.number_input("Years", 1, 20, 7)
+            if p_val > 0: st.warning(f"Monthly: {p_val/(y_val*12):,.2f}")
         with st.container(border=True):
             st.subheader("📏 Area / المساحة")
-            m = st.number_input("SQM / متر", 0.0)
-            st.info(f"SQFT: {m * 10.76:.2f}")
+            m_val = st.number_input("SQM / متر", 0.0)
+            st.info(f"SQFT: {m_val * 10.76:.2f}")
     with t2:
         with st.container(border=True):
             st.subheader("📈 ROI / العائد")
-            c = st.number_input("Cost", 1)
-            r = st.number_input("Annual Rent", 0)
-            st.warning(f"ROI: {(r/c)*100:.2f}%")
+            c_val = st.number_input("Cost", 1)
+            r_val = st.number_input("Annual Rent", 0)
+            st.warning(f"ROI: {(r_val/c_val)*100:.2f}%")
         with st.container(border=True):
             st.subheader("💰 Commission / العمولة")
-            v = st.number_input("Deal Value", 0)
-            perc = st.slider("%", 1.0, 5.0, 2.5)
-            st.info(f"Earn: {v*(perc/100):,.0f}")
+            v_val = st.number_input("Deal Value", 0)
+            perc_val = st.slider("%", 1.0, 5.0, 2.5)
+            st.info(f"Earn: {v_val*(perc_val/100):,.0f}")
     with t3:
         with st.container(border=True):
             st.subheader("🌍 Currency / العملة")
-            u = st.number_input("USD Amount", 0.0)
-            rate = st.number_input("Rate", 40.0, 70.0, 50.0)
-            st.warning(f"EGP: {u*rate:,.2f}")
+            u_val = st.number_input("USD Amount", 0.0)
+            rate_val = st.number_input("Rate", 40.0, 70.0, 50.0)
+            st.warning(f"EGP: {u_val*rate_val:,.2f}")
         with st.container(border=True):
             st.subheader("✍️ AI Script / نص بيعي")
-            proj = st.text_input("Project Name")
-            if st.button("Create Script"): st.code(f"Invest now in {proj}! Exclusive luxury units available.")
+            proj_val = st.text_input("Project Name")
+            if st.button("Create Script"): st.code(f"Invest now in {proj_val}! Exclusive luxury units available.")
 
 # B. AI ASSISTANT SECTION
 elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
@@ -172,7 +173,6 @@ else:
         cols = active_df.columns
         if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
         
-        # التعديل المطلوب: تقسيم البيانات تلقائياً داخل كروت التفاصيل
         c1, c2, c3 = st.columns(3)
         split = max(1, len(cols) // 3)
         
@@ -181,21 +181,23 @@ else:
             for k in cols[:split]: content1 += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
             content1 += '</div>'
             st.markdown(content1, unsafe_allow_html=True)
-            
         with c2:
             content2 = f'<div class="detail-card"><h3 style="color:#f59e0b; border-bottom:1px solid #444;">📍 Details</h3>'
             for k in cols[split:split*2]: content2 += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
             content2 += '</div>'
             st.markdown(content2, unsafe_allow_html=True)
-            
         with c3:
             content3 = f'<div class="detail-card"><h3 style="color:#f59e0b; border-bottom:1px solid #444;">💰 More</h3>'
             for k in cols[split*2:]: content3 += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
             content3 += '</div>'
             st.markdown(content3, unsafe_allow_html=True)
+
     else:
         search = st.text_input(L["search"])
         filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
+        
+        # --- Pagination Logic ---
+        total_pages = (len(filtered) - 1) // ITEMS_PER_PAGE + 1
         start_idx = st.session_state.page_num * ITEMS_PER_PAGE
         display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
 
@@ -220,8 +222,18 @@ else:
                 for _, s_item in active_df.head(4).iterrows():
                     st.markdown(f"<div class='tool-card'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
+        # --- Pagination Controls ---
         st.write("---")
-        if (start_idx + ITEMS_PER_PAGE) < len(filtered):
-            if st.button("Next Page ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+        p_c1, p_c2, p_c3 = st.columns([1, 1, 1])
+        with p_c1:
+            if st.session_state.page_num > 0:
+                if st.button(L["prev"], use_container_width=True):
+                    st.session_state.page_num -= 1; st.rerun()
+        with p_c2:
+            st.markdown(f"<p style='text-align:center; color:#f59e0b; font-weight:bold;'>Page {st.session_state.page_num + 1} of {total_pages}</p>", unsafe_allow_html=True)
+        with p_c3:
+            if (start_idx + ITEMS_PER_PAGE) < len(filtered):
+                if st.button(L["next"], use_container_width=True):
+                    st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
