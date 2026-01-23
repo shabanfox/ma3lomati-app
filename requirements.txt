@@ -34,3 +34,7 @@ feedparser
 pandas
 
 requests
+streamlit
+pandas
+feedparser
+streamlit-option-menu
