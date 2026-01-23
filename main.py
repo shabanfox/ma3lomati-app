@@ -4,89 +4,86 @@ import pandas as pd
 # --- 1. Page Config ---
 st.set_page_config(page_title="منصة معلوماتي العقارية", layout="wide", initial_sidebar_state="collapsed")
 
-# --- روابط ---
+# --- روابط البيانات ---
 USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
 
-# --- 2. Custom CSS (التصميم البيضاوي والذهبي) ---
+# --- 2. Custom CSS (تصميم نظيف وممركز علوياً) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
-    /* إخفاء الهوامش العلوية تماماً */
+    /* إزالة الفراغ الأبيض العلوي تماماً */
     header, [data-testid="stHeader"] { visibility: hidden; display: none; }
     .block-container { padding-top: 0rem !important; margin-top: 0rem !important; }
-    [data-testid="stAppViewContainer"] { background-color: #f0f2f6; font-family: 'Cairo', sans-serif; }
+    [data-testid="stAppViewContainer"] { background-color: #f8f9fa; font-family: 'Cairo', sans-serif; }
 
     .main-container {
         display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-        width: 100%; padding-top: 20px;
+        width: 100%; padding-top: 10px;
     }
 
-    /* الشعار البيضاوي الفخم */
+    /* العنوان البيضاوي الفخم - خلفية سوداء فريم ذهبي */
     .oval-header {
         background-color: #000;
         border: 3px solid #f59e0b;
-        border-radius: 50% / 100%; /* شكل بيضاوي */
-        padding: 20px 60px;
+        border-radius: 50px; /* شكل بيضاوي انسيابي */
+        padding: 15px 40px;
         color: #f59e0b;
-        font-size: 32px;
+        font-size: 24px;
         font-weight: 900;
         text-align: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        margin-bottom: -20px;
         z-index: 10;
-        min-width: 400px;
+        margin-bottom: -20px;
+        min-width: 320px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
-    /* كارت الدخول الأبيض */
-    .login-box {
+    /* كارت واحد فقط - خلفية بيضاء */
+    .login-card {
         background-color: #ffffff;
-        width: 400px;
-        padding: 60px 40px 40px 40px;
+        width: 360px;
+        padding: 40px 30px 25px 30px;
         border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         text-align: center;
     }
 
     /* رمز القفل الذهبي */
-    .lock-icon {
-        font-size: 40px;
-        color: #f59e0b;
-        margin-bottom: 10px;
-    }
+    .lock-icon { font-size: 35px; color: #f59e0b; margin-bottom: 5px; }
 
-    /* حقول الإدخال (أسود بخط أبيض) */
+    /* الحقول: خلفية سوداء - نص أبيض */
     .stTextInput input {
-        background-color: #1a1a1a !important;
-        color: #ffffff !important;
+        background-color: #111 !important;
+        color: #fff !important;
         border: 1px solid #f59e0b !important;
-        border-radius: 10px !important;
-        height: 45px !important;
+        border-radius: 8px !important;
+        height: 40px !important;
         text-align: center;
     }
 
-    /* زر الدخول */
+    /* زر الدخول الذهبي الأسود */
     .stButton>button {
         background-color: #000 !important;
         color: #f59e0b !important;
         border: 2px solid #f59e0b !important;
-        border-radius: 10px !important;
-        font-weight: 900 !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
         width: 100%;
-        height: 45px;
         transition: 0.3s;
     }
-    .stButton>button:hover {
-        background-color: #f59e0b !important;
-        color: #000 !important;
-    }
+    .stButton>button:hover { background-color: #f59e0b !important; color: #000 !important; }
+
+    /* تنسيق التبويبات داخل الكارت */
+    .stTabs [data-baseweb="tab-list"] { justify-content: center; gap: 10px; }
+    .stTabs [data-baseweb="tab"] { color: #888 !important; font-size: 14px !important; }
+    .stTabs [aria-selected="true"] { color: #f59e0b !important; border-bottom-color: #f59e0b !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. التحقق من الدخول ---
+# --- 3. Logic ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
-def check_login(u, p):
+def validate_user(u, p):
     try:
         df = pd.read_csv(USER_SHEET_URL)
         df.columns = [c.strip() for c in df.columns]
@@ -95,36 +92,40 @@ def check_login(u, p):
         return not match.empty
     except: return False
 
-# --- 4. واجهة المستخدم ---
+# --- 4. UI ---
 if not st.session_state.auth:
     st.markdown("<div class='main-container'>", unsafe_allow_html=True)
     
-    # الجملة في الإطار البيضاوي الأسود بحد ذهبي
+    # الإطار البيضاوي (العنوان)
     st.markdown("<div class='oval-header'>منصة معلوماتي العقارية</div>", unsafe_allow_html=True)
     
-    # الكارت الأبيض تحتها
-    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-    
-    # رمز القفل الذهبي
+    # الكارت الموحد
+    st.markdown("<div class='login-card'>", unsafe_allow_html=True)
     st.markdown("<div class='lock-icon'>🔒</div>", unsafe_allow_html=True)
     
-    u_name = st.text_input("اسم المستخدم", placeholder="ادخل الاسم هنا", label_visibility="collapsed")
-    u_pass = st.text_input("كلمة المرور", type="password", placeholder="كلمة المرور", label_visibility="collapsed")
+    tab_log, tab_sign = st.tabs(["تسجيل الدخول", "طلب اشتراك"])
     
-    st.write("") # مسافة بسيطة
-    
-    if st.button("دخول"):
-        if check_login(u_name, u_pass):
-            st.session_state.auth = True
-            st.rerun()
-        else:
-            st.error("بيانات الدخول غير صحيحة")
+    with tab_log:
+        st.write("")
+        user = st.text_input("اسم المستخدم", placeholder="الاسم", label_visibility="collapsed", key="l1")
+        pwd = st.text_input("كلمة المرور", type="password", placeholder="كلمة المرور", label_visibility="collapsed", key="l2")
+        if st.button("دخول"):
+            if validate_user(user, pwd):
+                st.session_state.auth = True; st.rerun()
+            else: st.error("خطأ في البيانات")
+            
+    with tab_sign:
+        st.write("")
+        st.text_input("الاسم", placeholder="الاسم الكامل", label_visibility="collapsed", key="s1")
+        st.text_input("الواتساب", placeholder="رقم الواتساب", label_visibility="collapsed", key="s2")
+        st.text_input("الشركة", placeholder="اسم الشركة", label_visibility="collapsed", key="s3")
+        if st.button("إرسال الطلب"):
+            st.success("تم إرسال طلبك بنجاح")
             
     st.markdown("</div></div>", unsafe_allow_html=True)
 
 else:
-    # المنصة من الداخل
-    st.success("تم تسجيل الدخول بنجاح")
-    if st.button("خروج"):
-        st.session_state.auth = False
-        st.rerun()
+    # محتوى المنصة بعد الدخول
+    st.title("مرحباً بك في منصة معلوماتي")
+    if st.button("تسجيل خروج"):
+        st.session_state.auth = False; st.rerun()
