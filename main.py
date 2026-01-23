@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-from datetime import datetime
 
 # --- 1. Page Config ---
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
@@ -20,67 +19,83 @@ st.markdown(f"""
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    .block-container {{ padding-top: 2rem !important; }}
+    .block-container {{ padding-top: 3rem !important; }}
 
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('{BG_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
         font-family: 'Cairo', sans-serif;
     }}
 
     /* Glassmorphism Card */
     .auth-container {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        border-radius: 30px;
-        padding: 40px;
-        width: 400px;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 35px;
+        padding: 45px 35px;
+        width: 420px;
         margin: auto;
         text-align: center;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.6);
     }}
 
-    /* Remove Tabs Background */
+    /* Title inside Card */
+    .card-title {{
+        color: #f59e0b;
+        font-size: 32px;
+        font-weight: 900;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    }}
+    .card-subtitle {{
+        color: #ddd;
+        font-size: 13px;
+        margin-bottom: 30px;
+        letter-spacing: 2px;
+    }}
+
+    /* Tabs Styling */
     .stTabs [data-baseweb="tab-list"] {{
         background-color: transparent !important;
         justify-content: center !important;
         border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+        margin-bottom: 20px;
     }}
     .stTabs [data-baseweb="tab"] {{
         color: #ffffff !important;
         background: transparent !important;
         font-weight: 700 !important;
-        font-size: 16px !important;
     }}
     .stTabs [aria-selected="true"] {{
         color: #f59e0b !important;
         border-bottom: 3px solid #f59e0b !important;
     }}
 
-    /* Inputs Styling */
+    /* Inputs */
     div.stTextInput input {{
-        background: rgba(0,0,0,0.4) !important;
+        background: rgba(0,0,0,0.5) !important;
         color: #fff !important;
-        border: 1px solid #444 !important;
+        border: 1px solid #555 !important;
         border-radius: 12px !important;
-        transition: 0.4s;
+        height: 45px !important;
+        text-align: center !important;
     }}
     div.stTextInput input:focus {{
         border-color: #f59e0b !important;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
     }}
 
-    /* Button Styling */
+    /* Premium Button */
     .stButton button {{
-        background: linear-gradient(90deg, #f59e0b, #d97706) !important;
+        background: linear-gradient(135deg, #f59e0b, #92400e) !important;
         color: #000 !important;
         font-weight: 900 !important;
         border: none !important;
         border-radius: 12px !important;
-        height: 45px !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        height: 48px !important;
+        width: 100%;
+        margin-top: 10px;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -94,54 +109,49 @@ def login_user(u, p):
         return u if not user.empty else None
     except: return None
 
-# --- 5. New UI LOGIN/SIGNUP ---
+# --- 5. UI LOGIN/SIGNUP ---
 if not st.session_state.auth:
-    # Logo Area
-    st.markdown("""
-        <div style='text-align:center; margin-bottom: 20px;'>
-            <h1 style='color:#f59e0b; font-size:45px; font-weight:900; letter-spacing:2px; margin-bottom:0;'>MA3LOMATI</h1>
-            <p style='color:#bbb; font-size:14px; margin-top:0;'>PREMIUM REAL ESTATE PLATFORM</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Main Card
+    st.write("") # Space
     st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
+    
+    # اسم المنصة داخل الكارت
+    st.markdown("<div class='card-title'>MA3LOMATI PRO</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-subtitle'>المنصة العقارية الذكية</div>", unsafe_allow_html=True)
     
     tab_login, tab_signup = st.tabs(["🔐 دخول", "📝 اشتراك"])
     
     with tab_login:
         st.write("")
-        u_in = st.text_input("User", placeholder="الاسم أو الإيميل", label_visibility="collapsed", key="l_u")
+        u_in = st.text_input("User", placeholder="اسم المستخدم", label_visibility="collapsed", key="l_u")
         p_in = st.text_input("Pass", type="password", placeholder="كلمة السر", label_visibility="collapsed", key="l_p")
         
-        if st.button("دخول للمنصة 🚀", use_container_width=True):
+        if st.button("تسجيل الدخول", use_container_width=True):
             if p_in == "2026":
                 st.session_state.auth = True; st.rerun()
             else:
                 if login_user(u_in, p_in):
                     st.session_state.auth = True; st.rerun()
-                else: st.error("بيانات غير صحيحة")
+                else: st.error("خطأ في البيانات")
 
     with tab_signup:
         st.write("")
-        name = st.text_input("Name", placeholder="الأسم بالكامل", label_visibility="collapsed")
-        mail = st.text_input("Email", placeholder="الجيميل", label_visibility="collapsed")
-        wa = st.text_input("WA", placeholder="رقم الواتساب", label_visibility="collapsed")
-        co = st.text_input("CO", placeholder="اسم الشركة", label_visibility="collapsed")
-        pas = st.text_input("Pass", type="password", placeholder="كلمة السر (8+)", label_visibility="collapsed")
+        name = st.text_input("Name", placeholder="الأسم بالكامل", label_visibility="collapsed", key="reg_n")
+        mail = st.text_input("Email", placeholder="الجيميل", label_visibility="collapsed", key="reg_e")
+        wa = st.text_input("WA", placeholder="رقم الواتساب", label_visibility="collapsed", key="reg_w")
+        co = st.text_input("CO", placeholder="اسم الشركة", label_visibility="collapsed", key="reg_c")
+        pas = st.text_input("Pass", type="password", placeholder="كلمة السر (8 أرقام+)", label_visibility="collapsed", key="reg_p")
         
         if st.button("إرسال طلب الانضمام", use_container_width=True):
             if name and mail and pas:
-                if len(pas) < 8: st.warning("كلمة السر ضعيفة!")
-                else: st.success("تم إرسال طلبك للإدارة")
-            else: st.warning("أكمل البيانات")
+                if len(pas) < 8: st.warning("يجب أن تكون كلمة السر 8 خانات فأكثر")
+                else: st.success("تم إرسال طلبك بنجاح")
+            else: st.warning("يرجى إكمال كافة البيانات")
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. INTERNAL APP ---
+# --- 6. INTERNAL APP (بقية التطبيق) ---
 else:
     st.markdown('<h1 style="color:#f59e0b; text-align:center; padding:30px;">MA3LOMATI PRO</h1>', unsafe_allow_html=True)
-    if st.button("🚪 Logout"):
+    if st.button("🚪 تسجيل الخروج"):
         st.session_state.auth = False; st.rerun()
-    st.success("تم تسجيل الدخول بنجاح!")
