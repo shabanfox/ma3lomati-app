@@ -37,13 +37,13 @@ def check_auth(u, p):
 trans = {
     "EN": {
         "login_tab": "Login", "signup_tab": "Sign Up", "user": "Name", "pass": "Password", "login_btn": "Sign In",
-        "signup_btn": "Create Account", "email": "Email", "wa": "WhatsApp", "co": "Company",
+        "signup_btn": "Join Now", "email": "Email", "wa": "WhatsApp", "co": "Company",
         "logout": "Logout", "back": "🏠 Back", "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
         "side_proj": "🏠 READY", "search": "Search assets...", "next": "Next ➡", "prev": "⬅ Prev"
     },
     "AR": {
-        "login_tab": "تسجيل الدخول", "signup_tab": "إنشاء حساب", "user": "الاسم", "pass": "كلمة المرور", "login_btn": "دخول",
-        "signup_btn": "إرسال البيانات", "email": "الإيميل", "wa": "واتساب", "co": "الشركة",
+        "login_tab": "دخول", "signup_tab": "اشتراك", "user": "الاسم", "pass": "كلمة المرور", "login_btn": "دخول",
+        "signup_btn": "إرسال الطلب", "email": "الإيميل", "wa": "واتساب", "co": "الشركة",
         "logout": "خروج", "back": "🏠 العودة", "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
         "side_proj": "🏠 استلام فوري", "search": "بحث...", "next": "التالي ➡", "prev": "⬅ السابق"
     }
@@ -51,58 +51,67 @@ trans = {
 L = trans[st.session_state.lang]
 direction = "rtl" if st.session_state.lang == "AR" else "ltr"
 
-# --- 5. Custom CSS (Top Centered & Luxury) ---
+# --- 5. Custom CSS (Compact & Elegant) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     header, [data-testid="stHeader"] {{ visibility: hidden; }}
-    .block-container {{ padding-top: 1rem !important; }}
+    .block-container {{ padding-top: 2rem !important; }}
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('{BG_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.94), rgba(0,0,0,0.94)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
         direction: {direction} !important; font-family: 'Cairo', sans-serif;
     }}
-    /* تصميم الحاوية في الأعلى والمنتصف */
-    .auth-container {{
-        max-width: 500px;
-        margin: 20px auto;
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        padding: 30px;
-        border-radius: 20px;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-        text-align: center;
+    /* اسم المنصة الفخم */
+    .brand-title {{
+        text-align: center; color: #f59e0b; font-size: 50px; font-weight: 900;
+        letter-spacing: 5px; text-shadow: 2px 2px 15px rgba(245, 158, 11, 0.4);
+        margin-bottom: 10px;
     }}
-    .royal-header {{
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{HEADER_IMG}');
-        background-size: cover; border-bottom: 2px solid #f59e0b; padding: 40px;
-        text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 30px;
+    /* كارد تسجيل الدخول الصغير */
+    .compact-auth-box {{
+        max-width: 380px; margin: 0 auto;
+        background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(25px);
+        padding: 25px; border-radius: 20px;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }}
     .stTabs [data-baseweb="tab-list"] {{
-        display: flex; justify-content: center; background: transparent;
+        gap: 20px; justify-content: center;
     }}
     .stTabs [data-baseweb="tab"] {{
-        color: white !important; font-weight: bold; font-size: 18px;
+        color: #888 !important; font-size: 16px; height: 40px;
     }}
     .stTabs [aria-selected="true"] {{
         color: #f59e0b !important; border-bottom-color: #f59e0b !important;
     }}
+    /* تنسيق الحقول */
+    .stTextInput input {{
+        background-color: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        color: white !important; height: 40px !important;
+    }}
+    /* المنصة من الداخل */
+    .royal-header {{
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{HEADER_IMG}');
+        background-size: cover; border-bottom: 2px solid #f59e0b; padding: 30px;
+        text-align: center; border-radius: 0 0 30px 30px; margin-bottom: 20px;
+    }}
     div.stButton > button[key*="card_"] {{
         background: rgba(30, 30, 30, 0.9) !important; color: white !important;
-        border-left: 5px solid #f59e0b !important; height: 180px !important; width: 100% !important;
+        border-left: 5px solid #f59e0b !important; height: 160px !important; width: 100% !important;
     }}
-    .detail-card {{ background: rgba(20, 20, 20, 0.95); padding: 25px; border-radius: 15px; border-top: 5px solid #f59e0b; color: white; }}
-    .label-gold {{ color: #f59e0b; font-weight: 700; margin-top: 15px; }}
+    .detail-card {{ background: rgba(20, 20, 20, 0.95); padding: 20px; border-radius: 12px; border-top: 4px solid #f59e0b; color: white; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 6. AUTHENTICATION SECTION (AT THE TOP) ---
+# --- 6. AUTHENTICATION SECTION ---
 if not st.session_state.auth:
-    st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
-    st.markdown("<h1 style='color:#f59e0b; margin-bottom:10px;'>MA3LOMATI</h1>", unsafe_allow_html=True)
+    # اسم المنصة فوق المربع
+    st.markdown("<h1 class='brand-title'>MA3LOMATI</h1>", unsafe_allow_html=True)
     
-    # التبويبات في أعلى الكارد
+    st.markdown("<div class='compact-auth-box'>", unsafe_allow_html=True)
+    
     t_login, t_signup = st.tabs([L["login_tab"], L["signup_tab"]])
     
     with t_login:
@@ -112,20 +121,19 @@ if not st.session_state.auth:
         if st.button(L["login_btn"], use_container_width=True, type="primary"):
             if check_auth(u_in, p_in):
                 st.session_state.auth = True; st.rerun()
-            else: st.error("❌ بيانات الدخول غير صحيحة")
+            else: st.error("⚠️ بيانات خاطئة")
     
     with t_signup:
         st.write("")
         st.text_input(L["user"], key="s_name")
-        st.text_input(L["email"], key="s_email")
         st.text_input(L["wa"], key="s_wa")
         st.text_input(L["co"], key="s_co")
         st.text_input(L["pass"], type="password", key="s_pass")
         if st.button(L["signup_btn"], use_container_width=True):
-            st.success("✅ تم إرسال طلبك بنجاح. سنقوم بمراجعته.")
+            st.success("📩 تم استلام طلبك")
     
     st.write("---")
-    if st.button("🌐 English / العربية", use_container_width=True):
+    if st.button("🌐 Change Language", use_container_width=True):
         st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
     
     st.markdown("</div>", unsafe_allow_html=True)
@@ -146,9 +154,9 @@ else:
 
     df_p, df_d, df_l = load_all_data()
 
-    st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900; letter-spacing:3px;">MA3LOMATI PRO</h1></div>', unsafe_allow_html=True)
 
-    c_nav, c_out = st.columns([0.85, 0.15])
+    c_nav, c_out = st.columns([0.88, 0.12])
     with c_nav:
         menu = option_menu(None, L["menu"], default_index=2, orientation="horizontal",
             styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
@@ -157,7 +165,7 @@ else:
     with c_out:
         if st.button(f"🚪 {L['logout']}", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-    # --- منطق الأقسام ---
+    # --- منطق الأقسام الداخلي ---
     if menu in ["Tools", "الأدوات"]:
         st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ Tools</h2>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
@@ -184,7 +192,6 @@ else:
             st.rerun()
 
     else:
-        # عرض المشاريع والمطورين
         if menu in ["Projects", "المشاريع"]: active_df = df_p
         elif menu in ["Launches", "اللونشات"]: active_df = df_l
         else: active_df = df_d
@@ -197,7 +204,7 @@ else:
             c1, c2 = st.columns(2)
             for i, c in enumerate(active_df.columns):
                 with (c1 if i % 2 == 0 else c2):
-                    st.markdown(f"<div class='detail-card'><p class='label-gold'>{c}</p><p>{item[c]}</p></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='detail-card'><p style='color:#f59e0b; font-weight:700; margin-bottom:0;'>{c}</p><p>{item[c]}</p></div>", unsafe_allow_html=True)
         else:
             search = st.text_input(L["search"])
             filtered = active_df[active_df[col_name].astype(str).str.contains(search, case=False)]
@@ -214,7 +221,7 @@ else:
             with side:
                 st.markdown(f"<p style='color:#f59e0b;'>{L['side_proj']}</p>", unsafe_allow_html=True)
                 for _, s in active_df.head(6).iterrows():
-                    st.markdown(f"<div class='mini-side-card'>💎 {s[col_name][:22]}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='background:rgba(30,30,30,0.8); padding:8px; border-radius:5px; border-right:3px solid #f59e0b; margin-bottom:5px; font-size:12px; color:#f59e0b;'>💎 {s[col_name][:20]}</div>", unsafe_allow_html=True)
 
             st.write("---")
             b1, b2 = st.columns(2)
@@ -225,4 +232,4 @@ else:
                 if (start + ITEMS_PER_PAGE) < len(filtered):
                     if st.button(L["next"], use_container_width=True): st.session_state.page_num += 1; st.rerun()
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#444; margin-top:40px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
