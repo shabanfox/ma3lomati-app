@@ -8,7 +8,6 @@ st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_st
 # --- روابط الصور والبيانات ---
 HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
-# رابط شيت المستخدمين (CSV)
 USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
 ITEMS_PER_PAGE = 6
 
@@ -52,73 +51,83 @@ trans = {
 L = trans[st.session_state.lang]
 direction = "rtl" if st.session_state.lang == "AR" else "ltr"
 
-# --- 5. Custom CSS (Centered & Luxury) ---
+# --- 5. Custom CSS (Top Centered & Luxury) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
     header, [data-testid="stHeader"] {{ visibility: hidden; }}
-    .block-container {{ padding-top: 0rem !important; }}
+    .block-container {{ padding-top: 1rem !important; }}
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.92), rgba(0,0,0,0.92)), url('{BG_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
         direction: {direction} !important; font-family: 'Cairo', sans-serif;
     }}
-    /* Centering the Auth Card */
-    .auth-wrapper {{
-        display: flex; justify-content: center; align-items: center; min-height: 90vh;
-    }}
-    .auth-card {{
-        background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(15px);
-        padding: 40px; border-radius: 25px; border: 1px solid rgba(245, 158, 11, 0.3);
-        width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    /* تصميم الحاوية في الأعلى والمنتصف */
+    .auth-container {{
+        max-width: 500px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        text-align: center;
     }}
     .royal-header {{
         background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{HEADER_IMG}');
         background-size: cover; border-bottom: 2px solid #f59e0b; padding: 40px;
         text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
-    div.stButton > button {{ border-radius: 10px !important; }}
+    .stTabs [data-baseweb="tab-list"] {{
+        display: flex; justify-content: center; background: transparent;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        color: white !important; font-weight: bold; font-size: 18px;
+    }}
+    .stTabs [aria-selected="true"] {{
+        color: #f59e0b !important; border-bottom-color: #f59e0b !important;
+    }}
     div.stButton > button[key*="card_"] {{
         background: rgba(30, 30, 30, 0.9) !important; color: white !important;
         border-left: 5px solid #f59e0b !important; height: 180px !important; width: 100% !important;
     }}
     .detail-card {{ background: rgba(20, 20, 20, 0.95); padding: 25px; border-radius: 15px; border-top: 5px solid #f59e0b; color: white; }}
-    .mini-side-card {{ background: rgba(30, 30, 30, 0.8); padding: 10px; border-radius: 8px; border-right: 4px solid #f59e0b; margin-bottom: 8px; color: #f59e0b; font-size: 13px; }}
     .label-gold {{ color: #f59e0b; font-weight: 700; margin-top: 15px; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 6. AUTHENTICATION PAGE ---
+# --- 6. AUTHENTICATION SECTION (AT THE TOP) ---
 if not st.session_state.auth:
-    st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
-    with st.container():
-        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
-        st.markdown("<h1 style='color:#f59e0b;'>MA3LOMATI</h1>", unsafe_allow_html=True)
-        
-        t_login, t_signup = st.tabs([L["login_tab"], L["signup_tab"]])
-        
-        with t_login:
-            u_in = st.text_input(L["user"], key="u_login")
-            p_in = st.text_input(L["pass"], type="password", key="p_login")
-            if st.button(L["login_btn"], use_container_width=True, type="primary"):
-                if check_auth(u_in, p_in):
-                    st.session_state.auth = True; st.rerun()
-                else: st.error("خطأ في البيانات")
-        
-        with t_signup:
-            st.text_input(L["user"], key="s_name")
-            st.text_input(L["email"], key="s_email")
-            st.text_input(L["wa"], key="s_wa")
-            st.text_input(L["co"], key="s_co")
-            st.text_input(L["pass"], type="password", key="s_pass")
-            if st.button(L["signup_btn"], use_container_width=True):
-                st.success("تم إرسال طلبك للمراجعة بنجاح")
-        
-        st.write("---")
-        if st.button("🌐 English / العربية", use_container_width=True):
-            st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
-            
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#f59e0b; margin-bottom:10px;'>MA3LOMATI</h1>", unsafe_allow_html=True)
+    
+    # التبويبات في أعلى الكارد
+    t_login, t_signup = st.tabs([L["login_tab"], L["signup_tab"]])
+    
+    with t_login:
+        st.write("")
+        u_in = st.text_input(L["user"], key="u_login")
+        p_in = st.text_input(L["pass"], type="password", key="p_login")
+        if st.button(L["login_btn"], use_container_width=True, type="primary"):
+            if check_auth(u_in, p_in):
+                st.session_state.auth = True; st.rerun()
+            else: st.error("❌ بيانات الدخول غير صحيحة")
+    
+    with t_signup:
+        st.write("")
+        st.text_input(L["user"], key="s_name")
+        st.text_input(L["email"], key="s_email")
+        st.text_input(L["wa"], key="s_wa")
+        st.text_input(L["co"], key="s_co")
+        st.text_input(L["pass"], type="password", key="s_pass")
+        if st.button(L["signup_btn"], use_container_width=True):
+            st.success("✅ تم إرسال طلبك بنجاح. سنقوم بمراجعته.")
+    
+    st.write("---")
+    if st.button("🌐 English / العربية", use_container_width=True):
+        st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
+    
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
@@ -148,7 +157,7 @@ else:
     with c_out:
         if st.button(f"🚪 {L['logout']}", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-    # --- Section Logic ---
+    # --- منطق الأقسام ---
     if menu in ["Tools", "الأدوات"]:
         st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ Tools</h2>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
@@ -175,7 +184,7 @@ else:
             st.rerun()
 
     else:
-        # Projects / Developers / Launches
+        # عرض المشاريع والمطورين
         if menu in ["Projects", "المشاريع"]: active_df = df_p
         elif menu in ["Launches", "اللونشات"]: active_df = df_l
         else: active_df = df_d
