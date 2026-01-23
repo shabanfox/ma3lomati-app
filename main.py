@@ -23,14 +23,14 @@ trans = {
     "EN": {
         "logout": "Logout", "back": "🏠 Back to List",
         "menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"],
-        "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search assets...",
+        "side_dev": "⭐ TOP DEVELOPERS", "side_proj": "🏠 READY TO MOVE", "search": "Search...",
         "det_title": "Project Specifications", "ai_welcome": "How can I help you today?",
         "tool_title": "Professional Broker Tools"
     },
     "AR": {
         "logout": "خروج", "back": "🏠 العودة للقائمة",
         "menu": ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي", "اللونشات"],
-        "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث عن عقار...",
+        "side_dev": "⭐ أفضل المطورين", "side_proj": "🏠 استلام فوري", "search": "بحث...",
         "det_title": "مواصفات وتفاصيل المشروع", "ai_welcome": "كيف يمكنني مساعدتك اليوم؟",
         "tool_title": "أدوات البروكر المحترف"
     }
@@ -57,6 +57,14 @@ st.markdown(f"""
         border-bottom: 2px solid #f59e0b; padding: 40px 20px; text-align: center;
         border-radius: 0 0 40px 40px; margin-bottom: 30px;
     }}
+    /* تصغير خانة البحث */
+    [data-testid="stTextInput"] {{ width: 250px !important; margin-bottom: -15px !important; }}
+    
+    /* تصغير زر التنقل (Pagination) */
+    .stButton > button[key="next_btn"] {{
+        padding: 5px 15px !important; font-size: 12px !important; height: auto !important; width: 120px !important;
+    }}
+
     div.stButton > button[key*="card_"] {{
         background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
         border-left: 5px solid #f59e0b !important; border-radius: 15px !important;
@@ -110,7 +118,6 @@ with c_out:
 
 # --- 6. View Logic ---
 
-# A. TOOLS SECTION
 if menu_selection in ["Tools", "الأدوات"]:
     st.markdown(f"<h2 style='color:#f59e0b; text-align:center;'>⚒️ {L['tool_title']}</h2>", unsafe_allow_html=True)
     t1, t2, t3 = st.columns(3)
@@ -146,7 +153,6 @@ if menu_selection in ["Tools", "الأدوات"]:
             proj = st.text_input("Project Name")
             if st.button("Create Script"): st.code(f"Invest now in {proj}! Exclusive luxury units available.")
 
-# B. AI ASSISTANT SECTION
 elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
     st.markdown(f"<div class='tool-card'><h3>🤖 MA3LOMATI AI</h3><p>{L['ai_welcome']}</p></div>", unsafe_allow_html=True)
     for m in st.session_state.messages:
@@ -156,9 +162,7 @@ elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
         st.session_state.messages.append({"role": "assistant", "content": f"Analyzing market data for: {prompt}..."})
         st.rerun()
 
-# C. DATA SECTIONS (Projects, Devs, Launches)
 else:
-    # تحديد البيانات
     is_launch = menu_selection in ["Launches", "اللونشات"]
     if menu_selection in ["Projects", "المشاريع"]: 
         active_df, col_main_name = df_p, 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
@@ -179,23 +183,20 @@ else:
             <p class="label-gold">📝 Description</p><p class="val-white">{item.get('Notes', 'Full specifications inside the portal.')}</p>
         </div>""", unsafe_allow_html=True)
     else:
-        # البحث
-        search = st.text_input(L["search"])
+        # البحث (تم تصغيره عبر CSS)
+        search = st.text_input(L["search"], label_visibility="collapsed")
         filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
         start_idx = st.session_state.page_num * ITEMS_PER_PAGE
         display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
 
-        # --- تعديل صفحة اللونشات لتكون 100% ---
         if is_launch:
-            # عرض كامل بدون تقسيم جانبي
-            grid = st.columns(3) # 3 أعمدة بدلاً من 2 لاستغلال الـ 100%
+            grid = st.columns(3)
             for i, (orig_idx, r) in enumerate(display_df.iterrows()):
                 with grid[i % 3]:
                     card_text = f"🚀 {r[col_main_name]}\n📍 {r.get('Area', 'New Launch')}\n🏢 {r.get('Developer', 'Elite')}\n💰 Launching Soon..."
                     if st.button(card_text, key=f"card_{orig_idx}"):
                         st.session_state.current_index = orig_idx; st.session_state.view = "details"; st.rerun()
         else:
-            # بقية الصفحات بتقسيم 70/30
             col_main, col_side = st.columns([0.7, 0.3])
             with col_main:
                 grid = st.columns(2)
@@ -209,9 +210,10 @@ else:
                 for _, s_item in active_df.head(4).iterrows():
                     st.markdown(f"<div class='tool-card'>💎 {s_item[col_main_name]}</div>", unsafe_allow_html=True)
 
-        #Pagination
-        st.write("---")
+        # Pagination (تم تصغير الزر)
         if (start_idx + ITEMS_PER_PAGE) < len(filtered):
-            if st.button("Next Page ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+            st.write("")
+            if st.button("Next ➡", key="next_btn"): 
+                st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
