@@ -116,31 +116,39 @@ elif menu_selection in ["AI Assistant", "المساعد الذكي"]:
     st.markdown(f"<div class='tool-card'><h3>🤖 MA3LOMATI AI</h3></div>", unsafe_allow_html=True)
 else:
     is_launch = menu_selection in ["Launches", "اللونشات"]
-    if menu_selection in ["Projects", "المشاريع"]: active_df, col_main_name = df_p, 'Project Name'
-    elif is_launch: active_df, col_main_name = df_l, 'Project'
-    else: active_df, col_main_name = df_d, 'Developer'
+    
+    # تصحيح الـ KeyError عبر اختيار العمود الأول تلقائياً في حالة عدم وجود الاسم المتوقع
+    if menu_selection in ["Projects", "المشاريع"]:
+        active_df = df_p
+        col_main_name = 'Project Name' if 'Project Name' in df_p.columns else df_p.columns[0]
+    elif is_launch:
+        active_df = df_l
+        col_main_name = 'Project' if 'Project' in df_l.columns else df_l.columns[0]
+    else:
+        active_df = df_d
+        col_main_name = 'Developer' if 'Developer' in df_d.columns else df_d.columns[0]
 
     if st.session_state.view == "details":
+        if st.session_state.current_index >= len(active_df): st.session_state.view = "grid"; st.rerun()
         item = active_df.iloc[st.session_state.current_index]
         if st.button(L["back"], use_container_width=True): st.session_state.view = "grid"; st.rerun()
         
         if is_launch:
-            # --- تصميم كروت تفاصيل اللونش الجديد ---
             st.markdown(f"""
             <div class="launch-info-grid">
                 <div class="detail-card">
                     <h3 class="section-title">🏢 المطور العقاري</h3>
                     <p class="label-gold">اسم المطور:</p><p class="val-white">{item.get('Developer', '---')}</p>
-                    <p class="label-gold">سابقة الأعمال:</p><p class="val-white">{item.get('Previous Projects', 'سيتم التحديث قريباً')}</p>
+                    <p class="label-gold">سابقة الأعمال:</p><p class="val-white">{item.get('Previous Projects', '---')}</p>
                 </div>
                 <div class="detail-card">
-                    <h3 class="section-title">🚀 تفاصيل اللونش</h3>
-                    <p class="label-gold">اسم المشروع:</p><p class="val-white">{item.get('Project', '---')}</p>
+                    <h3 class="section-title">🚀 تفاصيل المشروع الجديد</h3>
+                    <p class="label-gold">اسم المشروع:</p><p class="val-white">{item[col_main_name]}</p>
                     <p class="label-gold">الموقع:</p><p class="val-white">{item.get('Area', '---')}</p>
-                    <p class="label-gold">المساحة الإجمالية:</p><p class="val-white">{item.get('Total Area', '---')}</p>
+                    <p class="label-gold">المساحة:</p><p class="val-white">{item.get('Total Area', '---')}</p>
                 </div>
                 <div class="detail-card">
-                    <h3 class="section-title">💰 المعلومات البيعية</h3>
+                    <h3 class="section-title">💰 البيع والوحدات</h3>
                     <p class="label-gold">بداية الأسعار:</p><p class="val-white">{item.get('Starting Price', '---')}</p>
                     <p class="label-gold">أنواع الوحدات:</p><p class="val-white">{item.get('Unit Types', '---')}</p>
                     <p class="label-gold">نظام السداد:</p><p class="val-white">{item.get('Price & Payment', '---')}</p>
@@ -148,12 +156,12 @@ else:
             </div>
             """, unsafe_allow_html=True)
         else:
-            # التصميم الافتراضي لباقي الصفحات
             st.markdown(f"<div class='detail-card'><h1>{item[col_main_name]}</h1><p class='val-white'>{item.get('Notes', '---')}</p></div>", unsafe_allow_html=True)
             
     else:
         search = st.text_input(L["search"], label_visibility="collapsed")
-        filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search else active_df
+        filtered = active_df[active_df[col_main_name].astype(str).str.contains(search, case=False)] if search and not active_df.empty else active_df
+        
         start_idx = st.session_state.page_num * ITEMS_PER_PAGE
         display_df = filtered.iloc[start_idx : start_idx + ITEMS_PER_PAGE]
 
@@ -161,7 +169,9 @@ else:
             grid = st.columns(3)
             for i, (orig_idx, r) in enumerate(display_df.iterrows()):
                 with grid[i % 3]:
-                    if st.button(f"🚀 {r[col_main_name]}\n📍 {r.get('Area', 'Launch')}", key=f"card_{orig_idx}"):
+                    # استخدام .get لضمان عدم حدوث خطأ لو العمود مش موجود
+                    area_val = r.get('Area', 'New Launch')
+                    if st.button(f"🚀 {r[col_main_name]}\n📍 {area_val}", key=f"card_{orig_idx}"):
                         st.session_state.current_index, st.session_state.view = orig_idx, "details"; st.rerun()
         else:
             col_main, col_side = st.columns([0.7, 0.3])
