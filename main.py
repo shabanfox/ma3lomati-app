@@ -7,7 +7,7 @@ st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_st
 # --- 2. Session State ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
-# --- 3. CSS Luxury Centered UI ---
+# --- 3. CSS Luxury Design ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -15,8 +15,9 @@ st.markdown(f"""
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80');
+        background: linear-gradient(rgba(0,0,0,0.92), rgba(0,0,0,0.92)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80');
         background-size: cover;
+        background-position: center;
         font-family: 'Cairo', sans-serif;
     }}
 
@@ -30,42 +31,54 @@ st.markdown(f"""
         width: 100%;
     }}
 
-    /* الكارت اللي مكتوب عليه اسم الموقع (الستايل اللي طلبته) */
+    /* الكارت الأسود اللي مكتوب عليه البيانات (تعديل السطرين) */
     .oval-header-card {{
         background-color: #000; 
         border: 3px solid #f59e0b; 
-        border-radius: 50px;
-        padding: 15px 40px; 
-        color: #f59e0b; 
-        font-size: 26px; 
-        font-weight: 900;
+        border-radius: 40px;
+        padding: 20px 50px; 
         text-align: center; 
         z-index: 10; 
-        margin-bottom: -25px; /* ليدخل جزئياً في كارت الدخول */
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        min-width: 320px;
+        margin-bottom: -40px; /* تداخل أكبر ليتناسب مع السطرين */
+        box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+        min-width: 350px;
     }}
 
-    /* كارت الدخول الأبيض أو الشفاف (حسب رغبتك، هنا جعلته أبيض لبروز الكارت الأسود) */
+    .title-top {{
+        color: #f59e0b; 
+        font-size: 28px; 
+        font-weight: 900;
+        margin: 0;
+        line-height: 1.2;
+    }}
+
+    .subtitle-top {{
+        color: #ffffff; 
+        font-size: 16px; 
+        font-weight: 400;
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }}
+
+    /* كارت الدخول */
     .login-box {{
         background-color: #ffffff; 
-        width: 400px; 
-        padding: 60px 35px 35px 35px; 
-        border-radius: 30px; 
+        width: 420px; 
+        padding: 70px 35px 35px 35px; 
+        border-radius: 35px; 
         text-align: center; 
-        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        box-shadow: 0 25px 60px rgba(0,0,0,0.5);
     }}
 
-    /* تنسيق النصوص والتبويبات داخل الكارت الأبيض */
-    .stTabs [data-baseweb="tab-list"] {{ justify-content: center !important; }}
-    .stTabs [data-baseweb="tab"] {{ font-weight: 700 !important; color: #444 !important; }}
-    .stTabs [aria-selected="true"] {{ color: #f59e0b !important; }}
+    /* التبويبات */
+    .stTabs [data-baseweb="tab-list"] {{ justify-content: center !important; gap: 20px; }}
+    .stTabs [data-baseweb="tab"] {{ font-weight: 700 !important; font-size: 16px; }}
     
     div.stTextInput input {{
-        background-color: #f9f9f9 !important;
-        border: 1px solid #ddd !important;
+        background-color: #f4f4f4 !important;
+        border: 1px solid #eee !important;
         border-radius: 12px !important;
-        height: 45px !important;
+        height: 48px !important;
         text-align: center !important;
     }}
     
@@ -75,48 +88,52 @@ st.markdown(f"""
         border: 2px solid #f59e0b !important;
         font-weight: 900 !important;
         border-radius: 12px !important;
-        height: 50px !important;
+        height: 52px !important;
+        margin-top: 10px;
     }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 4. Login UI ---
 if not st.session_state.auth:
-    # بدء حاوية التوسيط
     st.markdown("<div class='main-auth-wrapper'>", unsafe_allow_html=True)
     
-    # 1. الكارت اللي مكتوب عليه اسم الموقع
-    st.markdown("<div class='oval-header-card'>MA3LOMATI PRO</div>", unsafe_allow_html=True)
+    # الكارت الأسود وبه السطرين المطلوبة
+    st.markdown(f"""
+        <div class='oval-header-card'>
+            <p class='title-top'>MA3LOMATI PRO</p>
+            <p class='subtitle-top'>المنصة العقارية الذكية</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    # 2. كارت الدخول
+    # كارت الدخول الأبيض
     st.markdown("<div class='login-box'>", unsafe_allow_html=True)
     
-    # إضافة جملة المنصة العقارية تحت الكارت مباشرة
-    st.markdown("<p style='color:#666; font-weight:700; margin-top:-10px; margin-bottom:20px;'>المنصة العقارية الذكية</p>", unsafe_allow_html=True)
-    
-    t1, t2 = st.tabs(["تسجيل الدخول", "اشتراك جديد"])
+    t1, t2 = st.tabs(["🔐 دخول", "📝 اشتراك"])
     
     with t1:
         st.write("")
-        st.text_input("Username", placeholder="اسم المستخدم", label_visibility="collapsed", key="u")
-        st.text_input("Password", type="password", placeholder="كلمة السر", label_visibility="collapsed", key="p")
+        u_in = st.text_input("Username", placeholder="اسم المستخدم", label_visibility="collapsed", key="u")
+        p_in = st.text_input("Password", type="password", placeholder="كلمة السر", label_visibility="collapsed", key="p")
         if st.button("دخول للمنصة", use_container_width=True):
-            st.session_state.auth = True
-            st.rerun()
+            if p_in == "2026": # كود الدخول السريع
+                st.session_state.auth = True; st.rerun()
+            else:
+                st.error("البيانات غير صحيحة")
             
     with t2:
         st.write("")
-        st.info("للاشتراك، يرجى التواصل مع الدعم الفني لتفعيل الحساب.")
-        st.text_input("رقم الهاتف", placeholder="01xxxxxxxxx", key="s1")
-        st.button("طلب انضمام", use_container_width=True)
+        st.text_input("Name", placeholder="الأسم بالكامل", label_visibility="collapsed", key="reg_n")
+        st.text_input("Phone", placeholder="رقم الواتساب", label_visibility="collapsed", key="reg_p")
+        if st.button("طلب تفعيل الحساب", use_container_width=True):
+            st.success("تم إرسال طلبك بنجاح!")
 
-    st.markdown("</div>", unsafe_allow_html=True) # قفل الكارت الأبيض
-    st.markdown("</div>", unsafe_allow_html=True) # قفل التوسيط
+    st.markdown("</div>", unsafe_allow_html=True) 
+    st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 5. التطبيق الداخلي ---
+# --- 5. بعد الدخول ---
 else:
-    st.title("مرحباً بك في MA3LOMATI PRO")
-    if st.button("تسجيل خروج"):
-        st.session_state.auth = False
-        st.rerun()
+    st.markdown('<h1 style="color:#f59e0b; text-align:center; padding-top:50px;">MA3LOMATI PRO</h1>', unsafe_allow_html=True)
+    if st.sidebar.button("🚪 تسجيل خروج"):
+        st.session_state.auth = False; st.rerun()
