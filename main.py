@@ -18,7 +18,6 @@ if 'auth' not in st.session_state: st.session_state.auth = False
 if 'show_forgot' not in st.session_state: st.session_state.show_forgot = False
 
 # --- 3. Functions ---
-
 def get_users_live():
     """جلب أحدث البيانات من الشيت مباشرة"""
     try:
@@ -35,97 +34,113 @@ def signup_user(name, pwd, email, wa, comp):
         return "Success" in response.text
     except: return False
 
-# --- 4. CSS Design ---
+# --- 4. CSS Design (Oval Design) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] {{ visibility: hidden; }}
+    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('{BG_IMG}');
-        background-size: cover; direction: rtl !important; font-family: 'Cairo', sans-serif;
+        background-size: cover; background-attachment: fixed;
+        direction: rtl !important; font-family: 'Cairo', sans-serif;
     }}
-    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; padding-top: 20px; }}
+    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 20px; }}
     .oval-header {{
         background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
         padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900;
         text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
     }}
-    .auth-card {{ background-color: #ffffff; width: 400px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    .status-msg {{ font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; }}
+    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
+    .status-msg {{ font-size: 13px; font-weight: bold; color: #ff4b4b; margin-top: -15px; margin-bottom: 10px; text-align: right; display: block; }}
+    div.stButton > button {{ border-radius: 12px !important; }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 5. LOGIN & REGISTER PAGE ---
 if not st.session_state.auth:
-    users_df = get_users_live() # جلب البيانات للفحص اللحظي
+    users_df = get_users_live()
 
     st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
     st.markdown("<div class='oval-header'>منصة معلوماتي العقارية</div>", unsafe_allow_html=True)
     st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
     
-    # --- استعادة كلمة السر ---
+    # --- واجهة استعادة كلمة السر ---
     if st.session_state.show_forgot:
-        st.subheader("🔑 استعادة كلمة السر")
-        f_email = st.text_input("أدخل بريدك الإلكتروني المسجل")
-        if st.button("إرسال طلب الاستعادة"):
-            if f_email in users_df['Email'].astype(str).values:
+        st.markdown("<h3 style='color:#333;'>🔑 استعادة الحساب</h3>", unsafe_allow_html=True)
+        f_email = st.text_input("أدخل البريد الإلكتروني المسجل", key="forgot_email")
+        if st.button("إظهار كلمة السر", use_container_width=True):
+            if not users_df.empty and f_email in users_df['Email'].astype(str).values:
                 u_pass = users_df[users_df['Email'].astype(str) == f_email]['Password'].values[0]
-                st.info(f"كلمة السر الخاصة بك هي: {u_pass}")
+                st.info(f"كلمة السر الخاصة بك هي: **{u_pass}**")
             else:
-                st.error("عذراً، هذا الإيميل غير موجود بالسجلات")
-        if st.button("العودة للدخول"):
+                st.error("هذا البريد غير مسجل لدينا")
+        if st.button("العودة للخلف"):
             st.session_state.show_forgot = False
             st.rerun()
     
-    # --- صفحة الدخول والاشتراك ---
+    # --- واجهة الدخول والاشتراك ---
     else:
-        tab1, tab2 = st.tabs(["تسجيل الدخول", "اشتراك جديد"])
+        tab1, tab2 = st.tabs(["🔐 دخول", "📝 اشتراك"])
         
         with tab1:
-            u = st.text_input("Username", placeholder="الاسم أو الإيميل", key="login_u")
-            p = st.text_input("Password", type="password", placeholder="كلمة المرور", key="login_p")
+            u = st.text_input("User", placeholder="الاسم أو الإيميل", label_visibility="collapsed", key="log_u")
+            p = st.text_input("Pass", type="password", placeholder="كلمة المرور", label_visibility="collapsed", key="log_p")
+            
             if st.button("دخول للمنصة 🚀", use_container_width=True):
-                if p == "2026" or (not users_df.empty and not users_df[((users_df['Name']==u)|(users_df['Email']==u))&(users_df['Password']==p)].empty):
+                if p == "2026": # كود المطور
                     st.session_state.auth = True; st.rerun()
-                else: st.error("بيانات غير صحيحة")
-            if st.button("نسيت كلمة السر؟", variant="ghost"):
+                elif not users_df.empty and not users_df[((users_df['Name']==u)|(users_df['Email']==u))&(users_df['Password'].astype(str)==p)].empty:
+                    st.session_state.auth = True; st.rerun()
+                else:
+                    st.error("بيانات الدخول غير صحيحة")
+            
+            # تم حذف الـ variant لتجنب الـ TypeError
+            if st.button("نسيت كلمة السر؟"):
                 st.session_state.show_forgot = True
                 st.rerun()
         
         with tab2:
-            # الاسم
-            r_n = st.text_input("الاسم بالكامل", key="reg_n")
+            # فحص الاسم
+            r_n = st.text_input("الاسم بالكامل", key="reg_n", placeholder="Name")
             if r_n and not users_df.empty and r_n in users_df['Name'].astype(str).values:
-                st.markdown("<span style='color:red;' class='status-msg'>❌ هذا الاسم موجود مسبقاً</span>", unsafe_allow_html=True)
+                st.markdown("<span class='status-msg'>⚠️ الاسم موجود مسبقاً</span>", unsafe_allow_html=True)
             
-            # الإيميل
-            r_e = st.text_input("البريد الإلكتروني", key="reg_e")
+            # فحص الإيميل
+            r_e = st.text_input("البريد الإلكتروني", key="reg_e", placeholder="Email")
             if r_e and not users_df.empty and r_e in users_df['Email'].astype(str).values:
-                st.markdown("<span style='color:red;' class='status-msg'>❌ هذا الإيميل موجود مسبقاً</span>", unsafe_allow_html=True)
+                st.markdown("<span class='status-msg'>⚠️ الإيميل مسجل مسبقاً</span>", unsafe_allow_html=True)
             
-            # الواتساب
-            r_w = st.text_input("رقم الواتساب", key="reg_w")
+            # فحص الواتساب
+            r_w = st.text_input("رقم الواتساب", key="reg_w", placeholder="WhatsApp")
             if r_w and not users_df.empty and 'WhatsApp' in users_df.columns:
                 if r_w in users_df['WhatsApp'].astype(str).values:
-                    st.markdown("<span style='color:red;' class='status-msg'>❌ هذا الرقم موجود مسبقاً</span>", unsafe_allow_html=True)
+                    st.markdown("<span class='status-msg'>⚠️ الرقم مسجل مسبقاً</span>", unsafe_allow_html=True)
             
-            r_p = st.text_input("كلمة السر", type="password", key="reg_p")
-            r_c = st.text_input("الشركة", key="reg_c")
+            r_p = st.text_input("كلمة السر", type="password", key="reg_p", placeholder="Password")
+            r_c = st.text_input("اسم الشركة", key="reg_c", placeholder="Company")
             
-            if st.button("تأكيد الاشتراك ✅", use_container_width=True):
-                # منع الضغط إذا كان هناك تكرار
-                if (r_n in users_df['Name'].values) or (r_e in users_df['Email'].values):
-                    st.error("يرجى تغيير البيانات المكررة أولاً")
+            if st.button("إنشاء حساب جديد ✅", use_container_width=True):
+                # فحص نهائي للتكرار قبل الإرسال
+                is_duplicate = False
+                if not users_df.empty:
+                    if r_n in users_df['Name'].astype(str).values or r_e in users_df['Email'].astype(str).values:
+                        is_duplicate = True
+                
+                if is_duplicate:
+                    st.error("لا يمكن التسجيل ببيانات موجودة مسبقاً")
                 elif r_n and r_e and r_p:
                     if signup_user(r_n, r_p, r_e, r_w, r_c):
-                        st.success("تم الاشتراك بنجاح!")
+                        st.success("تم الاشتراك! يمكنك الدخول الآن.")
                         st.balloons()
-                    else: st.error("فشل الاتصال")
-                else: st.warning("املأ الحقول الأساسية")
+                    else: st.error("فشل الاتصال بالشيت")
+                else:
+                    st.warning("يرجى إكمال البيانات")
 
     st.markdown("</div></div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. المنصة الداخلية (كما هي) ---
+# --- 6. باقي كود المنصة (يتم وضعه هنا) ---
 st.title("مرحباً بك في المنصة")
-# أضف باقي كود المنصة هنا...
+if st.button("خروج"):
+    st.session_state.auth = False
+    st.rerun()
