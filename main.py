@@ -1,20 +1,14 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-import requests
-import time
 
 # --- 1. Page Config ---
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CONSTANTS & URLS ---
-# رابط الـ Apps Script المسؤول عن إضافة البيانات للشيت
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
-# رابط الشيت لقراءة المستخدمين (لعمل تسجيل الدخول)
-USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
-
+# --- CONSTANTS ---
 HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
+USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
 ITEMS_PER_PAGE = 6
 
 # --- 2. Session State ---
@@ -26,40 +20,7 @@ if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "Launches"
 if 'messages' not in st.session_state: st.session_state.messages = []
 
-# --- 3. Functions (Auth & Signup) ---
-def check_auth(u, p):
-    try:
-        # إضافة طابع زمني لمنع التخزين المؤقت (Cache) عند جلب المستخدمين الجدد
-        response = requests.get(f"{USER_SHEET_URL}?nocache={time.time()}")
-        import io
-        df = pd.read_csv(io.StringIO(response.text))
-        df.columns = [c.strip() for c in df.columns]
-        # التحقق من الاسم أو الإيميل مع كلمة السر
-        user_row = df[((df['Name'].astype(str) == str(u)) | (df['Email'].astype(str) == str(u))) & 
-                      (df['Password'].astype(str) == str(p))]
-        return not user_row.empty
-    except: return False
-
-def signup_user(name, pwd, email, wa, comp):
-    payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
-    try:
-        # إرسال البيانات للـ Google Apps Script
-        response = requests.post(SCRIPT_URL, json=payload)
-        return "Success" in response.text
-    except: return False
-
-@st.cache_data(ttl=60)
-def load_data():
-    U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
-    U_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
-    try:
-        p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
-        for df in [p, d, l]: df.columns = [c.strip() for c in df.columns]
-        return p.fillna("---"), d.fillna("---"), l.fillna("---")
-    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-# --- 4. CSS Luxury Design ---
+# --- 3. CSS Luxury Design ---
 direction = "rtl" if st.session_state.lang == "AR" else "ltr"
 st.markdown(f"""
     <style>
@@ -81,7 +42,7 @@ st.markdown(f"""
     }}
     .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
     .lock-gold {{ font-size: 45px; color: #f59e0b; margin-bottom: 5px; }}
-    .auth-card div.stTextInput input {{ background-color: #f1f1f1 !important; color: #000 !important; border: 1px solid #ddd !important; border-radius: 12px !important; text-align: center !important; height: 45px !important; }}
+    .auth-card div.stTextInput input {{ background-color: #000 !important; color: #fff !important; border: 1px solid #f59e0b !important; border-radius: 12px !important; text-align: center !important; height: 45px !important; }}
 
     /* INTERNAL UI */
     .royal-header {{
@@ -102,44 +63,40 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. LOGIN & REGISTER PAGE ---
+# --- 4. Data Loading ---
+def check_auth(u, p):
+    try:
+        df = pd.read_csv(USER_SHEET_URL)
+        df.columns = [c.strip() for c in df.columns]
+        return not df[(df['Name'].astype(str) == str(u)) & (df['Password'].astype(str) == str(p))].empty
+    except: return False
+
+@st.cache_data(ttl=60)
+def load_data():
+    U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
+    U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
+    U_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
+    try:
+        p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
+        for df in [p, d, l]: df.columns = [c.strip() for c in df.columns]
+        return p.fillna("---"), d.fillna("---"), l.fillna("---")
+    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+# --- 5. LOGIN PAGE ---
 if not st.session_state.auth:
     st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
     st.markdown("<div class='oval-header'>منصة معلوماتي العقارية</div>", unsafe_allow_html=True)
     st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
     st.markdown("<div class='lock-gold'>🔒</div>", unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["تسجيل الدخول", "اشتراك جديد"])
-    
+    tab1, tab2 = st.tabs(["Login", "Register"])
     with tab1:
-        u = st.text_input("Username", placeholder="الاسم أو الإيميل", label_visibility="collapsed", key="login_u")
-        p = st.text_input("Password", type="password", placeholder="كلمة المرور", label_visibility="collapsed", key="login_p")
+        u = st.text_input("User", placeholder="User", label_visibility="collapsed", key="login_u")
+        p = st.text_input("Pass", type="password", placeholder="Pass", label_visibility="collapsed", key="login_p")
         if st.button("SIGN IN", use_container_width=True):
-            if p == "2026": # كود المطور
-                st.session_state.auth = True; st.rerun()
-            elif check_auth(u, p): 
-                st.session_state.auth = True; st.rerun()
-            else: 
-                st.error("بيانات الدخول غير صحيحة")
-    
+            if check_auth(u, p): st.session_state.auth = True; st.rerun()
+            else: st.error("Error")
     with tab2:
-        reg_n = st.text_input("Full Name", placeholder="الاسم بالكامل", key="r_n")
-        reg_e = st.text_input("Email", placeholder="البريد الإلكتروني", key="r_e")
-        reg_p = st.text_input("Password", type="password", placeholder="كلمة السر", key="r_p")
-        reg_w = st.text_input("WhatsApp", placeholder="رقم الواتساب", key="r_w")
-        reg_c = st.text_input("Company", placeholder="اسم الشركة", key="r_c")
-        
-        if st.button("CREATE ACCOUNT", use_container_width=True):
-            if reg_n and reg_e and reg_p:
-                with st.spinner("جاري تسجيل حسابك..."):
-                    if signup_user(reg_n, reg_p, reg_e, reg_w, reg_c):
-                        st.success("✅ تم الاشتراك بنجاح! يمكنك الآن الدخول.")
-                        st.balloons()
-                    else:
-                        st.error("❌ حدث خطأ في الاتصال، حاول مرة أخرى.")
-            else:
-                st.warning("يرجى ملء كافة الحقول")
-
+        st.write("Contact Support to Join")
     st.markdown("</div>", unsafe_allow_html=True)
     st.write("")
     if st.button("🌐 Change Language / تغيير اللغة"):
@@ -171,9 +128,9 @@ if menu == "Tools":
     with c1:
         with st.container(border=True):
             st.subheader("🧮 Mortgage")
-            p_val = st.number_input("Price", value=2000000)
-            y_val = st.slider("Years", 1, 20, 10)
-            st.warning(f"Monthly: {p_val/(y_val*12):,.0f}")
+            p = st.number_input("Price", value=2000000)
+            y = st.slider("Years", 1, 20, 10)
+            st.warning(f"Monthly: {p/(y*12):,.0f}")
     with c2:
         with st.container(border=True):
             st.subheader("📈 ROI")
@@ -197,15 +154,17 @@ elif menu == "AI Assistant":
 
 else:
     active_df = df_p if menu=="Projects" else (df_l if menu=="Launches" else df_d)
-    if active_df.empty: st.error("No Data Available")
+    if active_df.empty: st.error("No Data")
     else:
         col_main = active_df.columns[0]
         
+        # --- VIEW: DETAILS (التعديل هنا لعرض البيانات كاملة) ---
         if st.session_state.view == "details":
             item = active_df.iloc[st.session_state.current_index]
             if st.button("⬅ Back / عودة", use_container_width=True):
                 st.session_state.view = "grid"; st.rerun()
             
+            # تقسيم الأعمدة إلى 3 مجموعات للعرض الكامل
             all_cols = active_df.columns
             n = len(all_cols)
             c1, c2, c3 = st.columns(3)
@@ -215,17 +174,20 @@ else:
                 for k in all_cols[:(n//3)+1]:
                     h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
+            
             with c2:
                 h = '<div class="detail-card">'
                 for k in all_cols[(n//3)+1 : (2*n//3)+1]:
                     h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
+                
             with c3:
                 h = '<div class="detail-card">'
                 for k in all_cols[(2*n//3)+1 :]:
                     h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
 
+        # --- VIEW: GRID ---
         else:
             search = st.text_input("🔍 Search / بحث")
             filt = active_df[active_df[col_main].astype(str).str.contains(search, case=False)] if search else active_df
@@ -248,11 +210,14 @@ else:
                 for _, s in active_df.head(6).iterrows():
                     st.markdown(f"<div class='mini-side-card'>💎 {s[col_main][:20]}</div>", unsafe_allow_html=True)
             
+            # Pagination
             st.write("---")
             n1, _, n3 = st.columns([1, 2, 1])
-            if st.session_state.page_num > 0:
-                if n1.button("⬅ Previous", use_container_width=True): st.session_state.page_num -= 1; st.rerun()
-            if (start + ITEMS_PER_PAGE) < len(filt):
-                if n3.button("Next ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+            with n1:
+                if st.session_state.page_num > 0:
+                    if st.button("⬅ Previous", use_container_width=True): st.session_state.page_num -= 1; st.rerun()
+            with n3:
+                if (start + ITEMS_PER_PAGE) < len(filt):
+                    if st.button("Next ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
