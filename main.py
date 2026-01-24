@@ -1,21 +1,31 @@
 import streamlit as st
 import pandas as pd
 import requests
+import urllib.parse
+from datetime import datetime
+import pytz
 import time
+from streamlit_option_menu import option_menu
 
-# --- 1. إعدادات الصفحة ---
-st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
+# --- 1. إعدادات الصفحة الفخمة ---
+st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- الروابط (رابط الـ Apps Script الخاص بك) ---
-# ملاحظة: هذا الرابط هو المسؤول عن جلب المستخدمين وتسجيلهم
+# --- روابط البيانات (Google Sheets / Apps Script) ---
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
+HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 
-# --- 2. إدارة الجلسة ---
+# --- 2. إدارة الحالة (Session State) ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
+if 'view' not in st.session_state: st.session_state.view = "grid"
+if 'page_num' not in st.session_state: st.session_state.page_num = 0
 
-# --- 3. وظائف الربط (Backend) ---
+egypt_tz = pytz.timezone('Africa/Cairo')
+egypt_now = datetime.now(egypt_tz)
+
+# --- 3. وظائف التحقق والربط ---
 def signup_user(name, pwd, email, wa, comp):
     payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
     try:
@@ -23,117 +33,122 @@ def signup_user(name, pwd, email, wa, comp):
         return response.text == "Success"
     except: return False
 
-def login_user(user_input, pwd_input):
+def login_user(u, p):
     try:
-        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}")
-        if response.status_code == 200:
-            users_list = response.json()
-            for user_data in users_list:
-                name_s = str(user_data.get('Name', user_data.get('name', ''))).strip()
-                pass_s = str(user_data.get('Password', user_data.get('password', ''))).strip()
-                email_s = str(user_data.get('Email', user_data.get('email', ''))).strip()
-                if (user_input.strip().lower() == name_s.lower() or user_input.strip().lower() == email_s.lower()) and str(pwd_input).strip() == pass_s:
-                    return name_s
+        df = pd.read_csv(f"{USER_SHEET_URL}?nocache={time.time()}")
+        df.columns = [c.strip() for c in df.columns]
+        user_row = df[(df['Name'].astype(str) == str(u)) & (df['Password'].astype(str) == str(p))]
+        if not user_row.empty:
+            return user_row.iloc[0]['Name']
         return None
     except: return None
 
-# --- 4. تصميم الـ CSS (السنترة المطلقة + الشكل المصغر) ---
+# --- 4. التنسيق الجمالي (CSS Luxury 2026) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    .block-container {{ padding: 0px !important; }}
-
+    .block-container {{ padding-top: 0rem !important; }}
     [data-testid="stAppViewContainer"] {{
         background: linear-gradient(rgba(0,0,0,0.92), rgba(0,0,0,0.92)), url('{BG_IMG}');
-        background-size: cover; background-position: center;
-        display: flex !important; align-items: center !important; justify-content: center !important;
-        height: 100vh; direction: rtl !important; font-family: 'Cairo', sans-serif;
+        background-size: cover; background-attachment: fixed;
+        direction: rtl !important; font-family: 'Cairo', sans-serif;
     }}
 
-    /* الحاوية الممركزة */
-    .auth-container {{
-        width: 100%; max-width: 320px; text-align: center;
+    /* تصميم صفحة تسجيل الدخول */
+    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 50px; }}
+    .oval-header {{
+        background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
+        padding: 15px 50px; color: #f59e0b; font-size: 28px; font-weight: 900;
+        text-align: center; z-index: 10; margin-bottom: -35px; min-width: 380px;
+        box-shadow: 0 10px 30px rgba(245,158,11,0.3);
     }}
-
-    .brand-logo {{
-        color: #f59e0b; font-size: 35px; font-weight: 900; margin-bottom: 5px;
-        text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    .auth-card {{ 
+        background-color: #ffffff; width: 400px; padding: 60px 35px 35px 35px; 
+        border-radius: 40px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.5); 
     }}
+    .lock-gold {{ font-size: 50px; color: #f59e0b; margin-bottom: 10px; }}
     
-    .brand-tagline {{ color: #ffffff; font-size: 13px; opacity: 0.5; margin-bottom: 20px; }}
-
-    /* التبويبات */
-    .stTabs [data-baseweb="tab-list"] {{ background: transparent !important; gap: 10px; justify-content: center !important; }}
-    .stTabs [data-baseweb="tab"] {{ font-size: 14px !important; color: #777 !important; padding: 5px 12px !important; }}
-    .stTabs [aria-selected="true"] {{ color: #f59e0b !important; border-bottom: 2px solid #f59e0b !important; }}
-
-    /* الحقول */
-    div.stTextInput input {{
-        background: rgba(255, 255, 255, 0.04) !important; color: #fff !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 10px !important;
-        height: 40px !important; font-size: 14px !important; text-align: center !important;
+    /* ستايل المدخلات داخل الكارت */
+    .auth-card div.stTextInput input {{
+        background-color: #f8f9fa !important; color: #000 !important;
+        border: 1px solid #ddd !important; border-radius: 15px !important;
+        text-align: center !important; height: 50px !important; font-weight: bold;
     }}
 
-    /* الأزرار */
-    .stButton button {{
-        background: linear-gradient(90deg, #f59e0b, #d97706) !important;
-        color: #000 !important; font-weight: 700 !important;
-        border-radius: 10px !important; height: 42px !important; border: none !important; margin-top: 10px;
+    /* ستايل الهيدر الداخلي */
+    .royal-header {{
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('{HEADER_IMG}');
+        background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b;
+        padding: 40px 20px; text-align: center; border-radius: 0 0 50px 50px; margin-bottom: 30px;
     }}
+    .detail-card {{ background: rgba(25, 25, 25, 0.95); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; border: 1px solid #333; }}
+    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 15px; margin-bottom: 2px; }}
+    .val-white {{ color: white; font-size: 17px; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. واجهة تسجيل الدخول والاشتراك ---
+# --- 5. منطق عرض صفحة الدخول ---
 if not st.session_state.auth:
-    st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
-    st.markdown("<p class='brand-logo'>MA3LOMATI PRO</p>", unsafe_allow_html=True)
-    st.markdown("<p class='brand-tagline'>الجيل القادم من المعلومات العقارية</p>", unsafe_allow_html=True)
+    st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
+    st.markdown("<div class='oval-header'>MA3LOMATI PRO</div>", unsafe_allow_html=True)
+    st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='lock-gold'>🔐</div>", unsafe_allow_html=True)
     
-    t_login, t_reg = st.tabs(["🔐 دخول", "📝 اشتراك"])
+    tab_log, tab_reg = st.tabs(["تسجيل الدخول", "فتح حساب جديد"])
     
-    with t_login:
-        u_log = st.text_input("User", placeholder="الاسم أو الإيميل", label_visibility="collapsed", key="u_l")
-        p_log = st.text_input("Pass", type="password", placeholder="كلمة السر", label_visibility="collapsed", key="p_l")
-        
-        if st.button("دخول للمنصة", use_container_width=True):
-            if p_log == "2026": # الدخول السريع للإدارة
+    with tab_log:
+        u = st.text_input("اسم المستخدم / البريد", placeholder="Username", label_visibility="collapsed", key="l_user")
+        p = st.text_input("كلمة المرور", type="password", placeholder="Password", label_visibility="collapsed", key="l_pass")
+        if st.button("دخول للمنصة 🔥", use_container_width=True):
+            if p == "2026": # كود دخول سريع للمطور
                 st.session_state.auth = True
-                st.session_state.current_user = "مدير المنصة"
+                st.session_state.current_user = "Admin"
                 st.rerun()
             else:
-                with st.spinner("جاري التحقق..."):
-                    user_name = login_user(u_log, p_log)
-                    if user_name:
-                        st.session_state.auth = True
-                        st.session_state.current_user = user_name
-                        st.rerun()
-                    else:
-                        st.error("البيانات غير صحيحة")
+                user_name = login_user(u, p)
+                if user_name:
+                    st.session_state.auth = True
+                    st.session_state.current_user = user_name
+                    st.rerun()
+                else:
+                    st.error("بيانات غير صحيحة")
+                    
+    with tab_reg:
+        r_name = st.text_input("الاسم بالكامل", key="r1")
+        r_mail = st.text_input("البريد الإلكتروني", key="r2")
+        r_pass = st.text_input("كلمة السر", type="password", key="r3")
+        if st.button("إنشاء حساب جديد ✅", use_container_width=True):
+            if signup_user(r_name, r_pass, r_mail, "000", "Company"):
+                st.success("تم التسجيل! يمكنك الدخول الآن")
+            else:
+                st.error("خطأ في الاتصال")
 
-    with t_reg:
-        r_name = st.text_input("Name", placeholder="الاسم بالكامل", label_visibility="collapsed", key="r_n")
-        r_email = st.text_input("Email", placeholder="البريد الإلكتروني", label_visibility="collapsed", key="r_e")
-        r_pass = st.text_input("Pass", type="password", placeholder="كلمة السر", label_visibility="collapsed", key="r_p")
-        r_wa = st.text_input("WA", placeholder="رقم الواتساب", label_visibility="collapsed", key="r_w")
-        r_co = st.text_input("CO", placeholder="اسم الشركة", label_visibility="collapsed", key="r_c")
-        
-        if st.button("تأكيد طلب الاشتراك", use_container_width=True):
-            if r_name and r_pass and r_email:
-                with st.spinner("جاري التسجيل..."):
-                    if signup_user(r_name, r_pass, r_email, r_wa, r_co):
-                        st.success("تم تسجيلك بنجاح! يمكنك الدخول الآن.")
-                    else: st.error("فشل الاتصال بالسيرفر")
-            else: st.warning("يرجى ملء البيانات الأساسية")
-            
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div></div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. الواجهة الداخلية بعد الدخول ---
-else:
-    st.markdown(f"<h2 style='text-align:center; color:#f59e0b; padding-top:100px;'>مرحباً بك {st.session_state.current_user}</h2>", unsafe_allow_html=True)
-    # هنا تضع بقية كود المنصة (المشاريع، المساعد الذكي، إلخ)
-    if st.sidebar.button("تسجيل الخروج"):
-        st.session_state.auth = False
-        st.rerun()
+# --- 6. المنصة من الداخل (بعد تسجيل الدخول) ---
+st.markdown(f"""
+    <div class="royal-header">
+        <h1 style="color:#f59e0b; font-weight:900; margin:0;">MA3LOMATI PRO</h1>
+        <p style="color:white;">مرحباً بك، {st.session_state.current_user} | {egypt_now.strftime('%Y-%m-%d')}</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# المنيو الرئيسي
+menu = option_menu(None, ["الأدوات", "المطورين", "المشاريع", "المساعد الذكي"], 
+                   icons=["tools", "building", "list-task", "robot"], 
+                   default_index=2, orientation="horizontal",
+                   styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black"}})
+
+if st.sidebar.button("🚪 تسجيل خروج"):
+    st.session_state.auth = False
+    st.rerun()
+
+# --- هنا تضع بقية كود عرض المشاريع والأدوات الخاص بك ---
+if menu == "المشاريع":
+    st.subheader("🏢 قاعدة بيانات المشاريع العقارية")
+    # تكملة الكود...
+    st.info("تم تفعيل نظام الدخول بنجاح. يمكنك الآن عرض بيانات المشاريع هنا.")
+
+st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026 | النسخة الاحترافية</p>", unsafe_allow_html=True)
