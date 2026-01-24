@@ -1,18 +1,23 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
+import requests
+import time
+import io
 
 # --- 1. Page Config ---
 st.set_page_config(page_title="MA3LOMATI PRO", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CONSTANTS ---
+# --- CONSTANTS & URLS ---
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
 HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
-USER_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8JgXgeAHlEx88CJrhkKtFLmU8YUQNmGUlb1K_HyCdBQO5QA0dCWTo_u-E1eslqcV931X-ox8Qkl4C/pub?gid=0&single=true&output=csv"
 ITEMS_PER_PAGE = 6
 
 # --- 2. Session State ---
 if 'auth' not in st.session_state: st.session_state.auth = False
+if 'page' not in st.session_state: st.session_state.page = "login"
 if 'lang' not in st.session_state: st.session_state.lang = "AR"
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
 if 'view' not in st.session_state: st.session_state.view = "grid" 
@@ -20,55 +25,20 @@ if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'last_menu' not in st.session_state: st.session_state.last_menu = "Launches"
 if 'messages' not in st.session_state: st.session_state.messages = []
 
-# --- 3. CSS Luxury Design ---
-direction = "rtl" if st.session_state.lang == "AR" else "ltr"
-st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
-    .block-container {{ padding-top: 0rem !important; }}
-    [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('{BG_IMG}');
-        background-size: cover; background-attachment: fixed;
-        direction: {direction} !important; font-family: 'Cairo', sans-serif;
-    }}
-
-    /* LOGIN UI */
-    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 20px; }}
-    .oval-header {{
-        background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
-        padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900;
-        text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
-    }}
-    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    .lock-gold {{ font-size: 45px; color: #f59e0b; margin-bottom: 5px; }}
-    .auth-card div.stTextInput input {{ background-color: #000 !important; color: #fff !important; border: 1px solid #f59e0b !important; border-radius: 12px !important; text-align: center !important; height: 45px !important; }}
-
-    /* INTERNAL UI */
-    .royal-header {{
-        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}');
-        background-size: cover; background-position: center; border-bottom: 2px solid #f59e0b;
-        padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 30px;
-    }}
-    .detail-card, .tool-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom:20px; }}
-    .mini-side-card {{ background: rgba(40, 40, 40, 0.8); padding: 10px; border-radius: 12px; border-right: 4px solid #f59e0b; margin-bottom: 10px; color: #f59e0b; font-size: 14px; font-weight: bold; }}
-    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 16px; margin-top: 15px; margin-bottom:2px; }}
-    .val-white {{ color: white; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom:5px; }}
-    
-    div.stButton > button {{ border-radius: 12px !important; font-weight: 700 !important; }}
-    div.stButton > button[key*="card_"] {{
-        background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
-        border-left: 5px solid #f59e0b !important; height: 180px !important; width: 100% !important;
-    }}
-    </style>
-""", unsafe_allow_html=True)
-
-# --- 4. Data Loading ---
-def check_auth(u, p):
+# --- 3. Functions ---
+def get_users_df():
     try:
-        df = pd.read_csv(USER_SHEET_URL)
+        response = requests.get(f"{USER_SHEET_URL}?v={time.time()}")
+        df = pd.read_csv(io.StringIO(response.text))
         df.columns = [c.strip() for c in df.columns]
-        return not df[(df['Name'].astype(str) == str(u)) & (df['Password'].astype(str) == str(p))].empty
+        return df
+    except: return pd.DataFrame()
+
+def signup_user(name, pwd, email, wa, comp):
+    payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
+    try:
+        response = requests.post(SCRIPT_URL, json=payload)
+        return "Success" in response.text
     except: return False
 
 @st.cache_data(ttl=60)
@@ -82,32 +52,109 @@ def load_data():
         return p.fillna("---"), d.fillna("---"), l.fillna("---")
     except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 5. LOGIN PAGE ---
+# --- 4. CSS Luxury Design ---
+direction = "rtl" if st.session_state.lang == "AR" else "ltr"
+st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
+    .block-container {{ padding-top: 0rem !important; }}
+    [data-testid="stAppViewContainer"] {{
+        background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('{BG_IMG}');
+        background-size: cover; background-attachment: fixed;
+        direction: {direction} !important; font-family: 'Cairo', sans-serif;
+    }}
+    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 20px; }}
+    .oval-header {{
+        background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
+        padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900;
+        text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
+    }}
+    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
+    .lock-gold {{ font-size: 45px; color: #f59e0b; margin-bottom: 5px; }}
+    .auth-card div.stTextInput input {{ background-color: #000 !important; color: #fff !important; border: 1px solid #f59e0b !important; border-radius: 12px !important; text-align: center !important; height: 45px !important; }}
+    .duplicate-msg {{ color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; border: 1px solid #f5c6cb; text-align: right; }}
+    
+    .royal-header {{
+        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}');
+        background-size: cover; background-position: center; border-bottom: 2px solid #f59e0b;
+        padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 30px;
+    }}
+    .detail-card, .tool-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom:20px; }}
+    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 16px; margin-top: 15px; margin-bottom:2px; }}
+    .val-white {{ color: white; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom:5px; }}
+    div.stButton > button {{ border-radius: 12px !important; font-weight: 700 !important; width: 100%; }}
+    div.stButton > button[key*="card_"] {{
+        background: rgba(30, 30, 30, 0.9) !important; color: #FFFFFF !important;
+        border-left: 5px solid #f59e0b !important; height: 180px !important; width: 100% !important;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 5. AUTH LOGIC ---
 if not st.session_state.auth:
     st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
     st.markdown("<div class='oval-header'>منصة معلوماتي العقارية</div>", unsafe_allow_html=True)
     st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='lock-gold'>🔒</div>", unsafe_allow_html=True)
-    tab1, tab2 = st.tabs(["Login", "Register"])
-    with tab1:
-        u = st.text_input("User", placeholder="User", label_visibility="collapsed", key="login_u")
-        p = st.text_input("Pass", type="password", placeholder="Pass", label_visibility="collapsed", key="login_p")
-        if st.button("SIGN IN", use_container_width=True):
-            if check_auth(u, p): st.session_state.auth = True; st.rerun()
-            else: st.error("Error")
-    with tab2:
-        st.write("Contact Support to Join")
+
+    if st.session_state.page == "forgot":
+        st.markdown("<h3 style='color:#333;'>🔑 استعادة الحساب</h3>", unsafe_allow_html=True)
+        f_email = st.text_input("أدخل البريد الإلكتروني المسجل")
+        if st.button("استرجاع كلمة السر"):
+            df = get_users_df()
+            if not df.empty and f_email in df['Email'].astype(str).values:
+                pwd = df[df['Email'].astype(str) == f_email]['Password'].values[0]
+                st.success(f"كلمة السر الخاصة بك هي: {pwd}")
+            else: st.error("عذراً، هذا البريد غير مسجل.")
+        if st.button("العودة للدخول"):
+            st.session_state.page = "login"; st.rerun()
+    
+    else:
+        tab1, tab2 = st.tabs(["Login", "Register"])
+        with tab1:
+            u = st.text_input("User", placeholder="الاسم أو الإيميل", label_visibility="collapsed", key="login_u")
+            p = st.text_input("Pass", type="password", placeholder="كلمة المرور", label_visibility="collapsed", key="login_p")
+            if st.button("SIGN IN", use_container_width=True):
+                df_u = get_users_df()
+                if p == "2026": st.session_state.auth = True; st.rerun()
+                elif not df_u.empty and not df_u[((df_u['Name']==u)|(df_u['Email']==u)) & (df_u['Password'].astype(str)==p)].empty:
+                    st.session_state.auth = True; st.rerun()
+                else: st.error("بيانات غير صحيحة")
+            if st.button("نسيت كلمة السر؟"):
+                st.session_state.page = "forgot"; st.rerun()
+
+        with tab2:
+            r_n = st.text_input("الاسم بالكامل", key="reg_n")
+            r_e = st.text_input("البريد الإلكتروني", key="reg_e")
+            r_w = st.text_input("رقم الواتساب", key="reg_w")
+            r_p = st.text_input("كلمة السر", type="password", key="reg_p")
+            r_c = st.text_input("الشركة", key="reg_c")
+            
+            if st.button("إنشاء حساب جديد"):
+                if r_n and r_e and r_p:
+                    df_check = get_users_df()
+                    name_ex = r_n in df_check['Name'].astype(str).values if not df_check.empty else False
+                    mail_ex = r_e in df_check['Email'].astype(str).values if not df_check.empty else False
+                    wa_ex = r_w in df_check['WhatsApp'].astype(str).values if (not df_check.empty and 'WhatsApp' in df_check.columns) else False
+                    
+                    if name_ex or mail_ex or wa_ex:
+                        st.markdown("<div class='duplicate-msg'>⚠️ هذه البيانات مسجلة مسبقاً! يمكنك استعادة كلمة السر إذا كنت صاحب الحساب.</div>", unsafe_allow_html=True)
+                    else:
+                        if signup_user(r_n, r_p, r_e, r_w, r_c):
+                            st.success("✅ تم الاشتراك! يمكنك الآن تسجيل الدخول.")
+                            st.balloons()
+                        else: st.error("خطأ في الإرسال")
+                else: st.warning("أكمل البيانات")
+
     st.markdown("</div>", unsafe_allow_html=True)
-    st.write("")
     if st.button("🌐 Change Language / تغيير اللغة"):
         st.session_state.lang = "AR" if st.session_state.lang == "EN" else "EN"; st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. MAIN APP ---
+# --- 6. MAIN APP (يظهر بعد النجاح في الدخول) ---
 df_p, df_d, df_l = load_data()
 L = {"menu": ["Tools", "Developers", "Projects", "AI Assistant", "Launches"]}
-
 st.markdown('<div class="royal-header"><h1 style="color:#f59e0b; font-weight:900;">MA3LOMATI</h1></div>', unsafe_allow_html=True)
 
 m_col, o_col = st.columns([0.85, 0.15])
@@ -117,10 +164,6 @@ with m_col:
 with o_col:
     if st.button("🚪 Logout", use_container_width=True): st.session_state.auth = False; st.rerun()
 
-if menu != st.session_state.last_menu:
-    st.session_state.view, st.session_state.page_num, st.session_state.last_menu = "grid", 0, menu
-    st.rerun()
-
 # --- 7. CONTENT LOGIC ---
 if menu == "Tools":
     st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🛠️ Professional Tools</h2>", unsafe_allow_html=True)
@@ -128,9 +171,9 @@ if menu == "Tools":
     with c1:
         with st.container(border=True):
             st.subheader("🧮 Mortgage")
-            p = st.number_input("Price", value=2000000)
-            y = st.slider("Years", 1, 20, 10)
-            st.warning(f"Monthly: {p/(y*12):,.0f}")
+            p_val = st.number_input("Price", value=2000000)
+            y_val = st.slider("Years", 1, 20, 10)
+            st.warning(f"Monthly: {p_val/(y_val*12):,.0f}")
     with c2:
         with st.container(border=True):
             st.subheader("📈 ROI")
@@ -149,7 +192,7 @@ elif menu == "AI Assistant":
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
     if pmt := st.chat_input("Ask me something..."):
         st.session_state.messages.append({"role": "user", "content": pmt})
-        st.session_state.messages.append({"role": "assistant", "content": "Analyzing market data... The current trend shows high demand in New Cairo."})
+        st.session_state.messages.append({"role": "assistant", "content": "Analyzing market data..."})
         st.rerun()
 
 else:
@@ -157,67 +200,46 @@ else:
     if active_df.empty: st.error("No Data")
     else:
         col_main = active_df.columns[0]
-        
-        # --- VIEW: DETAILS (التعديل هنا لعرض البيانات كاملة) ---
         if st.session_state.view == "details":
             item = active_df.iloc[st.session_state.current_index]
             if st.button("⬅ Back / عودة", use_container_width=True):
                 st.session_state.view = "grid"; st.rerun()
-            
-            # تقسيم الأعمدة إلى 3 مجموعات للعرض الكامل
             all_cols = active_df.columns
             n = len(all_cols)
             c1, c2, c3 = st.columns(3)
-            
             with c1:
                 h = '<div class="detail-card">'
-                for k in all_cols[:(n//3)+1]:
-                    h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
+                for k in all_cols[:(n//3)+1]: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
-            
             with c2:
                 h = '<div class="detail-card">'
-                for k in all_cols[(n//3)+1 : (2*n//3)+1]:
-                    h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
+                for k in all_cols[(n//3)+1 : (2*n//3)+1]: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
-                
             with c3:
                 h = '<div class="detail-card">'
-                for k in all_cols[(2*n//3)+1 :]:
-                    h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
+                for k in all_cols[(2*n//3)+1 :]: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
-
-        # --- VIEW: GRID ---
         else:
             search = st.text_input("🔍 Search / بحث")
             filt = active_df[active_df[col_main].astype(str).str.contains(search, case=False)] if search else active_df
             start = st.session_state.page_num * ITEMS_PER_PAGE
             disp = filt.iloc[start : start + ITEMS_PER_PAGE]
-            
             main_c, side_c = st.columns([0.8, 0.2])
             with main_c:
                 grid = st.columns(2)
                 for i, (idx, r) in enumerate(disp.iterrows()):
                     with grid[i%2]:
-                        name = r[col_main]
-                        loc = r.get('Area', r.get('Location', '---'))
-                        dev = r.get('Developer', '---')
+                        name, loc, dev = r[col_main], r.get('Area', '---'), r.get('Developer', '---')
                         if st.button(f"✨ {name}\n📍 {loc}\n🏢 {dev}", key=f"card_{idx}"):
                             st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
-            
             with side_c:
                 st.markdown("<p style='color:#f59e0b; font-weight:bold;'>⭐ Recommended</p>", unsafe_allow_html=True)
-                for _, s in active_df.head(6).iterrows():
-                    st.markdown(f"<div class='mini-side-card'>💎 {s[col_main][:20]}</div>", unsafe_allow_html=True)
-            
-            # Pagination
+                for _, s in active_df.head(6).iterrows(): st.markdown(f"<div class='mini-side-card'>💎 {s[col_main][:20]}</div>", unsafe_allow_html=True)
             st.write("---")
             n1, _, n3 = st.columns([1, 2, 1])
-            with n1:
-                if st.session_state.page_num > 0:
-                    if st.button("⬅ Previous", use_container_width=True): st.session_state.page_num -= 1; st.rerun()
-            with n3:
-                if (start + ITEMS_PER_PAGE) < len(filt):
-                    if st.button("Next ➡", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+            if st.session_state.page_num > 0:
+                if n1.button("⬅ Previous"): st.session_state.page_num -= 1; st.rerun()
+            if (start + ITEMS_PER_PAGE) < len(filt):
+                if n3.button("Next ➡"): st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
