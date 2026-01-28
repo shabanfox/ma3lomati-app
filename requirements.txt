@@ -39,4 +39,6 @@ pandas
 feedparser
 streamlit-option-menu
 
-streamlit-folium folium
+streamlit-folium
+
+pip install streamlit-folium folium
