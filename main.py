@@ -7,8 +7,6 @@ from datetime import datetime
 import pytz
 import time
 from streamlit_option_menu import option_menu
-from streamlit_folium import folium_static
-import folium
 
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
@@ -34,7 +32,7 @@ HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 ITEMS_PER_PAGE = 6
 
-# --- وظائف مساعدة للاستقرار ---
+# --- وظائف مساعدة ---
 def set_login_state(user_name):
     st.session_state.auth = True
     st.session_state.current_user = user_name
@@ -192,52 +190,39 @@ with c_top2:
     if st.button("🚪 خروج", use_container_width=True): logout()
 
 # --- 9. القائمة الرئيسية ---
-menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "الخرائط", "المساعد الذكي", "Launches"], 
-    icons=["briefcase", "building", "search", "map-marked-alt", "robot", "megaphone"], default_index=2, orientation="horizontal",
+menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "Launches"], 
+    icons=["briefcase", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
 if 'last_menu' not in st.session_state or menu != st.session_state.last_menu:
     st.session_state.view, st.session_state.page_num, st.session_state.last_menu = "grid", 0, menu
 
-# --- 10. منطق الصفحات ---
-
-# صفحة الخرائط
-if menu == "الخرائط":
-    st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🗺️ خريطة التجمع الخامس التفاعلية</h2>", unsafe_allow_html=True)
-    tagamo3_coords = [30.0131, 31.4880]
-    
-    with st.container(border=True):
-        col_m1, col_m2 = st.columns([0.3, 0.7])
-        with col_m1:
-            st.markdown("<p style='color:#f59e0b; font-weight:bold;'>📍 البحث عن كمبوند</p>", unsafe_allow_html=True)
-            proj_list = df_p['ProjectName'].tolist() if not df_p.empty else ["لا توجد بيانات"]
-            search_map = st.selectbox("اختر المشروع لعرض موقعه:", proj_list)
-            st.warning("يتم حالياً تحديث إحداثيات GPS لجميع المشاريع في قاعدة البيانات.")
-        with col_m2:
-            m = folium.Map(location=tagamo3_coords, zoom_start=12)
-            folium.Marker(tagamo3_coords, popup="مركز التجمع الخامس", icon=folium.Icon(color="orange")).add_to(m)
-            folium_static(m, width=800, height=500)
-
-# صفحة أدوات البروكر (تعديل مربعات الإدخال)
-elif menu == "أدوات البروكر":
+# --- التعديل المطلوب في أدوات البروكر ---
+if menu == "أدوات البروكر":
     st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         with st.container(border=True):
             st.subheader("💳 حساب القسط")
             v = st.number_input("إجمالي السعر", value=1000000, step=100000)
+            # مربع إدخال نسبة المقدم من 0 لـ 50
             down_pct = st.number_input("نسبة المقدم (%)", min_value=0, max_value=50, value=10)
+            # مربع إدخال السنين
             y = st.number_input("عدد السنين", min_value=1, max_value=20, value=8)
+            
             down_val = v * (down_pct / 100)
             rem = v - down_val
-            st.markdown(f"<p style='color:#f59e0b; margin-bottom:5px;'>قيمة المقدم: {down_val:,.0f}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color:#f59e0b; margin-bottom:0;'>قيمة المقدم: {down_val:,.0f}</p>", unsafe_allow_html=True)
             st.metric("القسط الشهري", f"{rem/(y*12):,.0f}" if y > 0 else "0")
+
     with c2:
         with st.container(border=True):
             st.subheader("💰 العمولة")
             deal = st.number_input("قيمة الصفقة", value=1000000, step=100000)
+            # مربع إدخال النسبة
             pct = st.number_input("النسبة (%)", min_value=0.0, max_value=10.0, value=2.5, step=0.1)
             st.metric("صافي الربح", f"{deal*(pct/100):,.0f}")
+
     with c3:
         with st.container(border=True):
             st.subheader("📈 العائد ROI")
@@ -253,7 +238,6 @@ elif menu == "المساعد الذكي":
         st.session_state.messages.append({"role": "user", "content": pmt})
         st.session_state.messages.append({"role": "assistant", "content": "جاري مراجعة قواعد البيانات... يفضل التركيز على المشاريع ذات التسليم القريب لضمان أعلى عائد."})
         st.rerun()
-
 else:
     active_df = df_p if menu=="المشاريع" else (df_l if menu=="Launches" else df_d)
     if active_df.empty: st.error("لا توجد بيانات متاحة حالياً")
