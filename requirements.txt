@@ -38,3 +38,5 @@ streamlit
 pandas
 feedparser
 streamlit-option-menu
+
+streamlit-folium folium
