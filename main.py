@@ -11,8 +11,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- [تعديل للاستقرار] إدارة الحالة عبر الـ URL ---
-# فحص إذا كان المستخدم مسجل دخول مسبقاً من خلال الرابط
+# --- إدارة الحالة عبر الـ URL ---
 params = st.query_params
 if 'auth' not in st.session_state:
     if params.get("logged_in") == "true":
@@ -33,7 +32,7 @@ HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 ITEMS_PER_PAGE = 6
 
-# --- وظائف مساعدة للاستقرار ---
+# --- وظائف مساعدة ---
 def set_login_state(user_name):
     st.session_state.auth = True
     st.session_state.current_user = user_name
@@ -81,7 +80,7 @@ def get_real_news():
 
 news_text = get_real_news()
 
-# --- 5. التصميم الجمالي CSS (نفس تصميمك تماماً) ---
+# --- 5. التصميم الجمالي CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -143,7 +142,7 @@ if not st.session_state.auth:
                     set_login_state(user_verified)
                     st.rerun()
                 else: st.error("بيانات الدخول غير صحيحة")
-    # ... (بقية كود الـ signup كما هو) ...
+    
     with tab_signup:
         reg_name = st.text_input("الأسم", placeholder="الاسم بالكامل")
         reg_pass = st.text_input("كلمة السر", type="password", placeholder="كلمة السر")
@@ -190,8 +189,7 @@ with c_top1:
 with c_top2:
     if st.button("🚪 خروج", use_container_width=True): logout()
 
-# --- 9. القائمة الرئيسية (والبقية كما هي) ---
-# [نفس بقية كودك الأصلي تماماً لم يتغير فيه شيء]
+# --- 9. القائمة الرئيسية ---
 menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "Launches"], 
     icons=["briefcase", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
@@ -199,28 +197,38 @@ menu = option_menu(None, ["أدوات البروكر", "المطورين", "ال
 if 'last_menu' not in st.session_state or menu != st.session_state.last_menu:
     st.session_state.view, st.session_state.page_num, st.session_state.last_menu = "grid", 0, menu
 
-# (هنا يكمل الكود بقية أدوات البروكر والمشاريع والمساعد الذكي بنفس الطريقة...)
+# --- التعديل المطلوب في أدوات البروكر ---
 if menu == "أدوات البروكر":
     st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         with st.container(border=True):
             st.subheader("💳 حساب القسط")
-            v = st.number_input("إجمالي السعر", 1000000)
-            y = st.slider("عدد السنين", 1, 15, 8)
-            st.metric("القسط الشهري", f"{v/(y*12):,.0f}")
+            v = st.number_input("إجمالي السعر", value=1000000, step=100000)
+            # مربع إدخال نسبة المقدم من 0 لـ 50
+            down_pct = st.number_input("نسبة المقدم (%)", min_value=0, max_value=50, value=10)
+            # مربع إدخال السنين
+            y = st.number_input("عدد السنين", min_value=1, max_value=20, value=8)
+            
+            down_val = v * (down_pct / 100)
+            rem = v - down_val
+            st.markdown(f"<p style='color:#f59e0b; margin-bottom:0;'>قيمة المقدم: {down_val:,.0f}</p>", unsafe_allow_html=True)
+            st.metric("القسط الشهري", f"{rem/(y*12):,.0f}" if y > 0 else "0")
+
     with c2:
         with st.container(border=True):
             st.subheader("💰 العمولة")
-            deal = st.number_input("قيمة الصفقة", 1000000)
-            pct = st.slider("النسبة %", 1.0, 5.0, 2.5)
+            deal = st.number_input("قيمة الصفقة", value=1000000, step=100000)
+            # مربع إدخال النسبة
+            pct = st.number_input("النسبة (%)", min_value=0.0, max_value=10.0, value=2.5, step=0.1)
             st.metric("صافي الربح", f"{deal*(pct/100):,.0f}")
+
     with c3:
         with st.container(border=True):
             st.subheader("📈 العائد ROI")
-            buy = st.number_input("سعر الشراء", 1000000)
-            rent = st.number_input("الإيجار السنوي", 100000)
-            st.metric("نسبة العائد", f"{(rent/buy)*100:,.1f}%")
+            buy = st.number_input("سعر الشراء", value=1000000, step=100000)
+            rent = st.number_input("الإيجار السنوي", value=100000, step=10000)
+            st.metric("نسبة العائد", f"{(rent/buy)*100:,.1f}%" if buy > 0 else "0%")
 
 elif menu == "المساعد الذكي":
     st.markdown("<div class='detail-card'><h3>🤖 مساعد معلوماتي الذكي</h3></div>", unsafe_allow_html=True)
@@ -274,5 +282,3 @@ else:
                 if p2.button("التالي ➡"): st.session_state.page_num += 1; st.rerun()
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | جميع الحقوق محفوظة</p>", unsafe_allow_html=True)
-
-
