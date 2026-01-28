@@ -7,6 +7,8 @@ from datetime import datetime
 import pytz
 import time
 from streamlit_option_menu import option_menu
+from streamlit_folium import folium_static
+import folium
 
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
@@ -189,40 +191,66 @@ with c_top1:
 with c_top2:
     if st.button("🚪 خروج", use_container_width=True): logout()
 
-# --- 9. القائمة الرئيسية ---
-menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "Launches"], 
-    icons=["briefcase", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
+# --- 9. القائمة الرئيسية (تمت إضافة الخرائط) ---
+menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "الخرائط", "المساعد الذكي", "Launches"], 
+    icons=["briefcase", "building", "search", "map", "robot", "megaphone"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "bold"}})
 
 if 'last_menu' not in st.session_state or menu != st.session_state.last_menu:
     st.session_state.view, st.session_state.page_num, st.session_state.last_menu = "grid", 0, menu
 
-# --- التعديل المطلوب في أدوات البروكر ---
-if menu == "أدوات البروكر":
+# --- صفحة الخرائط التفاعلية ---
+if menu == "الخرائط":
+    st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🗺️ خريطة المشاريع التفاعلية</h2>", unsafe_allow_html=True)
+    
+    # قائمة ببعض الإحداثيات التقريبية لأشهر مناطق التجمع (كمثال)
+    tagamo3_center = [30.0131, 31.4880] # مركز القاهرة الجديدة
+    
+    with st.container(border=True):
+        col_map_1, col_map_2 = st.columns([0.3, 0.7])
+        
+        with col_map_1:
+            st.markdown("<p style='color:#f59e0b; font-weight:bold;'>📍 ابحث عن الموقع</p>", unsafe_allow_html=True)
+            # استخراج قائمة المشاريع من الداتا
+            project_list = df_p['ProjectName'].tolist() if not df_p.empty else ["لم يتم تحميل مشاريع"]
+            selected_proj = st.selectbox("اختر الكمبوند لعرض مكانه:", project_list)
+            
+            st.info("ملاحظة: يتم حالياً الربط مع إحداثيات GPS لكل مشروع لضمان الدقة الكاملة.")
+            
+        with col_map_2:
+            # إنشاء الخريطة
+            m = folium.Map(location=tagamo3_center, zoom_start=12, tiles="OpenStreetMap")
+            
+            # إضافة Marker تجريبي (يمكنك مستقبلاً ربطها بـ Latitude و Longitude من الشيت)
+            folium.Marker(
+                tagamo3_center, 
+                popup="مركز التجمع الخامس",
+                tooltip="التجمع الخامس",
+                icon=folium.Icon(color="orange", icon="info-sign")
+            ).add_to(m)
+            
+            # عرض الخريطة
+            folium_static(m, width=800, height=500)
+
+elif menu == "أدوات البروكر":
     st.markdown("<h2 style='text-align:center; color:#f59e0b;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         with st.container(border=True):
             st.subheader("💳 حساب القسط")
             v = st.number_input("إجمالي السعر", value=1000000, step=100000)
-            # مربع إدخال نسبة المقدم من 0 لـ 50
             down_pct = st.number_input("نسبة المقدم (%)", min_value=0, max_value=50, value=10)
-            # مربع إدخال السنين
             y = st.number_input("عدد السنين", min_value=1, max_value=20, value=8)
-            
             down_val = v * (down_pct / 100)
             rem = v - down_val
             st.markdown(f"<p style='color:#f59e0b; margin-bottom:0;'>قيمة المقدم: {down_val:,.0f}</p>", unsafe_allow_html=True)
             st.metric("القسط الشهري", f"{rem/(y*12):,.0f}" if y > 0 else "0")
-
     with c2:
         with st.container(border=True):
             st.subheader("💰 العمولة")
             deal = st.number_input("قيمة الصفقة", value=1000000, step=100000)
-            # مربع إدخال النسبة
             pct = st.number_input("النسبة (%)", min_value=0.0, max_value=10.0, value=2.5, step=0.1)
             st.metric("صافي الربح", f"{deal*(pct/100):,.0f}")
-
     with c3:
         with st.container(border=True):
             st.subheader("📈 العائد ROI")
