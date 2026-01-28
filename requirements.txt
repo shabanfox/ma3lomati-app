@@ -40,5 +40,7 @@ feedparser
 streamlit-option-menu
 
 streamlit-folium
+pip install streamlit-folium folium
 
 pip install streamlit-folium folium
+
