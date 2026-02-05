@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- إدارة الحالة ---
+# --- إدارة الحالة (Session State) ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'view' not in st.session_state: st.session_state.view = "grid"
@@ -63,7 +63,7 @@ st.markdown(f"""
         background: #fff !important; color: #1a1a1a !important; border-right: 6px solid #f59e0b !important;
         border-radius: 15px !important; padding: 20px !important; text-align: right !important;
         min-height: 180px !important; width: 100% !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        white-space: pre-line !important; margin-bottom: 10px !important;
+        white-space: pre-line !important; margin-bottom: 10px !important; font-family: 'Cairo', sans-serif !important;
     }}
     .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; }}
@@ -85,7 +85,7 @@ if not st.session_state.auth:
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. جلب وتنظيف البيانات (حل مشكلة الـ KeyError) ---
+# --- 6. جلب وتنظيف البيانات (لتجنب KeyError) ---
 @st.cache_data(ttl=60)
 def load_data():
     U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -93,8 +93,7 @@ def load_data():
     try:
         p, d = pd.read_csv(U_P), pd.read_csv(U_D)
         for df in [p, d]:
-            df.columns = [c.strip() for c in df.columns] # إزالة المسافات من أسماء الأعمدة
-            # توحيد أسماء الأعمدة الأساسية
+            df.columns = [c.strip() for c in df.columns] # تنظيف أسماء الأعمدة من المسافات
             df.rename(columns={
                 'Project Name': 'ProjectName',
                 'Start Price': 'Price',
@@ -107,20 +106,20 @@ def load_data():
 
 df_p, df_d = load_data()
 
-# --- 7. الواجهة الرئيسية ---
+# --- 7. الهيدر والمنيو ---
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p>مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
 _, c_ex = st.columns([0.88, 0.12])
 with c_ex:
     if st.button("🚪 خروج", key="logout_btn"): logout()
 
-menu = option_menu(None, ["المطورين", "المشاريع", "المساعد الذكي", "أدوات البروكر"], 
-    icons=["building", "search", "robot", "briefcase"], default_index=1, orientation="horizontal",
+menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي"], 
+    icons=["briefcase", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000"}})
 
-# --- 8. المساعد الذكي المصلح ---
+# --- 8. المساعد الذكي المطور (بدون أخطاء) ---
 if menu == "المساعد الذكي":
-    st.markdown("<h3 style='color:#f59e0b;'>🤖 مركز الذكاء العقاري</h3>", unsafe_allow_html=True)
-    t1, t2, t3 = st.tabs(["💬 شات خبير", "🔍 فلاتر", "📊 مقارنة"])
+    st.markdown("<h3 style='color:#f59e0b; text-align:center;'>🤖 مركز الاستشارات الذكي</h3>", unsafe_allow_html=True)
+    t1, t2, t3 = st.tabs(["💬 شات خبير", "🔍 فلاتر ذكية", "📊 مقارنة سريعة"])
 
     with t1:
         for m in st.session_state.messages:
@@ -128,58 +127,68 @@ if menu == "المساعد الذكي":
         if pmt := st.chat_input("اسألني عن أي مشروع..."):
             st.session_state.messages.append({"role": "user", "content": pmt})
             with st.chat_message("user"): st.write(pmt)
-            # بحث مرن
-            res = df_p[df_p.apply(lambda r: r.astype(str).str.contains(pmt.lower(), case=False).any(), axis=1)]
             with st.chat_message("assistant"):
+                res = df_p[df_p.apply(lambda r: r.astype(str).str.contains(pmt.lower(), case=False).any(), axis=1)]
                 if not res.empty:
                     r = res.iloc[0]
-                    ans = f"✅ **{r.get('ProjectName', 'المشروع')}**\n\n🏗️ المطور: {r.get('Developer')}\n💰 السعر: {r.get('Price')}\n💳 السداد: {r.get('Payment')}\n📍 الموقع: {r.get('Location')}"
-                else: ans = "لم أجد نتائج، جرب كتابة اسم المشروع فقط."
+                    ans = f"✅ **تفاصيل {r.get('ProjectName', 'المشروع')}:**\n\n🏗️ المطور: {r.get('Developer')}\n💰 السعر: {r.get('Price')}\n💳 السداد: {r.get('Payment')}\n📍 الموقع: {r.get('Location')}\n📝 الملاحظات: {r.get('Details')}"
+                else: ans = "لم أجد نتائج مطابقة، حاول كتابة اسم المشروع أو المطور."
                 st.write(ans); st.session_state.messages.append({"role": "assistant", "content": ans})
 
     with t2:
-        # هنا تم حل الـ KeyError باستخدام ميزة get لضمان عدم تعطل الكود
         c1, c2 = st.columns(2)
-        with c1: locs = st.multiselect("المنطقة", options=df_p['Location'].unique() if 'Location' in df_p else [])
-        with c2: devs = st.multiselect("المطور", options=df_p['Developer'].unique() if 'Developer' in df_p else [])
+        with c1: 
+            loc_list = df_p['Location'].unique() if 'Location' in df_p.columns else []
+            sel_loc = st.multiselect("اختر المناطق", loc_list)
+        with c2: 
+            dev_list = df_p['Developer'].unique() if 'Developer' in df_p.columns else []
+            sel_dev = st.multiselect("اختر المطورين", dev_list)
+        
         f_df = df_p
-        if locs: f_df = f_df[f_df['Location'].isin(locs)]
-        if devs: f_df = f_df[f_df['Developer'].isin(devs)]
-        # عرض الأعمدة الموجودة فعلياً فقط لتجنب الخطأ
-        cols_to_show = [c for c in ['ProjectName', 'Developer', 'Location', 'Price', 'Payment'] if c in f_df.columns]
-        st.dataframe(f_df[cols_to_show], use_container_width=True)
+        if sel_loc: f_df = f_df[f_df['Location'].isin(sel_loc)]
+        if sel_dev: f_df = f_df[f_df['Developer'].isin(sel_dev)]
+        
+        show_cols = [c for c in ['ProjectName', 'Developer', 'Location', 'Price', 'Payment'] if c in f_df.columns]
+        st.dataframe(f_df[show_cols], use_container_width=True)
 
     with t3:
-        if not df_p.empty:
-            col1, col2 = st.columns(2)
-            p1 = col1.selectbox("المشروع الأول", df_p['ProjectName'].unique())
-            p2 = col2.selectbox("المشروع الثاني", df_p['ProjectName'].unique())
-            if st.button("مقارنة الآن"):
-                d1, d2 = df_p[df_p['ProjectName']==p1].iloc[0], df_p[df_p['ProjectName']==p2].iloc[0]
+        if not df_p.empty and 'ProjectName' in df_p.columns:
+            cc1, cc2 = st.columns(2)
+            p1 = cc1.selectbox("اختر المشروع الأول", df_p['ProjectName'].unique(), key="comp1")
+            p2 = cc2.selectbox("اختر المشروع الثاني", df_p['ProjectName'].unique(), key="comp2")
+            if st.button("بدء المقارنة 📊"):
+                row1, row2 = df_p[df_p['ProjectName']==p1].iloc[0], df_p[df_p['ProjectName']==p2].iloc[0]
                 st.table(pd.DataFrame({
-                    "الميزة": ["المطور", "السعر", "السداد", "الموقع"],
-                    p1: [d1.get('Developer'), d1.get('Price'), d1.get('Payment'), d1.get('Location')],
-                    p2: [d2.get('Developer'), d2.get('Price'), d2.get('Payment'), d2.get('Location')]
+                    "الميزة": ["المطور", "الموقع", "السعر", "نظام السداد"],
+                    p1: [row1.get('Developer'), row1.get('Location'), row1.get('Price'), row1.get('Payment')],
+                    p2: [row2.get('Developer'), row2.get('Location'), row2.get('Price'), row2.get('Payment')]
                 }))
 
-# --- 9. باقي الصفحات (المشاريع والمطورين) ---
+# --- 9. المشاريع والمطورين ---
 elif menu in ["المشاريع", "المطورين"]:
     active_df = df_p if menu == "المشاريع" else df_d
     if st.session_state.view == "grid":
-        search = st.text_input("🔍 بحث...")
+        search = st.text_input("🔍 بحث سريع في البيانات...")
         filt = active_df[active_df.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else active_df
         grid = st.columns(2)
         for i, (idx, r) in enumerate(filt.head(10).iterrows()):
             with grid[i%2]:
-                txt = f"🏠 {r.iloc[0]}\n🏗️ {r.get('Developer','-')}\n💰 {r.get('Price','-')}"
-                if st.button(txt, key=f"card_{idx}"):
+                card_txt = f"🏠 {r.iloc[0]}\n🏗️ {r.get('Developer','---')}\n💰 {r.get('Price','-')}"
+                if st.button(card_txt, key=f"card_{idx}"):
                     st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
     else:
         if st.button("⬅ عودة"): st.session_state.view = "grid"; st.rerun()
         item = active_df.iloc[st.session_state.current_index]
-        st.markdown(f'<div class="detail-card">', unsafe_allow_html=True)
+        st.markdown('<div class="detail-card">', unsafe_allow_html=True)
         for k, v in item.items():
             st.markdown(f"<p><span class='label-gold'>{k}:</span> {v}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:30px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+elif menu == "أدوات البروكر":
+    st.subheader("🛠️ الحاسبة العقارية")
+    v = st.number_input("إجمالي سعر الوحدة", value=1000000)
+    dp = st.slider("المقدم (%)", 0, 100, 10)
+    y = st.number_input("عدد سنوات التقسيط", 1, 20, 8)
+    st.metric("القسط الشهري المتوقع", f"{(v-(v*dp/100))/(y*12):,.0f}")
+
+st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026 | Powered by AI</p>", unsafe_allow_html=True)
