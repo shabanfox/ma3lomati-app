@@ -50,7 +50,7 @@ def logout():
     st.session_state.current_user = None
     st.rerun()
 
-# --- 4. التصميم الجمالي CSS (نسخة الكروت المطورة) ---
+# --- 4. التصميم الجمالي CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -61,7 +61,6 @@ st.markdown(f"""
         background-size: cover; background-attachment: fixed;
         direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }}
-    /* صفحة الدخول */
     .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 50px; }}
     .oval-header {{
         background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
@@ -69,15 +68,11 @@ st.markdown(f"""
         text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
     }}
     .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    
-    /* الهيدر */
     .royal-header {{
         background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}');
         background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b;
         padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px;
     }}
-
-    /* الكروت المطورة */
     div.stButton > button[key*="card_"] {{
         background: linear-gradient(145deg, #ffffff, #f9f9f9) !important;
         color: #1a1a1a !important;
@@ -99,19 +94,14 @@ st.markdown(f"""
         box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4) !important;
         background: #fff !important;
     }}
-
-    /* أزرار التنقل */
     div.stButton > button[key*="nav_"] {{
         background-color: #f59e0b !important; color: #000 !important;
         font-weight: 900 !important; border-radius: 12px !important;
         border: none !important; margin-top: 5px !important;
     }}
-
-    /* التفاصيل والمقترحات */
     .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom:20px; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 14px; margin-top: 5px; }}
     .val-white {{ color: white; font-size: 16px; border-bottom: 1px solid #333; padding-bottom:5px; margin-bottom: 8px; }}
-    
     div.stButton > button[key*="side_"] {{
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: #eee !important; border: none !important;
@@ -161,7 +151,7 @@ def load_data():
         p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
         for df in [p, d, l]: 
             df.columns = [c.strip() for c in df.columns]
-            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName'}, inplace=True, errors="ignore")
+            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName', 'Start Price': 'Price'}, inplace=True, errors="ignore")
         return p.fillna("---"), d.fillna("---"), l.fillna("---")
     except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
@@ -204,13 +194,37 @@ if menu == "أدوات البروكر":
             st.metric("العائد", f"{(r/b)*100:,.1f}%")
 
 elif menu == "المساعد الذكي":
-    st.info("اسألني عن أي مشروع أو قارن بين المطورين...")
+    st.markdown("<h3 style='color:#f59e0b;'>🤖 مساعد معلوماتي الذكي (خبير بياناتك)</h3>", unsafe_allow_html=True)
+    st.info("أنا الآن مبرمج لقراءة كافة تفاصيل المشاريع التي أرسلتها. اسألني عن أي مشروع أو مطور!")
+    
+    # عرض الرسائل السابقة
     for m in st.session_state.messages:
         with st.chat_message(m["role"]): st.write(m["content"])
-    if prompt := st.chat_input("اكتب سؤالك هنا..."):
+    
+    if prompt := st.chat_input("مثلاً: ما هي تفاصيل مشروع Taj Tower؟"):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.messages.append({"role": "assistant", "content": "بناءً على بيانات 2026، هذا الخيار يعتبر الأفضل للاستثمار..."})
-        st.rerun()
+        with st.chat_message("user"): st.write(prompt)
+        
+        # محرك البحث الذكي داخل البيانات
+        query = prompt.lower()
+        # البحث في صفحة المشاريع
+        search_results = df_p[df_p.apply(lambda row: row.astype(str).str.contains(query, case=False).any(), axis=1)]
+        
+        with st.chat_message("assistant"):
+            if not search_results.empty:
+                res = search_results.iloc[0]
+                response = f"✅ **إليك ما وجدته عن {res.get('ProjectName', 'هذا المشروع')}:**\n\n"
+                response += f"🏗️ **المطور:** {res.get('Developer', '---')}\n"
+                response += f"📍 **الموقع:** {res.get('Location', '---')}\n"
+                response += f"💰 **السعر الابتدائي:** {res.get('Price', '---')}\n"
+                response += f"💳 **نظام السداد:** {res.get('Payment Plan', '---')}\n"
+                response += f"🏢 **التشطيب:** {res.get('Finishing', '---')}\n"
+                response += f"📝 **تفاصيل دقيقة:** {res.get('Detailed Info & Specifics', '---')}"
+            else:
+                response = "للأسف لم أجد مشروعاً بهذا الاسم بالضبط في بياناتي الحالية. هل تقصد مشروعاً آخر في العاصمة أو التجمع؟"
+            
+            st.write(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
 else:
     active_df = df_p if menu=="المشاريع" else (df_l if menu=="Launches" else df_d)
@@ -237,18 +251,16 @@ else:
             grid = st.columns(2)
             for i, (idx, r) in enumerate(disp.iterrows()):
                 with grid[i%2]:
-                    # عرض تفاصيل غنية داخل الكارت
                     name = r[col_main]
                     loc = r.get('Location', '---')
                     dev = r.get('Developer', '---')
-                    price = r.get('Starting Price', r.get('Price', 'تواصل للتفاصيل'))
+                    price = r.get('Price', 'تواصل للتفاصيل')
                     
                     card_text = f"🏠 {name}\n🏗️ المطور: {dev}\n📍 الموقع: {loc}\n💰 السعر: {price}"
                     
                     if st.button(card_text, key=f"card_{idx}"):
                         st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
             
-            # أزرار التنقل ملتصقة بالكروت
             st.markdown("<div style='margin-top:5px;'></div>", unsafe_allow_html=True)
             p1, p_info, p2 = st.columns([1, 2, 1])
             with p1:
