@@ -78,7 +78,6 @@ st.markdown(f"""
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 16px; margin-top: 10px; }}
     .val-white {{ color: white; font-size: 18px; border-bottom: 1px solid #333; padding-bottom:5px; margin-bottom: 10px; }}
     
-    /* أزرار الكروت الرئيسية */
     div.stButton > button[key*="card_"] {{
         background-color: white !important; color: #111 !important;
         min-height: 140px !important; text-align: right !important;
@@ -86,7 +85,6 @@ st.markdown(f"""
         border: none !important; margin-bottom: 10px !important;
         display: block !important; width: 100% !important; border-radius: 12px !important;
     }}
-    /* أزرار المقترحات الجانبية */
     div.stButton > button[key*="side_"] {{
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: #eee !important; border: none !important;
@@ -97,11 +95,16 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. منطق الدخول (Login UI) ---
+# --- 5. صفحة الدخول (تعديل: إضافة زر اللغة هنا) ---
 if not st.session_state.auth:
     st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
     st.markdown("<div class='oval-header'>MA3LOMATI PRO</div>", unsafe_allow_html=True)
     st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+    
+    # إضافة زر اللغة في أعلى كارت تسجيل الدخول
+    col_lang, _ = st.columns([0.4, 0.6])
+    with col_lang:
+        st.button("🌐 EN / AR", key="login_lang", use_container_width=True)
     
     tab_login, tab_signup = st.tabs(["🔐 تسجيل دخول", "📝 اشتراك جديد"])
     with tab_login:
@@ -160,9 +163,9 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-c_top1, c_top2 = st.columns([0.85, 0.15])
-with c_top2:
-    st.button("🌐 EN/AR", key="lang_btn", use_container_width=True)
+# تعديل: زر الخروج فقط في الأعلى
+_, c_exit = st.columns([0.85, 0.15])
+with c_exit:
     if st.button("🚪 خروج", key="exit_btn", use_container_width=True): logout()
 
 # --- 8. القائمة الرئيسية ---
