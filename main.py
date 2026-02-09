@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. إدارة الحالة والحفاظ على الجلسة (Persistence) ---
+# --- 2. إدارة الحالة والحفاظ على الجلسة ---
 if 'auth' not in st.session_state:
     if "u_session" in st.query_params:
         st.session_state.auth = True
@@ -19,7 +19,6 @@ if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'view' not in st.session_state: st.session_state.view = "grid"
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'messages' not in st.session_state: st.session_state.messages = []
 
 # --- 3. الروابط والبيانات ---
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
@@ -87,7 +86,7 @@ def render_grid(dataframe, prefix):
                 if st.button(f"📌 {str(s_row[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
                     st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"; st.rerun()
 
-# --- 5. التصميم CSS الأصلي ---
+# --- 5. التصميم CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -100,13 +99,13 @@ st.markdown(f"""
     }}
     .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 50px; }}
     .oval-header {{ background-color: #000; border: 3px solid #f59e0b; border-radius: 60px; padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900; text-align: center; margin-bottom: -30px; min-width: 360px; z-index: 10; }}
-    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px; }}
+    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35_px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
+    .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 30px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px; }}
     div.stButton > button[key*="card_"] {{ background: linear-gradient(145deg, #ffffff, #f9f9f9) !important; color: #1a1a1a !important; border-right: 6px solid #f59e0b !important; border-radius: 15px !important; padding: 20px !important; text-align: right !important; min-height: 160px !important; width: 100% !important; }}
     .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; }}
     .val-white {{ color: white; font-size: 18px; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 5px; }}
-    .stTabs [aria-selected="true"] {{ background-color: #f59e0b !important; color: black !important; font-weight: bold; }}
+    div.stButton > button[key="logout_top"] {{ background-color: #ff4b4b !important; color: white !important; border-radius: 10px !important; border: none !important; font-weight: bold !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -133,16 +132,25 @@ def load_data():
     U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
     U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
     U_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
-    p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
-    for df in [p, d, l]: 
-        df.columns = [c.strip() for c in df.columns]
-        df.rename(columns={'Area': 'Location', 'الموقع': 'Location'}, inplace=True, errors="ignore")
-    return p.fillna("---"), d.fillna("---"), l.fillna("---")
+    try:
+        p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
+        for df in [p, d, l]: 
+            df.columns = [c.strip() for c in df.columns]
+            df.rename(columns={'Area': 'Location', 'الموقع': 'Location'}, inplace=True, errors="ignore")
+        return p.fillna("---"), d.fillna("---"), l.fillna("---")
+    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
 df_p, df_d, df_l = load_data()
 
-# --- 8. الواجهة الرئيسية ---
-st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+# --- 8. الواجهة الرئيسية (التعديل هنا لزر الخروج) ---
+# تقسيم الهيدر لعرض الاسم وزر الخروج في سطر واحد
+st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1></div>', unsafe_allow_html=True)
+
+head_col1, head_col2, head_col3 = st.columns([0.4, 0.2, 0.4])
+with head_col2:
+    st.markdown(f"<p style='color:#f59e0b; text-align:center; font-weight:bold; margin-bottom:5px;'>مرحباً {st.session_state.current_user}</p>", unsafe_allow_html=True)
+    if st.button("🚪 تسجيل خروج", key="logout_top", use_container_width=True):
+        logout()
 
 menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["briefcase", "building", "search", "robot"], default_index=2, orientation="horizontal",
@@ -166,11 +174,10 @@ if menu == "أدوات البروكر":
         st.markdown("<div class='detail-card'><h3>📊 العمولة</h3>", unsafe_allow_html=True)
         deal = st.number_input("الصفقة", value=5000000, step=100000, key="b1")
         pct = st.number_input("النسبة %", value=2.5, step=0.1, key="b2")
-        comm = deal * (pct/100)
-        st.markdown(f"<p class='label-gold'>العمولة:</p><p class='val-white'>{comm:,.0f}</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العمولة المتوقعة:</p><p class='val-white'>{deal * (pct/100):,.0f}</p></div>", unsafe_allow_html=True)
     with c3:
         st.markdown("<div class='detail-card'><h3>📈 العائد ROI</h3>", unsafe_allow_html=True)
-        buy = st.number_input("شراء", value=5000000, key="c1")
+        buy = st.number_input("سعر الشراء", value=5000000, key="c1")
         rent = st.number_input("إيجار شهري", value=40000, key="c2")
         roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
         st.markdown(f"<p class='label-gold'>العائد السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
@@ -186,5 +193,4 @@ elif menu == "المطورين":
 elif menu == "المساعد الذكي":
     st.info("نظام تحليل البيانات العقارية AI 2026")
 
-if st.button("🚪 خروج"): logout()
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
