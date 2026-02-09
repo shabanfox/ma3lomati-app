@@ -73,21 +73,20 @@ st.markdown(f"""
     }}
     .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px; }}
     div.stButton > button[key*="card_"] {{ background: linear-gradient(145deg, #ffffff, #f9f9f9) !important; color: #1a1a1a !important; border-right: 6px solid #f59e0b !important; border-radius: 15px !important; padding: 20px !important; text-align: right !important; min-height: 160px !important; width: 100% !important; }}
-    .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom: 10px; }}
-    .label-gold {{ color: #f59e0b; font-weight: 900; }}
-    .val-white {{ color: white; font-size: 18px; font-weight: bold; }}
+    .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom: 10px; min-height: 400px; }}
+    .label-gold {{ color: #f59e0b; font-weight: 900; margin-bottom: 2px; }}
+    .val-white {{ color: white; font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 6. تسجيل الدخول (مع الحفاظ على الجلسة) ---
+# --- 6. تسجيل الدخول ---
 if not st.session_state.auth:
     st.title("MA3LOMATI PRO - Login")
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
     if st.button("دخول"):
         if p == "2026":
-            st.session_state.auth = True
-            st.session_state.current_user = u
+            st.session_state.auth, st.session_state.current_user = True, u
             st.query_params["u_session"] = u
             st.rerun()
     st.stop()
@@ -113,55 +112,51 @@ menu = option_menu(None, ["أدوات البروكر", "المطورين", "ال
 
 if menu == "أدوات البروكر":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات الحساب الدقيقة</h2>", unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
         st.subheader("💰 حساب القسط")
-        price = st.number_input("سعر الوحدة الكامل", value=5000000, step=100000)
-        down_payment_pct = st.number_input("نسبة المقدم (%)", value=10, min_value=0, max_value=100)
-        years = st.number_input("سنين التقسيط", value=8, min_value=1)
+        price = st.number_input("سعر الوحدة", value=5000000, step=100000, key="calc_p")
+        down_pct = st.number_input("نسبة المقدم (%)", value=10, key="calc_d")
+        years = st.number_input("سنين التقسيط", value=8, key="calc_y")
         
-        dp_val = price * (down_payment_pct / 100)
+        dp_val = price * (down_pct / 100)
         rem_val = price - dp_val
-        monthly = rem_val / (years * 12)
-        quarterly = monthly * 3
+        monthly = rem_val / (years * 12) if years > 0 else 0
         
         st.markdown(f"<p class='label-gold'>المقدم المطلوب:</p><p class='val-white'>{dp_val:,.0f}</p>", unsafe_allow_html=True)
         st.markdown(f"<p class='label-gold'>القسط الشهري:</p><p class='val-white'>{monthly:,.0f}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='label-gold'>القسط الربع سنوي:</p><p class='val-white'>{quarterly:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>القسط الربع سنوي:</p><p class='val-white'>{monthly*3:,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
         st.subheader("📊 حساب العمولة")
-        deal_val = st.number_input("قيمة الصفقة (التعاقد)", value=5000000, step=100000)
-        comm_pct = st.number_input("نسبة العمولة (%)", value=2.5, step=0.1)
+        deal_v = st.number_input("قيمة الصفقة", value=5000000, step=100000, key="comm_v")
+        comm_p = st.number_input("نسبة العمولة (%)", value=2.5, step=0.1, key="comm_p")
         
-        comm_val = deal_val * (comm_pct / 100)
-        tax_val = comm_val * 0.14
-        net_comm = comm_val - tax_val
+        c_val = deal_v * (comm_p / 100)
+        tax = c_val * 0.14
         
-        st.markdown(f<p class='label-gold'>العمولة قبل الضريبة:</p><p class='val-white'>{comm_val:,.0f}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='label-gold'>خصم ضريبة (14%):</p><p class='val-white'>{tax_val:,.0f}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='label-gold'>صافي الربح:</p><p class='val-white'>{net_comm:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العمولة قبل الضريبة:</p><p class='val-white'>{c_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>خصم ضريبة (14%):</p><p class='val-white'>{tax:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>صافي الربح:</p><p class='val-white'>{c_val - tax:,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
-        st.subheader("📈 حساب الاستثمار (ROI)")
-        buy_p = st.number_input("سعر الشراء الحالي", value=5000000)
-        rent_p = st.number_input("الإيجار الشهري المتوقع", value=40000)
-        annual_inc = st.number_input("الزيادة السنوية للعقار (%)", value=15)
+        st.subheader("📈 حساب الاستثمار")
+        b_p = st.number_input("سعر الشراء", value=5000000, key="inv_b")
+        r_p = st.number_input("الإيجار الشهري", value=40000, key="inv_r")
+        inc = st.number_input("الزيادة السنوية (%)", value=15, key="inv_i")
         
-        annual_rent = rent_p * 12
-        roi_pct = (annual_rent / buy_p) * 100
-        future_val = buy_p * (1 + annual_inc/100)
+        roi = ((r_p * 12) / b_p) * 100 if b_p > 0 else 0
+        f_val = b_p * (1 + inc/100)
         
-        st.markdown(f"<p class='label-gold'>العائد الإيجاري السنوي:</p><p class='val-white'>{roi_pct:.2f} %</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='label-gold'>قيمة العقار بعد سنة:</p><p class='val-white'>{future_val:,.0f}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='label-gold'>إجمالي الربح (إيجار + زيادة):</p><p class='val-white'>{(annual_rent + (future_val-buy_p)):,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العائد الإيجاري السنوي:</p><p class='val-white'>{roi:.2f} %</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>قيمة العقار بعد سنة:</p><p class='val-white'>{f_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>إجمالي الربح المتوقع:</p><p class='val-white'>{(r_p*12)+(f_val-b_p):,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 elif menu == "المشاريع":
@@ -175,4 +170,4 @@ elif menu == "المطورين":
 elif menu == "المساعد الذكي":
     st.chat_input("اسألني عن أي حاجة...")
 
-if st.button("🚪 تسجيل خروج"): logout()
+if st.button("🚪 خروج"): logout()
