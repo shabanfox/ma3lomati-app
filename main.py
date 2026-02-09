@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. إدارة الحالة والحفاظ على الجلسة (Refresh Persistence) ---
+# --- 2. إدارة الحالة والحفاظ على الجلسة ---
 if 'auth' not in st.session_state:
     if "u_session" in st.query_params:
         st.session_state.auth = True
@@ -19,7 +19,6 @@ if 'current_user' not in st.session_state: st.session_state.current_user = None
 if 'view' not in st.session_state: st.session_state.view = "grid"
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'messages' not in st.session_state: st.session_state.messages = []
 
 # --- 3. الروابط والبيانات ---
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
@@ -27,33 +26,17 @@ HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 ITEMS_PER_PAGE = 6
 
-# --- 4. الوظائف الأساسية ---
-def login_user(user_input, pwd_input):
-    try:
-        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}", timeout=15)
-        if response.status_code == 200:
-            users_list = response.json()
-            user_input = str(user_input).strip().lower()
-            for user_data in users_list:
-                name_s = str(user_data.get('Name', user_data.get('name', ''))).strip()
-                pass_s = str(user_data.get('Password', user_data.get('password', ''))).strip()
-                if user_input == name_s.lower() and str(pwd_input) == pass_s:
-                    return name_s
-        return None
-    except: return None
-
+# --- 4. الوظائف ---
 def logout():
     st.session_state.auth = False
     st.query_params.clear()
     st.rerun()
 
-# --- 5. دالة العرض الرئيسية (خرجت بره عشان تحل الـ NameError) ---
 def render_grid(dataframe, prefix):
     if st.session_state.view == f"details_{prefix}":
         if st.button("⬅ عودة للقائمة", key=f"back_{prefix}", use_container_width=True): 
             st.session_state.view = "grid"
             st.rerun()
-        
         item = dataframe.iloc[st.session_state.current_index]
         c1, c2, c3 = st.columns(3)
         cols = dataframe.columns
@@ -63,12 +46,10 @@ def render_grid(dataframe, prefix):
                 for k in cs: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
                 st.markdown(h+'</div>', unsafe_allow_html=True)
     else:
-        search = st.text_input(f"🔍 بحث ذكي في {prefix}...", key=f"search_{prefix}")
+        search = st.text_input(f"🔍 بحث...", key=f"search_{prefix}")
         filt = dataframe[dataframe.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else dataframe
-        
         start = st.session_state.page_num * ITEMS_PER_PAGE
         disp = filt.iloc[start : start + ITEMS_PER_PAGE]
-        
         m_col, s_col = st.columns([0.76, 0.24])
         with m_col:
             grid = st.columns(2)
@@ -78,25 +59,14 @@ def render_grid(dataframe, prefix):
                     if st.button(card_text, key=f"card_{prefix}_{idx}"):
                         st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"
                         st.rerun()
-            
-            # أزرار التنقل
-            p1, p_info, p2 = st.columns([1, 2, 1])
-            with p1:
-                if st.session_state.page_num > 0:
-                    if st.button("⬅ السابق", key=f"nav_p_{prefix}"): st.session_state.page_num -= 1; st.rerun()
-            with p_info: st.markdown(f"<p style='text-align:center; color:#f59e0b;'>صفحة {st.session_state.page_num + 1}</p>", unsafe_allow_html=True)
-            with p2:
-                if (start + ITEMS_PER_PAGE) < len(filt):
-                    if st.button("التالي ➡", key=f"nav_n_{prefix}"): st.session_state.page_num += 1; st.rerun()
-        
         with s_col:
-            st.markdown("<p style='color:#f59e0b; font-weight:bold; border-bottom:1px solid #333;'>🏆 مقترحات سريعة</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#f59e0b; font-weight:bold;'>🏆 مقترحات</p>", unsafe_allow_html=True)
             for s_idx, s_row in dataframe.head(10).iterrows():
                 if st.button(f"📌 {str(s_row[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
                     st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"
                     st.rerun()
 
-# --- 6. التصميم CSS ---
+# --- 5. التصميم CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -107,38 +77,28 @@ st.markdown(f"""
         background-size: cover; background-attachment: fixed;
         direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }}
-    .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 50px; }}
-    .oval-header {{ background-color: #000; border: 3px solid #f59e0b; border-radius: 60px; padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900; text-align: center; margin-bottom: -30px; min-width: 360px; }}
-    .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
     .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px; }}
     div.stButton > button[key*="card_"] {{ background: linear-gradient(145deg, #ffffff, #f9f9f9) !important; color: #1a1a1a !important; border-right: 6px solid #f59e0b !important; border-radius: 15px !important; padding: 20px !important; text-align: right !important; min-height: 160px !important; width: 100% !important; }}
     .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; }}
-    .stTabs [aria-selected="true"] {{ background-color: #f59e0b !important; color: black !important; font-weight: bold; }}
+    .stMetric {{ background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid #f59e0b; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 7. منطق الدخول ---
+# --- 6. تسجيل الدخول ---
 if not st.session_state.auth:
-    st.markdown("<div class='auth-wrapper'><div class='oval-header'>MA3LOMATI PRO</div><div class='auth-card'>", unsafe_allow_html=True)
-    u = st.text_input("User", placeholder="الأسم أو الإيميل", key="log_u")
-    p = st.text_input("Pass", type="password", placeholder="كلمة السر", key="log_p")
-    if st.button("SIGN IN 🚀", use_container_width=True):
-        if p == "2026": 
-            st.session_state.auth, st.session_state.current_user = True, "Admin"
-            st.query_params["u_session"] = "Admin"
+    st.title("MA3LOMATI PRO - Login")
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
+    if st.button("دخول"):
+        if p == "2026": # كلمة سر تجريبية
+            st.session_state.auth = True
+            st.session_state.current_user = u
+            st.query_params["u_session"] = u
             st.rerun()
-        else:
-            user = login_user(u, p)
-            if user:
-                st.session_state.auth, st.session_state.current_user = True, user
-                st.query_params["u_session"] = user
-                st.rerun()
-            else: st.error("بيانات غير صحيحة")
-    st.markdown("</div></div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 8. تحميل البيانات ---
+# --- 7. تحميل البيانات ---
 @st.cache_data(ttl=60)
 def load_data():
     U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -147,39 +107,74 @@ def load_data():
     p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
     for df in [p, d, l]: 
         df.columns = [c.strip() for c in df.columns]
-        df.rename(columns={'Area': 'Location', 'الموقع': 'Location'}, inplace=True, errors="ignore")
     return p.fillna("---"), d.fillna("---"), l.fillna("---")
 
 df_p, df_d, df_l = load_data()
 
-# --- 9. الواجهة الرئيسية ---
+# --- 8. الواجهة ---
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
-if st.button("🚪 تسجيل خروج"): logout()
 
 menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي"], 
-    icons=["briefcase", "building", "search", "robot"], default_index=2, orientation="horizontal",
+    icons=["briefcase", "building", "search", "robot"], default_index=0, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000"}})
 
-if 'last_m' not in st.session_state or menu != st.session_state.last_m:
-    st.session_state.view, st.session_state.page_num, st.session_state.last_m = "grid", 0, menu
+if menu == "أدوات البروكر":
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات الحساب الذكية</h2>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
+        st.subheader("💰 حساب القسط")
+        price = st.number_input("إجمالي سعر الوحدة", value=5000000, step=100000)
+        down_payment_pct = st.slider("المقدم (%)", 0, 50, 10)
+        years = st.number_input("عدد سنوات التقسيط", value=8, min_value=1)
+        
+        dp_val = price * (down_payment_pct / 100)
+        rem_val = price - dp_val
+        monthly = rem_val / (years * 12)
+        quarterly = monthly * 3
+        
+        st.metric("المقدم المطلوب", f"{dp_val:,.0f}")
+        st.metric("القسط الشهري", f"{monthly:,.0f}")
+        st.metric("القسط الربع سنوي", f"{quarterly:,.0f}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 10. تنفيذ الأقسام ---
-if menu == "المشاريع":
-    t1, t2 = st.tabs(["🏗️ جميع المشاريع", "🚀 اللونشات الحالية"])
+    with col2:
+        st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
+        st.subheader("📊 حساب العمولة")
+        deal_val = st.number_input("قيمة الصفقة", value=5000000, step=100000)
+        comm_pct = st.number_input("نسبة عمولتك (%)", value=2.5, step=0.1)
+        tax_pct = st.checkbox("خصم ضريبة (14%)؟")
+        
+        comm_val = deal_val * (comm_pct / 100)
+        if tax_pct: comm_val = comm_val / 1.14
+            
+        st.metric("صافي العمولة", f"{comm_val:,.0f}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
+        st.subheader("📈 حساب العائد ROI")
+        buy_price = st.number_input("سعر الشراء", value=5000000)
+        rent_val = st.number_input("الإيجار الشهري المتوقع", value=40000)
+        annual_increase = st.slider("الزيادة السنوية للعقار (%)", 0, 30, 10)
+        
+        annual_rent = rent_val * 12
+        roi = (annual_rent / buy_price) * 100
+        st.metric("العائد الإيجاري السنوي", f"{roi:.2f} %")
+        st.metric("قيمة العقار بعد سنة", f"{buy_price*(1 + annual_increase/100):,.0f}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+elif menu == "المشاريع":
+    t1, t2 = st.tabs(["🏗️ المشاريع", "🚀 اللونشات"])
     with t1: render_grid(df_p, "proj")
     with t2: render_grid(df_l, "launch")
 
 elif menu == "المطورين":
     render_grid(df_d, "dev")
 
-elif menu == "أدوات البروكر":
-    st.subheader("🔢 آلات حسابية")
-    c1, c2 = st.columns(2)
-    with c1: st.number_input("سعر الوحدة", value=1000000)
-    with c2: st.number_input("السنوات", value=8)
-
 elif menu == "المساعد الذكي":
-    st.info("نظام تحليل البيانات العقارية AI")
-    st.chat_input("سؤالك عن السوق...")
+    st.chat_input("اسألني عن أي حاجة في السوق...")
 
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+if st.button("🚪 خروج"): logout()
