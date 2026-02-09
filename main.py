@@ -59,12 +59,6 @@ def render_grid(dataframe, prefix):
                     if st.button(card_text, key=f"card_{prefix}_{idx}"):
                         st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"
                         st.rerun()
-        with s_col:
-            st.markdown("<p style='color:#f59e0b; font-weight:bold;'>🏆 مقترحات</p>", unsafe_allow_html=True)
-            for s_idx, s_row in dataframe.head(10).iterrows():
-                if st.button(f"📌 {str(s_row[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
-                    st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"
-                    st.rerun()
 
 # --- 5. التصميم CSS ---
 st.markdown(f"""
@@ -79,19 +73,19 @@ st.markdown(f"""
     }}
     .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px; }}
     div.stButton > button[key*="card_"] {{ background: linear-gradient(145deg, #ffffff, #f9f9f9) !important; color: #1a1a1a !important; border-right: 6px solid #f59e0b !important; border-radius: 15px !important; padding: 20px !important; text-align: right !important; min-height: 160px !important; width: 100% !important; }}
-    .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; }}
+    .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom: 10px; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; }}
-    .stMetric {{ background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid #f59e0b; }}
+    .val-white {{ color: white; font-size: 18px; font-weight: bold; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 6. تسجيل الدخول ---
+# --- 6. تسجيل الدخول (مع الحفاظ على الجلسة) ---
 if not st.session_state.auth:
     st.title("MA3LOMATI PRO - Login")
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
     if st.button("دخول"):
-        if p == "2026": # كلمة سر تجريبية
+        if p == "2026":
             st.session_state.auth = True
             st.session_state.current_user = u
             st.query_params["u_session"] = u
@@ -105,8 +99,7 @@ def load_data():
     U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
     U_L = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
     p, d, l = pd.read_csv(U_P), pd.read_csv(U_D), pd.read_csv(U_L)
-    for df in [p, d, l]: 
-        df.columns = [c.strip() for c in df.columns]
+    for df in [p, d, l]: df.columns = [c.strip() for c in df.columns]
     return p.fillna("---"), d.fillna("---"), l.fillna("---")
 
 df_p, df_d, df_l = load_data()
@@ -119,51 +112,56 @@ menu = option_menu(None, ["أدوات البروكر", "المطورين", "ال
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000"}})
 
 if menu == "أدوات البروكر":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات الحساب الذكية</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات الحساب الدقيقة</h2>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
         st.subheader("💰 حساب القسط")
-        price = st.number_input("إجمالي سعر الوحدة", value=5000000, step=100000)
-        down_payment_pct = st.slider("المقدم (%)", 0, 50, 10)
-        years = st.number_input("عدد سنوات التقسيط", value=8, min_value=1)
+        price = st.number_input("سعر الوحدة الكامل", value=5000000, step=100000)
+        down_payment_pct = st.number_input("نسبة المقدم (%)", value=10, min_value=0, max_value=100)
+        years = st.number_input("سنين التقسيط", value=8, min_value=1)
         
         dp_val = price * (down_payment_pct / 100)
         rem_val = price - dp_val
         monthly = rem_val / (years * 12)
         quarterly = monthly * 3
         
-        st.metric("المقدم المطلوب", f"{dp_val:,.0f}")
-        st.metric("القسط الشهري", f"{monthly:,.0f}")
-        st.metric("القسط الربع سنوي", f"{quarterly:,.0f}")
+        st.markdown(f"<p class='label-gold'>المقدم المطلوب:</p><p class='val-white'>{dp_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>القسط الشهري:</p><p class='val-white'>{monthly:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>القسط الربع سنوي:</p><p class='val-white'>{quarterly:,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
         st.subheader("📊 حساب العمولة")
-        deal_val = st.number_input("قيمة الصفقة", value=5000000, step=100000)
-        comm_pct = st.number_input("نسبة عمولتك (%)", value=2.5, step=0.1)
-        tax_pct = st.checkbox("خصم ضريبة (14%)؟")
+        deal_val = st.number_input("قيمة الصفقة (التعاقد)", value=5000000, step=100000)
+        comm_pct = st.number_input("نسبة العمولة (%)", value=2.5, step=0.1)
         
         comm_val = deal_val * (comm_pct / 100)
-        if tax_pct: comm_val = comm_val / 1.14
-            
-        st.metric("صافي العمولة", f"{comm_val:,.0f}")
+        tax_val = comm_val * 0.14
+        net_comm = comm_val - tax_val
+        
+        st.markdown(f<p class='label-gold'>العمولة قبل الضريبة:</p><p class='val-white'>{comm_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>خصم ضريبة (14%):</p><p class='val-white'>{tax_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>صافي الربح:</p><p class='val-white'>{net_comm:,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
         st.markdown("<div class='detail-card'>", unsafe_allow_html=True)
-        st.subheader("📈 حساب العائد ROI")
-        buy_price = st.number_input("سعر الشراء", value=5000000)
-        rent_val = st.number_input("الإيجار الشهري المتوقع", value=40000)
-        annual_increase = st.slider("الزيادة السنوية للعقار (%)", 0, 30, 10)
+        st.subheader("📈 حساب الاستثمار (ROI)")
+        buy_p = st.number_input("سعر الشراء الحالي", value=5000000)
+        rent_p = st.number_input("الإيجار الشهري المتوقع", value=40000)
+        annual_inc = st.number_input("الزيادة السنوية للعقار (%)", value=15)
         
-        annual_rent = rent_val * 12
-        roi = (annual_rent / buy_price) * 100
-        st.metric("العائد الإيجاري السنوي", f"{roi:.2f} %")
-        st.metric("قيمة العقار بعد سنة", f"{buy_price*(1 + annual_increase/100):,.0f}")
+        annual_rent = rent_p * 12
+        roi_pct = (annual_rent / buy_p) * 100
+        future_val = buy_p * (1 + annual_inc/100)
+        
+        st.markdown(f"<p class='label-gold'>العائد الإيجاري السنوي:</p><p class='val-white'>{roi_pct:.2f} %</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>قيمة العقار بعد سنة:</p><p class='val-white'>{future_val:,.0f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>إجمالي الربح (إيجار + زيادة):</p><p class='val-white'>{(annual_rent + (future_val-buy_p)):,.0f}</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 elif menu == "المشاريع":
@@ -175,6 +173,6 @@ elif menu == "المطورين":
     render_grid(df_d, "dev")
 
 elif menu == "المساعد الذكي":
-    st.chat_input("اسألني عن أي حاجة في السوق...")
+    st.chat_input("اسألني عن أي حاجة...")
 
-if st.button("🚪 خروج"): logout()
+if st.button("🚪 تسجيل خروج"): logout()
