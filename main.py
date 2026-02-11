@@ -40,28 +40,19 @@ def login_user(user_input, pwd_input):
         return None
     except: return None
 
-def logout():
-    st.session_state.auth = False
-    st.query_params.clear()
-    st.rerun()
-
-# --- 5. دالة العرض المحدثة (حل مشكلة كروت التفاصيل) ---
+# --- 5. دالة العرض (الشبكة والتفاصيل) ---
 def render_grid(dataframe, prefix):
-    # استخدام مفتاح فريد للصفحات لكل قسم
     pg_key = f"pg_{prefix}"
     if pg_key not in st.session_state: st.session_state[pg_key] = 0
 
     if st.session_state.view == f"details_{prefix}":
-        # زر العودة بتنسيق واضح
         if st.button("⬅ عودة للقائمة الرئيسية", key=f"back_{prefix}", use_container_width=True): 
             st.session_state.view = "grid"; st.rerun()
         
-        # جلب البيانات المختارة
         try:
             item = dataframe.iloc[st.session_state.current_index]
             st.markdown(f"### 📄 تفاصيل: {item.iloc[0]}")
             
-            # توزيع التفاصيل في كروت منظمة (3 أعمدة)
             cols_count = 3
             st_cols = st.columns(cols_count)
             for i, col_name in enumerate(dataframe.columns):
@@ -72,12 +63,11 @@ def render_grid(dataframe, prefix):
                         <p class="val-white">{item[col_name]}</p>
                     </div>
                     """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error("عذراً، حدث خطأ في عرض البيانات.")
-            st.session_state.view = "grid"
+        except:
+            st.session_state.view = "grid"; st.rerun()
             
     else:
-        # --- شريط الفلاتر المطور ---
+        # --- الفلاتر ---
         st.markdown("<div style='background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; border:1px solid #333;'>", unsafe_allow_html=True)
         f1, f2, f3 = st.columns([2, 2, 3])
         
@@ -92,19 +82,18 @@ def render_grid(dataframe, prefix):
             else: price_range = None
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # منطق التصفية
+        # التصفية
         filt = dataframe.copy()
         if search: filt = filt[filt.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
         if sel_area != "الكل": filt = filt[filt['Location'].astype(str).str.contains(sel_area, case=False, na=False)]
         if price_range: filt = filt[(filt['Price'] >= price_range[0]) & (filt['Price'] <= price_range[1])]
 
-        # العرض والتقسيم
         start = st.session_state[pg_key] * ITEMS_PER_PAGE
         disp = filt.iloc[start : start + ITEMS_PER_PAGE]
         
         m_c, s_c = st.columns([0.78, 0.22])
         with m_c:
-            if filt.empty: st.info("لا توجد نتائج تطابق بحثك")
+            if filt.empty: st.info("لا توجد نتائج")
             grid = st.columns(2)
             for i, (idx, r) in enumerate(disp.iterrows()):
                 with grid[i%2]:
@@ -113,7 +102,7 @@ def render_grid(dataframe, prefix):
                     if st.button(card_content, key=f"card_{prefix}_{idx}", use_container_width=True):
                         st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
             
-            # أزرار التنقل
+            # التنقل
             st.write("")
             p1, px, p2 = st.columns([1, 1, 1])
             with p1: 
@@ -130,7 +119,7 @@ def render_grid(dataframe, prefix):
                 if st.button(f"📌 {str(s_row[0])[:18]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
                     st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"; st.rerun()
 
-# --- 6. التنسيق الجمالي (CSS) ---
+# --- 6. التنسيق (CSS) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
@@ -146,27 +135,15 @@ st.markdown(f"""
     .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
     .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 15px; }}
     .royal-header h1 {{ color: #f59e0b; font-size: 3rem; font-weight: 900; margin: 0; }}
-    
-    /* تنسيق كروت الشبكة */
-    div.stButton > button[key*="card_"] {{ 
-        background: white !important; color: black !important; 
-        border-right: 10px solid #f59e0b !important; border-radius: 15px !important;
-        text-align: right !important; min-height: 140px !important; font-weight: 900 !important; 
-    }}
-    
-    /* تنسيق كروت التفاصيل */
-    .detail-card {{ 
-        background: rgba(30, 30, 30, 0.9); padding: 20px; border-radius: 15px; 
-        border: 1px solid #444; border-top: 5px solid #f59e0b; margin-bottom: 15px;
-    }}
-    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 1rem; margin-bottom: 5px; }}
+    div.stButton > button[key*="card_"] {{ background: white !important; color: black !important; border-right: 10px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 140px !important; font-weight: 900 !important; }}
+    .detail-card {{ background: rgba(30, 30, 30, 0.9); padding: 20px; border-radius: 15px; border: 1px solid #444; border-top: 5px solid #f59e0b; margin-bottom: 15px; }}
+    .label-gold {{ color: #f59e0b; font-weight: 900; }}
     .val-white {{ color: white; font-size: 1.2rem; font-weight: bold; }}
-    
     .stTabs [aria-selected="true"] {{ background-color: #f59e0b !important; color: black !important; font-weight: 900 !important; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 7. بوابة تسجيل الدخول ---
+# --- 7. الدخول ---
 if not st.session_state.get('auth', False):
     st.markdown("<div class='auth-wrapper'><div class='oval-header'>MA3LOMATI PRO</div><div class='auth-card'>", unsafe_allow_html=True)
     u = st.text_input("User", placeholder="الأسم", key="log_u")
@@ -180,7 +157,7 @@ if not st.session_state.get('auth', False):
             if user:
                 st.session_state.auth, st.session_state.current_user = True, user
                 st.query_params["u_session"] = user; st.rerun()
-            else: st.error("خطأ في البيانات")
+            else: st.error("خطأ")
     st.markdown("</div></div>", unsafe_allow_html=True); st.stop()
 
 # --- 8. تحميل البيانات ---
@@ -203,14 +180,13 @@ def load_data():
 
 df_p, df_d, df_l = load_data()
 
-# --- 9. الواجهة الرئيسية ---
+# --- 9. المنيو الرئيسي ---
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
 
 menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000", "font-weight": "900"}})
 
-# إعادة تعيين الحالة عند تغيير المنيو
 if 'last_m' not in st.session_state or menu != st.session_state.last_m:
     st.session_state.view, st.session_state.last_m = "grid", menu
 
@@ -231,11 +207,11 @@ if menu == "أدوات الحساب":
         pct = st.number_input("النسبة %", value=2.5)
         st.markdown(f"<p class='label-gold'>العمولة:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
     with c3:
-        st.markdown("<div class='detail-card'><h3>📈 العائد ROI</h3>", unsafe_allow_html=True)
-        buy = st.number_input("سعر الشراء", value=5000000)
-        rent = st.number_input("الإيجار", value=40000)
+        st.markdown("<div class='detail-card'><h3>📈 ROI</h3>", unsafe_allow_html=True)
+        buy = st.number_input("شراء", value=5000000)
+        rent = st.number_input("إيجار", value=40000)
         roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
-        st.markdown(f"<p class='label-gold'>العائد السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العائد:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
 
 elif menu == "المشاريع":
     t1, t2 = st.tabs(["🏗️ جميع المشاريع", "🚀 اللونشات"])
@@ -248,6 +224,4 @@ elif menu == "المطورين":
 elif menu == "المساعد الذكي":
     st.info("نظام تحليل البيانات العقارية 2026")
 
-# زر الخروج في السايدبار
-if st.sidebar.button("🚪 خروج"): logout()
 st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
