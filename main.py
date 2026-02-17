@@ -10,15 +10,17 @@ st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sid
 # --- 2. إدارة حالة الجلسة (Session State) ---
 if 'auth' not in st.session_state:
     if "u_session" in st.query_params:
-        st.session_state.auth, st.session_state.current_user = True, st.query_params["u_session"]
-    else: st.session_state.auth = False
+        st.session_state.auth = True
+        st.session_state.current_user = st.query_params["u_session"]
+    else:
+        st.session_state.auth = False
 
 if 'view' not in st.session_state: st.session_state.view = "grid"
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
 if 'page_num' not in st.session_state: st.session_state.page_num = 0
-if 'search_query' not in st.session_state: st.session_state.search_query = "" # لتمرير البحث بين الأقسام
 
 # --- 3. الروابط والثوابت ---
+# ملاحظة: تأكد من أن روابط CSV صحيحة وتعمل
 URL_PROJECTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
 URL_DEVELOPERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
 URL_LAUNCHES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"
@@ -46,29 +48,32 @@ def login_user(user_input, pwd_input):
 @st.cache_data(ttl=60)
 def load_data():
     try:
-        p, d, l = pd.read_csv(URL_PROJECTS), pd.read_csv(URL_DEVELOPERS), pd.read_csv(URL_LAUNCHES)
+        p = pd.read_csv(URL_PROJECTS)
+        d = pd.read_csv(URL_DEVELOPERS)
+        l = pd.read_csv(URL_LAUNCHES)
         for df in [p, d, l]:
             df.columns = [c.strip() for c in df.columns]
+            # توحيد أسماء الأعمدة للتعامل معها برمجياً
             df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'السعر': 'Price', 'سعر': 'Price'}, inplace=True, errors="ignore")
+            
             if 'Price' in df.columns:
+                # تنظيف السعر: إزالة أي رموز غير رقمية وتحويله لـ float
                 df['Price'] = pd.to_numeric(df['Price'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
+                # المنطق الذكي: إذا كان الرقم أقل من 1000 (مثلاً 7.5)، يتم ضربه في مليون
                 df['Price'] = df['Price'].apply(lambda x: x * 1_000_000 if 0 < x < 1000 else x)
+        
         return p.fillna("---"), d.fillna("---"), l.fillna("---")
-    except: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-# دالة التنقل التفاعلي
-def navigate_to(menu_target, search_val):
-    st.session_state.last_m = menu_target
-    st.session_state.search_query = search_val
-    st.session_state.view = "grid"
-    st.rerun()
+    except:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
 # --- 5. دالة العرض الرئيسية (الشبكة والتفاصيل) ---
 def render_grid(dataframe, prefix):
+    # إدارة رقم الصفحة داخل القسم
     pg_key = f"pg_{prefix}"
     if pg_key not in st.session_state: st.session_state[pg_key] = 0
 
     if st.session_state.view == f"details_{prefix}":
+        # --- عرض التفاصيل ---
         if st.button("⬅ عودة للقائمة الرئيسية", key=f"back_{prefix}", use_container_width=True): 
             st.session_state.view = "grid"; st.rerun()
         
@@ -79,56 +84,51 @@ def render_grid(dataframe, prefix):
             cols = st.columns(3)
             for i, col_name in enumerate(dataframe.columns):
                 with cols[i % 3]:
-                    val = str(item[col_name])
-                    st.markdown(f'<div class="detail-card">', unsafe_allow_html=True)
-                    st.markdown(f'<p class="label-gold">{col_name}</p>', unsafe_allow_html=True)
-                    
-                    # --- تعديل الربط الذكي ---
-                    # إذا كنا في صفحة مشروع وضغطنا على اسم المطور
-                    if col_name in ['المطور', 'Developer', 'الشركة'] and val != "---":
-                        if st.button(f"🏢 ملف: {val}", key=f"link_to_dev_{i}"):
-                            navigate_to("المطورين", val)
-                    # إذا كنا في صفحة مطور وضغطنا على اسم الشركة لرؤية مشاريعها
-                    elif prefix == "d" and i == 0: # أول عمود في المطورين هو الاسم
-                         if st.button(f"🔍 مشاريع {val}", key=f"link_to_proj_{i}"):
-                            navigate_to("المشاريع", val)
-                    else:
-                        if col_name == 'Price': val = f"{int(float(val)):,}" if float(val) > 0 else "اتصل للسعر"
-                        st.markdown(f'<p class="val-white">{val}</p>', unsafe_allow_html=True)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-        except: st.session_state.view = "grid"; st.rerun()
+                    val = item[col_name]
+                    # تنسيق السعر في صفحة التفاصيل
+                    if col_name == 'Price': val = f"{int(val):,}" if float(val) > 0 else "اتصل للسعر"
+                    st.markdown(f"""
+                    <div class="detail-card">
+                        <p class="label-gold">{col_name}</p>
+                        <p class="val-white">{val}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+        except:
+            st.session_state.view = "grid"; st.rerun()
             
     else:
+        # --- عرض الشبكة (Grid) مع الفلاتر ---
         st.markdown("<div style='background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; border:1px solid #333;'>", unsafe_allow_html=True)
         f1, f2 = st.columns([2, 1])
-        with f1: 
-            # قراءة البحث الممرر إن وجد
-            search = st.text_input("🔍 ابحث عن أي شيء...", value=st.session_state.search_query, key=f"s_{prefix}")
-            st.session_state.search_query = "" # تفريغه بعد الاستخدام
+        with f1: search = st.text_input("🔍 ابحث عن أي شيء...", key=f"s_{prefix}")
         with f2:
             loc_list = ["الكل"] + sorted([str(x).strip() for x in dataframe['Location'].unique() if str(x).strip() not in ["---", "nan", ""]]) if 'Location' in dataframe.columns else ["الكل"]
             sel_area = st.selectbox("📍 تصفية حسب الموقع", loc_list, key=f"l_{prefix}")
         st.markdown("</div>", unsafe_allow_html=True)
 
+        # منطق الفلترة
         filt = dataframe.copy()
         if search: filt = filt[filt.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
         if sel_area != "الكل": filt = filt[filt['Location'].astype(str).str.contains(sel_area, case=False, na=False)]
 
+        # تقسيم الصفحات
         start = st.session_state[pg_key] * ITEMS_PER_PAGE
         disp = filt.iloc[start : start + ITEMS_PER_PAGE]
         
+        # العرض في كروت
         m_c, s_c = st.columns([0.8, 0.2])
         with m_c:
             if filt.empty: st.warning("لا توجد نتائج تطابق بحثك.")
             grid = st.columns(2)
             for i, (idx, r) in enumerate(disp.iterrows()):
                 with grid[i%2]:
+                    # تنسيق السعر للكارت
                     price_val = f"{int(r['Price']):,}" if ('Price' in r and r['Price'] > 0) else "اتصل للسعر"
                     card_content = f"🏢 {r[0]}\n\n📍 {r.get('Location','---')}\n💰 {price_val} ج.م"
                     if st.button(card_content, key=f"card_{prefix}_{idx}", use_container_width=True):
                         st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
             
+            # أزرار التنقل
             st.write("")
             p1, px, p2 = st.columns([1, 1, 1])
             with p1: 
@@ -191,13 +191,8 @@ df_p, df_d, df_l = load_data()
 
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
 
-# تحديد الـ Index للمنيو برمجياً بناءً على التنقل
-menu_options = ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"]
-current_menu = st.session_state.get('last_m', "المشاريع")
-default_idx = menu_options.index(current_menu)
-
-menu = option_menu(None, menu_options, 
-    icons=["calculator", "building", "search", "robot"], default_index=default_idx, orientation="horizontal",
+menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
+    icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000", "font-weight": "900"}})
 
 # إعادة تعيين العرض عند تغيير القسم
@@ -238,4 +233,3 @@ elif menu == "المساعد الذكي":
     st.info("نظام تحليل البيانات العقارية AI 2026 قيد التطوير.")
 
 st.markdown("<p style='text-align:center; color:#555; margin-top:50px; font-weight:bold;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
-
