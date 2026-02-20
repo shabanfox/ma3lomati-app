@@ -38,6 +38,7 @@ streamlit
 pandas
 feedparser
 streamlit-option-menu
+pip install streamlit pandas requests streamlit-option_menu
 
 
 
