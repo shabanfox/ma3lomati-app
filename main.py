@@ -50,7 +50,7 @@ def logout():
     st.session_state.current_user = None
     st.rerun()
 
-# --- 4. التصميم الجمالي CSS (نسخة الكروت المطورة) ---
+# --- 4. التصميم الجمالي CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -61,7 +61,6 @@ st.markdown(f"""
         background-size: cover; background-attachment: fixed;
         direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }}
-    /* صفحة الدخول */
     .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; padding-top: 50px; }}
     .oval-header {{
         background-color: #000; border: 3px solid #f59e0b; border-radius: 60px;
@@ -69,56 +68,32 @@ st.markdown(f"""
         text-align: center; z-index: 10; margin-bottom: -30px; min-width: 360px;
     }}
     .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    
-    /* الهيدر */
     .royal-header {{
         background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}');
         background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b;
         padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 10px;
     }}
-
-    /* الكروت المطورة */
     div.stButton > button[key*="card_"] {{
         background: linear-gradient(145deg, #ffffff, #f9f9f9) !important;
-        color: #1a1a1a !important;
-        border-right: 6px solid #f59e0b !important;
-        border-radius: 15px !important;
-        padding: 20px !important;
-        text-align: right !important;
-        line-height: 1.7 !important;
-        min-height: 180px !important;
-        width: 100% !important;
+        color: #1a1a1a !important; border-right: 6px solid #f59e0b !important;
+        border-radius: 15px !important; padding: 20px !important;
+        text-align: right !important; line-height: 1.7 !important;
+        min-height: 180px !important; width: 100% !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        transition: all 0.3s ease !important;
-        white-space: pre-line !important;
-        margin-bottom: 10px !important;
-        font-family: 'Cairo', sans-serif !important;
+        transition: all 0.3s ease !important; white-space: pre-line !important;
+        margin-bottom: 10px !important; font-family: 'Cairo', sans-serif !important;
     }}
-    div.stButton > button[key*="card_"]:hover {{
-        transform: translateY(-5px) !important;
-        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4) !important;
-        background: #fff !important;
-    }}
-
-    /* أزرار التنقل */
-    div.stButton > button[key*="nav_"] {{
-        background-color: #f59e0b !important; color: #000 !important;
-        font-weight: 900 !important; border-radius: 12px !important;
-        border: none !important; margin-top: 5px !important;
-    }}
-
-    /* التفاصيل والمقترحات */
+    div.stButton > button[key*="card_"]:hover {{ transform: translateY(-5px) !important; box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4) !important; background: #fff !important; }}
+    div.stButton > button[key*="nav_"] {{ background-color: #f59e0b !important; color: #000 !important; font-weight: 900 !important; border-radius: 12px !important; border: none !important; margin-top: 5px !important; }}
     .detail-card {{ background: rgba(20, 20, 20, 0.9); padding: 25px; border-radius: 20px; border-top: 5px solid #f59e0b; color: white; border: 1px solid #333; margin-bottom:20px; }}
     .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 14px; margin-top: 5px; }}
     .val-white {{ color: white; font-size: 16px; border-bottom: 1px solid #333; padding-bottom:5px; margin-bottom: 8px; }}
+    div.stButton > button[key*="side_"] {{ background-color: rgba(255, 255, 255, 0.05) !important; color: #eee !important; border: none !important; border-right: 3px solid #f59e0b !important; text-align: right !important; font-size: 13px !important; margin-bottom: 5px !important; border-radius: 8px !important; }}
     
-    div.stButton > button[key*="side_"] {{
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: #eee !important; border: none !important;
-        border-right: 3px solid #f59e0b !important;
-        text-align: right !important; font-size: 13px !important;
-        margin-bottom: 5px !important; border-radius: 8px !important;
-    }}
+    /* تحسين شكل التابس الداخلية */
+    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
+    .stTabs [data-baseweb="tab"] {{ background-color: rgba(255,255,255,0.05); border-radius: 10px 10px 0 0; padding: 10px 20px; color: white; }}
+    .stTabs [aria-selected="true"] {{ background-color: #f59e0b !important; color: black !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -173,8 +148,9 @@ _, c_ex = st.columns([0.88, 0.12])
 with c_ex:
     if st.button("🚪 خروج", key="ex", use_container_width=True): logout()
 
-menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "Launches"], 
-    icons=["briefcase", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
+# تم حذف Launches من القائمة الرئيسية
+menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي"], 
+    icons=["briefcase", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000"}})
 
 if 'last_m' not in st.session_state or menu != st.session_state.last_m:
@@ -212,60 +188,86 @@ elif menu == "المساعد الذكي":
         st.session_state.messages.append({"role": "assistant", "content": "بناءً على بيانات 2026، هذا الخيار يعتبر الأفضل للاستثمار..."})
         st.rerun()
 
-else:
-    active_df = df_p if menu=="المشاريع" else (df_l if menu=="Launches" else df_d)
-    col_main = active_df.columns[0]
+elif menu == "المشاريع":
+    # إضافة التابس الداخلية (جميع المشاريع / المشاريع الجديدة)
+    tab_all, tab_new = st.tabs(["🏗️ جميع المشاريع", "🚀 المشاريع الجديدة"])
     
-    if st.session_state.view == "details":
-        if st.button("⬅ عودة", use_container_width=True): st.session_state.view = "grid"; st.rerun()
-        item = active_df.iloc[st.session_state.current_index]
-        c1, c2, c3 = st.columns(3)
-        cols = active_df.columns
-        for i, cs in enumerate([cols[:len(cols)//3+1], cols[len(cols)//3+1:2*len(cols)//3+1], cols[2*len(cols)//3+1:]]):
-            with [c1, c2, c3][i]:
-                h = '<div class="detail-card">'
-                for k in cs: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
-                st.markdown(h+'</div>', unsafe_allow_html=True)
-    else:
-        search = st.text_input("🔍 بحث ذكي في المشاريع والمطورين...")
-        filt = active_df[active_df.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else active_df
-        start = st.session_state.page_num * ITEMS_PER_PAGE
-        disp = filt.iloc[start : start + ITEMS_PER_PAGE]
-        
-        main_c, side_c = st.columns([0.76, 0.24])
-        with main_c:
-            grid = st.columns(2)
-            for i, (idx, r) in enumerate(disp.iterrows()):
-                with grid[i%2]:
-                    # عرض تفاصيل غنية داخل الكارت
-                    name = r[col_main]
-                    loc = r.get('Location', '---')
-                    dev = r.get('Developer', '---')
-                    price = r.get('Starting Price', r.get('Price', 'تواصل للتفاصيل'))
-                    
-                    card_text = f"🏠 {name}\n🏗️ المطور: {dev}\n📍 الموقع: {loc}\n💰 السعر: {price}"
-                    
-                    if st.button(card_text, key=f"card_{idx}"):
-                        st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
-            
-            # أزرار التنقل ملتصقة بالكروت
-            st.markdown("<div style='margin-top:5px;'></div>", unsafe_allow_html=True)
-            p1, p_info, p2 = st.columns([1, 2, 1])
-            with p1:
+    with tab_all:
+        active_df = df_p
+        col_main = active_df.columns[0]
+        if st.session_state.view == "details":
+            if st.button("⬅ عودة", use_container_width=True, key="back_all"): st.session_state.view = "grid"; st.rerun()
+            item = active_df.iloc[st.session_state.current_index]
+            c1, c2, c3 = st.columns(3)
+            cols = active_df.columns
+            for i, cs in enumerate([cols[:len(cols)//3+1], cols[len(cols)//3+1:2*len(cols)//3+1], cols[2*len(cols)//3+1:]]):
+                with [c1, c2, c3][i]:
+                    h = '<div class="detail-card">'
+                    for k in cs: h += f'<p class="label-gold">{k}</p><p class="val-white">{item[k]}</p>'
+                    st.markdown(h+'</div>', unsafe_allow_html=True)
+        else:
+            search = st.text_input("🔍 بحث في جميع المشاريع...", key="search_all")
+            filt = active_df[active_df.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else active_df
+            start = st.session_state.page_num * ITEMS_PER_PAGE
+            disp = filt.iloc[start : start + ITEMS_PER_PAGE]
+            main_c, side_c = st.columns([0.76, 0.24])
+            with main_c:
+                grid = st.columns(2)
+                for i, (idx, r) in enumerate(disp.iterrows()):
+                    with grid[i%2]:
+                        name, loc, dev = r[col_main], r.get('Location', '---'), r.get('Developer', '---')
+                        price = r.get('Starting Price', r.get('Price', 'تواصل للمزيد'))
+                        card_text = f"🏠 {name}\n🏗️ {dev}\n📍 {loc}\n💰 {price}"
+                        if st.button(card_text, key=f"card_all_{idx}"):
+                            st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
+                st.markdown("<div style='margin-top:5px;'></div>", unsafe_allow_html=True)
+                p1, p_info, p2 = st.columns([1, 2, 1])
                 if st.session_state.page_num > 0:
-                    if st.button("⬅ السابق", key="nav_p", use_container_width=True):
-                        st.session_state.page_num -= 1; st.rerun()
-            with p_info:
-                st.markdown(f"<p style='text-align:center; color:#f59e0b; font-weight:bold; margin-top:10px;'>صفحة {st.session_state.page_num + 1}</p>", unsafe_allow_html=True)
-            with p2:
+                    with p1: 
+                        if st.button("⬅ السابق", key="nav_p_all", use_container_width=True): st.session_state.page_num -= 1; st.rerun()
+                with p_info: st.markdown(f"<p style='text-align:center; color:#f59e0b; font-weight:bold; margin-top:10px;'>صفحة {st.session_state.page_num + 1}</p>", unsafe_allow_html=True)
                 if (start + ITEMS_PER_PAGE) < len(filt):
-                    if st.button("التالي ➡", key="nav_n", use_container_width=True):
-                        st.session_state.page_num += 1; st.rerun()
-        
-        with side_c:
-            st.markdown("<p style='color:#f59e0b; font-weight:bold; border-bottom:1px solid #333;'>🏆 مقترحات سريعة</p>", unsafe_allow_html=True)
-            for s_idx, s_row in active_df.head(10).iterrows():
-                if st.button(f"📌 {str(s_row[col_main])[:28]}", key=f"side_{s_idx}", use_container_width=True):
-                    st.session_state.current_index, st.session_state.view = s_idx, "details"; st.rerun()
+                    with p2:
+                        if st.button("التالي ➡", key="nav_n_all", use_container_width=True): st.session_state.page_num += 1; st.rerun()
+            with side_c:
+                st.markdown("<p style='color:#f59e0b; font-weight:bold; border-bottom:1px solid #333;'>🏆 مقترحات</p>", unsafe_allow_html=True)
+                for s_idx, s_row in active_df.head(10).iterrows():
+                    if st.button(f"📌 {str(s_row[col_main])[:28]}", key=f"side_all_{s_idx}", use_container_width=True):
+                        st.session_state.current_index, st.session_state.view = s_idx, "details"; st.rerun()
+
+    with tab_new:
+        active_df_new = df_l
+        col_main_new = active_df_new.columns[0]
+        if st.session_state.view == "details_new":
+            if st.button("⬅ عودة", use_container_width=True, key="back_new"): st.session_state.view = "grid"; st.rerun()
+            item_new = active_df_new.iloc[st.session_state.current_index]
+            c1, c2, c3 = st.columns(3)
+            cols = active_df_new.columns
+            for i, cs in enumerate([cols[:len(cols)//3+1], cols[len(cols)//3+1:2*len(cols)//3+1], cols[2*len(cols)//3+1:]]):
+                with [c1, c2, c3][i]:
+                    h = '<div class="detail-card">'
+                    for k in cs: h += f'<p class="label-gold">{k}</p><p class="val-white">{item_new[k]}</p>'
+                    st.markdown(h+'</div>', unsafe_allow_html=True)
+        else:
+            search_new = st.text_input("🔍 بحث في المشاريع الجديدة...", key="search_new")
+            filt_new = active_df_new[active_df_new.apply(lambda r: r.astype(str).str.contains(search_new, case=False).any(), axis=1)] if search_new else active_df_new
+            grid_new = st.columns(2)
+            for i, (idx, r) in enumerate(filt_new.iterrows()):
+                with grid_new[i%2]:
+                    name, loc, dev = r[col_main_new], r.get('Location', '---'), r.get('Developer', '---')
+                    card_text = f"🚀 {name}\n🏗️ {dev}\n📍 {loc}\n✨ مشروع جديد"
+                    if st.button(card_text, key=f"card_new_{idx}"):
+                        st.session_state.current_index, st.session_state.view = idx, "details_new"; st.rerun()
+
+elif menu == "المطورين":
+    active_df = df_d
+    col_main = active_df.columns[0]
+    search = st.text_input("🔍 بحث في المطورين...")
+    filt = active_df[active_df.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else active_df
+    grid = st.columns(2)
+    for i, (idx, r) in enumerate(filt.iterrows()):
+        with grid[i%2]:
+            if st.button(f"🏢 {r[col_main]}", key=f"card_dev_{idx}"):
+                st.info(f"عرض تفاصيل: {r[col_main]}")
 
 st.markdown("<p style='text-align:center; color:#444; margin-top:50px; font-size:12px;'>MA3LOMATI PRO © 2026 | Powered by AI</p>", unsafe_allow_html=True)
