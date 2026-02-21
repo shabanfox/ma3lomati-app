@@ -192,7 +192,6 @@ if not st.session_state.get('auth', False):
     st.markdown("</div></div>", unsafe_allow_html=True); st.stop()
 
 # --- 9. الهيدر وزر تسجيل الخروج ---
-# إضافة زر الخروج في الركن العلوي
 with st.container():
     c_out1, c_out2 = st.columns([0.1, 0.9])
     with c_out1:
@@ -234,7 +233,8 @@ if menu == "أدوات الحساب":
         st.markdown(f"<p class='label-gold'>السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
 
 elif menu == "المشاريع":
-    t1, t2 = st.tabs(["🏗️ المشاريع", "🚀 اللونشات"])
+    # تم تعديل المسميات هنا بناءً على طلبك
+    t1, t2 = st.tabs(["🏗️ جميع المشاريع", "🚀 المشاريع الجديدة"])
     with t1: render_grid(df_p, "p")
     with t2: render_grid(df_l, "l")
 
