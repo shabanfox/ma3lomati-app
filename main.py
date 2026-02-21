@@ -26,21 +26,33 @@ st.markdown("""
         background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'); 
         background-size: cover; background-position: center; 
         border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; 
-        border-radius: 0 0 40px 40px; margin-bottom: 15px; position: relative; 
+        border-radius: 0 0 40px 40px; margin-bottom: 0px; position: relative; 
     }
     .royal-header h1 { color: #f59e0b; font-size: 3rem; font-weight: 900; margin: 0; }
 
+    /* شريط الأخبار المتحرك */
+    .ticker-wrap {
+        width: 100%; background: rgba(245, 158, 11, 0.15); border-bottom: 1px solid #f59e0b;
+        overflow: hidden; white-space: nowrap; padding: 12px 0; margin-bottom: 20px;
+    }
+    .ticker {
+        display: inline-block; animation: ticker 50s linear infinite;
+        color: #f59e0b; font-weight: bold; font-size: 1.1rem;
+    }
+    .ticker:hover { animation-play-state: paused; }
+    .news-msg { margin: 0 60px; }
+    @keyframes ticker {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-150%); }
+    }
+
     /* ستايل الكروت والفلاتر */
     div.stButton > button[key*="card_"] { background: white !important; color: black !important; border-right: 12px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 150px !important; font-weight: 900 !important; font-size: 1.1rem !important; }
+    div.stButton > button[key*="linked_"] { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; border: 1px solid #f59e0b !important; font-weight: bold !important; border-radius: 10px !important; }
     .detail-card { background: rgba(30, 30, 30, 0.95); padding: 20px; border-radius: 15px; border: 1px solid #444; border-top: 6px solid #f59e0b; margin-bottom: 15px; }
     .label-gold { color: #f59e0b; font-weight: 900; font-size: 1rem; }
     .val-white { color: white; font-size: 1.25rem; font-weight: 700; }
-    
     .filter-box { background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; }
-    
-    /* الأنيميشن */
-    .stApp { animation: fadeIn 0.5s; }
-    @keyframes fadeIn { 0% {opacity: 0;} 100% {opacity: 1;} }
     </style>
 """, unsafe_allow_html=True)
 
@@ -64,7 +76,15 @@ URL_LAUNCHES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
 ITEMS_PER_PAGE = 6
 
-# --- 5. الوظائف التقنية ---
+# --- 5. الوظائف التقنية وتنسيق الأسعار ---
+def format_price_millions(val):
+    try:
+        v = float(val)
+        if v >= 1_000_000:
+            return f"{v/1_000_000:,.2f} مليون ج.م"
+        return f"{v:,.0f} ج.م"
+    except: return "اتصل للسعر"
+
 @st.cache_data(ttl=300, show_spinner=False)
 def load_data():
     try:
@@ -73,7 +93,7 @@ def load_data():
         l = pd.read_csv(URL_LAUNCHES)
         for df in [p, d, l]:
             df.columns = [c.strip() for c in df.columns]
-            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'السعر': 'Price', 'سعر': 'Price'}, inplace=True, errors="ignore")
+            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'السعر': 'Price', 'سعر': 'Price', 'المطور': 'Developer'}, inplace=True, errors="ignore")
             if 'Price' in df.columns:
                 df['Price'] = pd.to_numeric(df['Price'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
                 df['Price'] = df['Price'].apply(lambda x: x * 1_000_000 if 0 < x < 1000 else x)
@@ -90,7 +110,7 @@ def login_user(u, p):
     except: pass
     return None
 
-# --- 6. دالة العرض الرئيسية مع الفلاتر ---
+# --- 6. دالة العرض الرئيسية مع الفلاتر والربط ---
 def render_grid(dataframe, prefix):
     pg_key = f"pg_{prefix}"
     if pg_key not in st.session_state: st.session_state[pg_key] = 0
@@ -98,14 +118,30 @@ def render_grid(dataframe, prefix):
     if st.session_state.view == f"details_{prefix}":
         if st.button("⬅ عودة للقائمة", key=f"back_{prefix}", use_container_width=True): 
             st.session_state.view = "grid"; st.rerun()
+        
         item = dataframe.iloc[st.session_state.current_index]
-        st.markdown(f"<h2 style='color:#f59e0b; text-align:right;'>🏠 {item.iloc[0]}</h2>", unsafe_allow_html=True)
+        main_name = str(item.iloc[0])
+        st.markdown(f"<h2 style='color:#f59e0b; text-align:right;'>🏠 {main_name}</h2>", unsafe_allow_html=True)
+        
         cols = st.columns(3)
         for i, col_name in enumerate(dataframe.columns):
             with cols[i % 3]:
                 val = item[col_name]
-                if col_name == 'Price': val = f"{int(val):,}" if float(val) > 0 else "اتصل للسعر"
+                if col_name == 'Price': val = format_price_millions(val)
                 st.markdown(f'<div class="detail-card"><p class="label-gold">{col_name}</p><p class="val-white">{val}</p></div>', unsafe_allow_html=True)
+        
+        # الربط التلقائي للمطورين بمشاريعهم
+        if prefix == "d":
+            st.markdown("<h3 style='color:#f59e0b; border-right:5px solid #f59e0b; padding-right:10px; margin-top:30px;'>🏗️ مشاريع المطور</h3>", unsafe_allow_html=True)
+            df_p, _, df_l = load_data()
+            all_p = pd.concat([df_p, df_l]).drop_duplicates().reset_index(drop=True)
+            related = all_p[all_p.apply(lambda row: row.astype(str).str.contains(main_name, case=False).any(), axis=1)]
+            if not related.empty:
+                r_grid = st.columns(2)
+                for r_idx, (idx, r_row) in enumerate(related.iterrows()):
+                    with r_grid[r_idx % 2]:
+                        st.button(f"🏢 {r_row.iloc[0]} | 📍 {r_row.get('Location','---')}", key=f"linked_{idx}", use_container_width=True)
+            else: st.info("لا توجد مشاريع مسجلة حالياً.")
     else:
         # الفلاتر
         st.markdown('<div class="filter-box">', unsafe_allow_html=True)
@@ -129,8 +165,8 @@ def render_grid(dataframe, prefix):
             grid = st.columns(2)
             for i, (idx, r) in enumerate(disp.iterrows()):
                 with grid[i%2]:
-                    p_v = f"{int(r['Price']):,}" if ('Price' in r and r['Price'] > 0) else "اتصل للسعر"
-                    if st.button(f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {p_v} ج.م", key=f"card_{prefix}_{idx}", use_container_width=True):
+                    p_v = format_price_millions(r['Price']) if 'Price' in r else ""
+                    if st.button(f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {p_v}", key=f"card_{prefix}_{idx}", use_container_width=True):
                         st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
             
             # أزرار التنقل
@@ -170,7 +206,21 @@ c_out1, c_out2 = st.columns([0.1, 0.9])
 with c_out1: 
     if st.button("🚪 خروج", key="logout"): logout()
 
+# الهيدر الملكي
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+
+# شريط الأخبار المتحرك (تحت الهيدر مباشرة)
+st.markdown("""
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="news-msg">🏗️ عقارات: أسعار المشاريع الجديدة تبدأ من 4.5 مليون ج.م في العاصمة الإدارية</span>
+            <span class="news-msg">🟡 الذهب: عيار 21 يسجل استقراراً عند 3,640 ج.م اليوم</span>
+            <span class="news-msg">🏢 تطوير: إطلاق المرحلة الجديدة من كمبوند "تاج سيتي" بمقدم 5%</span>
+            <span class="news-msg">💵 العملات: استقرار سعر صرف الدولار مقابل الجنيه في البنك المركزي</span>
+            <span class="news-msg">🔥 عاجل: ارتفاع معدلات الإقبال على وحدات الساحل الشمالي لصيف 2026</span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
@@ -188,12 +238,12 @@ if menu == "أدوات الحساب":
         dp = st.number_input("المقدم %", value=10)
         yr = st.number_input("السنين", value=8)
         res = (pr - (pr * dp/100)) / (yr * 12) if yr > 0 else 0
-        st.markdown(f"<p class='label-gold'>الشهري:</p><p class='val-white'>{res:,.0f}</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>الشهري:</p><p class='val-white'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
     with c2:
         st.markdown("<div class='detail-card'><h3>📊 العمولة</h3>", unsafe_allow_html=True)
         deal = st.number_input("الصفقة", value=5000000)
         pct = st.number_input("النسبة %", value=2.5)
-        st.markdown(f"<p class='label-gold'>العمولة:</p><p class='val-white'>{deal*(pct/100):,.0f}</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العمولة:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
     with c3:
         st.markdown("<div class='detail-card'><h3>📈 ROI</h3>", unsafe_allow_html=True)
         buy = st.number_input("الشراء", value=5000000)
@@ -205,10 +255,8 @@ elif menu == "المشاريع":
     t1, t2 = st.tabs(["🏗️ جميع المشاريع", "🚀 المشاريع الجديدة"])
     with t1: render_grid(df_p, "p")
     with t2: render_grid(df_l, "l")
-
 elif menu == "المطورين":
     render_grid(df_d, "d")
-
 elif menu == "المساعد الذكي":
     st.info("نظام تحليل البيانات العقارية AI 2026 قيد التطوير.")
 
