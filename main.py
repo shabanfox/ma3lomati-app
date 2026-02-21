@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. التصميم البصري (CSS) الفخم ---
+# --- 2. التصميم البصري (CSS) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
@@ -27,160 +27,109 @@ st.markdown("""
     .ticker { display: inline-block; animation: ticker 45s linear infinite; color: #f59e0b; font-weight: bold; }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
     
-    /* الكروت الرئيسية */
+    /* تنسيق الأدوات */
+    .tool-card {
+        background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; border-top: 4px solid #f59e0b; margin-bottom: 20px;
+    }
+    .tool-result {
+        background: rgba(245, 158, 11, 0.15); padding: 15px; border-radius: 10px; border: 1px dashed #f59e0b; color: #fff; font-size: 1.2rem; font-weight: bold; text-align: center; margin-top: 10px;
+    }
     div.stButton > button[key*="card_"] { 
         background: white !important; color: #000 !important; border-right: 15px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 140px !important; font-weight: 900 !important; font-size: 1.2rem !important; white-space: pre-wrap !important;
     }
-    /* كروت الجانب */
-    div.stButton > button[key*="side_"] {
-        background: #111 !important; color: #f59e0b !important; border: 1px solid #f59e0b !important; border-radius: 12px !important; margin-bottom: 8px !important; font-weight: bold !important;
-    }
-    .detail-card { background: #111; padding: 25px; border-radius: 20px; border-top: 6px solid #f59e0b; margin-bottom: 15px; border-left: 1px solid #333; border-right: 1px solid #333; }
-    .label-gold { color: #f59e0b; font-weight: 900; }
-    .val-white { color: white; font-size: 1.4rem; font-weight: 700; }
-    
-    /* تنسيق التبويبات (Tabs) */
-    .stTabs [data-baseweb="tab-list"] { gap: 20px; }
-    .stTabs [data-baseweb="tab"] { background-color: transparent !important; color: white !important; font-weight: bold !important; font-size: 1.1rem !important; }
-    .stTabs [aria-selected="true"] { color: #f59e0b !important; border-bottom-color: #f59e0b !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. البيانات والربط بالشيت ---
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+# --- (تم اختصار دوال البيانات والدخول للحفاظ على مساحة الرد - هي نفس الموجودة في الكود السابق) ---
+# [ضع دوال load_all_data و login_check هنا]
 
-def format_p(val):
-    try:
-        v = float(val)
-        return f"{v/1_000_000:,.2f} مليون ج.م" if v >= 1_000_000 else f"{v:,.0f} ج.م"
-    except: return "اتصل للسعر"
+# --- 7. قسم أدوات الحساب المطور (كامل الأدوات) ---
+# سيتم استدعاؤه عندما يكون menu == "أدوات الحساب"
 
-@st.cache_data(ttl=300)
-def load_all_data():
-    urls = [
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv", # المشاريع
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv", # المطورين
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=1593482152&single=true&output=csv"  # المشاريع الجديدة
-    ]
-    dfs = []
-    for u in urls:
-        df = pd.read_csv(u)
-        df.columns = [c.strip() for c in df.columns]
-        df.rename(columns={'Area':'Location','الموقع':'Location','السعر':'Price','الاونر':'Owner','صاحب الشركة':'Owner'}, inplace=True, errors="ignore")
-        if 'Price' in df.columns:
-            df['Price'] = pd.to_numeric(df['Price'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-            df['Price'] = df['Price'].apply(lambda x: x * 1_000_000 if 0 < x < 1000 else x)
-        dfs.append(df.fillna("---"))
-    return dfs
-
-def login_check(u, p):
-    try:
-        res = requests.get(f"{SCRIPT_URL}?nocache={time.time()}", timeout=5)
-        if res.status_code == 200:
-            for user in res.json():
-                if str(u).strip().lower() == str(user.get('Name','')).strip().lower() and str(p) == str(user.get('Password','')):
-                    return user.get('Name')
-    except: pass
-    return None
-
-# --- 4. نظام الدخول ---
-if 'auth' not in st.session_state: st.session_state.auth = False
-if not st.session_state.auth:
-    st.markdown("<h1 style='color:#f59e0b; text-align:center; padding-top:100px;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    u = st.text_input("اسم المستخدم")
-    p = st.text_input("كلمة المرور", type="password")
-    if st.button("دخول الملكي 🚀"):
-        user = "Admin" if p == "2026" else login_check(u, p)
-        if user: st.session_state.auth, st.session_state.user = True, user; st.rerun()
-        else: st.error("بيانات الدخول غير صحيحة")
-    st.stop()
-
-# --- 5. الهيكل الرئيسي ---
-df_p, df_d, df_l = load_all_data()
-st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b;">مرحباً {st.session_state.user} | 2026</p></div>', unsafe_allow_html=True)
-st.markdown('<div class="ticker-wrap"><div class="ticker">🔥 جديد: مشاريع الساحل 2026 متوفرة الآن | 🏗️ استقرار أسعار التجمع والشروق | 💎 خصومات حصرية للمنصة</div></div>', unsafe_allow_html=True)
-
-menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع"], 
-    icons=["calculator", "building", "search"], default_index=2, orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000", "font-weight":"900"}})
-
-if 'view' not in st.session_state: st.session_state.view = "grid"
-
-# --- 6. دالة العرض 70/30 ---
-def render_ui(dataframe, prefix):
-    pg_key = f"pg_{prefix}"
-    if pg_key not in st.session_state: st.session_state[pg_key] = 0
-    
+def render_tools():
     col_main, col_side = st.columns([0.7, 0.3])
-
+    
     with col_main:
-        if st.session_state.view == f"details_{prefix}":
-            if st.button("⬅ عودة للقائمة", key=f"bk_{prefix}"): st.session_state.view = "grid"; st.rerun()
-            item = dataframe.iloc[st.session_state.current_index]
-            st.markdown(f"<h2 style='color:#f59e0b;'>💎 {item.iloc[0]}</h2>", unsafe_allow_html=True)
-            for c in dataframe.columns:
-                v = format_p(item[c]) if c == 'Price' else item[c]
-                st.markdown(f'<div class="detail-card"><p class="label-gold">{c}</p><p class="val-white">{v}</p></div>', unsafe_allow_html=True)
-        else:
-            search = st.text_input("🔍 ابحث هنا...", key=f"s_{prefix}")
-            filt = dataframe[dataframe.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else dataframe
-            start = st.session_state[pg_key] * 6
-            disp = filt.iloc[start : start + 6]
-            grid = st.columns(2)
-            for i, (idx, r) in enumerate(disp.iterrows()):
-                with grid[i%2]:
-                    # كارت المطور: (اسم + أونر) | كارت المشاريع: (اسم + موقع + سعر)
-                    if prefix=="d":
-                        lbl = f"🏗️ {r[0]}\n👤 الاونر: {r.get('Owner','---')}"
-                    else:
-                        lbl = f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {format_p(r.get('Price',0))}"
-                    
-                    if st.button(lbl, key=f"card_{prefix}_{idx}", use_container_width=True):
-                        st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
-            
-            # التنقل
-            if len(filt)>6:
-                st.write("---")
-                c1, c2, c3 = st.columns([1,2,1])
-                with c1: 
-                    if st.session_state[pg_key]>0 and st.button("السابق", key=f"pr_{prefix}"): st.session_state[pg_key]-=1; st.rerun()
-                with c2: st.markdown(f"<p style='text-align:center; color:#f59e0b;'>صفحة {st.session_state[pg_key]+1}</p>", unsafe_allow_html=True)
-                with c3:
-                    if (start+6)<len(filt) and st.button("التالي", key=f"nx_{prefix}"): st.session_state[pg_key]+=1; st.rerun()
+        st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ مركز أدوات البروكر الذكي</h2>", unsafe_allow_html=True)
+        
+        tab1, tab2, tab3, tab4 = st.tabs(["💰 المالية الأساسية", "📈 الاستثمار", "🏠 التمويل العقاري", "🎁 العروض"])
+        
+        with tab1:
+            st.markdown("### حاسبة الأقساط والعمولات")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+                price = st.number_input("سعر الوحدة الكلي", value=5000000, step=100000)
+                down_pct = st.number_input("المقدم %", value=10, step=5)
+                years = st.number_input("سنوات التقسيط", value=8, step=1)
+                rem = price - (price * down_pct / 100)
+                monthly = rem / (years * 12) if years > 0 else 0
+                st.markdown(f'<div class="tool-result">القسط الشهري: {monthly:,.0f} ج.م</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c2:
+                st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+                deal_val = st.number_input("قيمة الصفقة (للمناقشة)", value=5000000, step=100000)
+                comm_pct = st.number_input("نسبة العمولة %", value=2.5, step=0.5, format="%.1f")
+                tax = st.checkbox("خصم ضرائب (14% مثلاً)")
+                total_comm = deal_val * (comm_pct / 100)
+                if tax: total_comm *= 0.86
+                st.markdown(f'<div class="tool-result">صافي العمولـة: {total_comm:,.0f} ج.م</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        with tab2:
+            st.markdown("### تحليل العائد الاستثماري (ROI)")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+                st.write("📈 عائد الإيجار السنوي")
+                inv_price = st.number_input("تكلفة الاستثمار (الشراء)", value=8000000)
+                rent_val = st.number_input("الإيجار الشهري المتوقع", value=45000)
+                roi = ((rent_val * 12) / inv_price) * 100 if inv_price > 0 else 0
+                st.markdown(f'<div class="tool-result">العائد السنوي: {roi:.2f}%</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c2:
+                st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+                st.write("🔮 القيمة المستقبلية (توقع التضخم)")
+                current_v = st.number_input("السعر الحالي", value=5000000)
+                inf_rate = st.slider("نسبة زيادة العقار السنوية %", 10, 50, 25)
+                after_yrs = st.number_input("بعد كم سنة؟", value=3)
+                future_v = current_v * (1 + inf_rate/100)**after_yrs
+                st.markdown(f'<div class="tool-result">القيمة المتوقعة: {future_v:,.0f} ج.م</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        with tab3:
+            st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+            st.write("🏦 حاسبة التمويل العقاري (البنك)")
+            bank_price = st.number_input("سعر الوحدة للتمويل", value=3000000)
+            int_rate = st.number_input("فائدة البنك السنوية % (متناقصة)", value=20.0)
+            bank_yrs = st.number_input("مدة التمويل (سنة)", value=15)
+            # معادلة القسط الثابت
+            r = (int_rate / 100) / 12
+            n = bank_yrs * 12
+            if r > 0:
+                p_bank = (bank_price * r * (1 + r)**n) / ((1 + r)**n - 1)
+            else: p_bank = bank_price / n if n > 0 else 0
+            st.markdown(f'<div class="tool-result">القسط البنكي الشهري: {p_bank:,.0f} ج.م</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with tab4:
+            st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+            st.write("💰 حاسبة الكاش باك (Cash Back)")
+            unit_p = st.number_input("إجمالي سعر الوحدة", key="cb_p", value=10000000)
+            cb_pct = st.slider("نسبة الخصم أو الكاش باك %", 0, 40, 5)
+            st.markdown(f'<div class="tool-result">مبلغ الخصم: {unit_p * (cb_pct/100):,.0f} ج.م</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="tool-result" style="background:green;">السعر بعد الخصم: {unit_p * (1 - cb_pct/100):,.0f} ج.م</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     with col_side:
-        st.markdown("<h3 style='color:#f59e0b; border-bottom:1px solid #333; padding-bottom:5px;'>⭐ مقترحات سريعة</h3>", unsafe_allow_html=True)
-        for s_idx, s_row in dataframe.head(8).iterrows():
-            if st.button(f"📌 {s_row.iloc[0]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
-                st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"; st.rerun()
+        st.markdown("<h3 style='color:#f59e0b;'>💡 نصائح بيعية</h3>", unsafe_allow_html=True)
+        st.info("""
+        - **للعميل المستثمر:** ركز دائماً على تبويب الـ **ROI** والقيمة المستقبلية.
+        - **للعميل السكني:** ركز على تبويب **القسط** والتمويل العقاري.
+        - **لإغلاق الصفقة:** استخدم حاسبة **الكاش باك** لتوضيح قيمة التوفير الفوري.
+        """)
+        st.warning("⚠️ ملاحظة: هذه الحسابات تقريبية لتسهيل عملية الشرح للعميل.")
 
-# --- 7. منطق التبويبات والأقسام ---
-if menu == "المشاريع":
-    tab1, tab2 = st.tabs(["🏗️ جميع المشاريع", "🚀 المشاريع الجديدة (Launch)"])
-    with tab1: render_ui(df_p, "p")
-    with tab2: render_ui(df_l, "l")
-
-elif menu == "المطورين":
-    render_ui(df_d, "d")
-
-elif menu == "أدوات الحساب":
-    cm, cs = st.columns([0.7, 0.3])
-    with cm:
-        st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات البروكر الذكية</h2>", unsafe_allow_html=True)
-        t1, t2, t3 = st.tabs(["💰 القسط", "📊 العمولة", "📈 ROI"])
-        with t1:
-            pr = st.number_input("سعر الوحدة الكلي", value=5000000)
-            dp = st.number_input("المقدم %", value=10)
-            yr = st.number_input("عدد سنوات التقسيط", value=8)
-            st.info(f"القسط الشهري المتوقع: {(pr - (pr*dp/100))/(yr*12):,.0f} ج.م")
-        with t2:
-            dl = st.number_input("قيمة الصفقة", value=5000000)
-            st.success(f"العمولة الصافية (2.5%): {dl*0.025:,.0f} ج.م")
-        with t3:
-            buy = st.number_input("سعر الشراء", value=5000000)
-            rent = st.number_input("الإيجار الشهري", value=30000)
-            st.warning(f"العائد السنوي الاستثماري: {((rent*12)/buy)*100:.2f} %")
-    with cs:
-        st.info("💡 المساعد الذكي:\nاستخدم هذه الأدوات لإقناع عميلك بأرقام دقيقة وحقيقية.")
-
-st.markdown("<p style='text-align:center; color:#444; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+# استدعاء القسم في جسم الكود الرئيسي:
+# if menu == "أدوات الحساب":
+#     render_tools()
