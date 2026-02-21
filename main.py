@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة الأساسية ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. التحسين البصري (CSS) ---
+# --- 2. التحسين البصري الشامل (CSS) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
@@ -21,22 +21,26 @@ st.markdown("""
         direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }
 
+    /* الهيدر الملكي */
     .royal-header { 
         background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'); 
         border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 0px;
     }
     .royal-header h1 { color: #f59e0b; font-size: 3rem; font-weight: 900; margin: 0; }
 
+    /* شريط الأخبار */
     .ticker-wrap {
         width: 100%; background: rgba(245, 158, 11, 0.15); border-bottom: 1px solid #f59e0b;
         overflow: hidden; white-space: nowrap; padding: 12px 0; margin-bottom: 20px;
     }
     .ticker { display: inline-block; animation: ticker 50s linear infinite; color: #f59e0b; font-weight: bold; font-size: 1.1rem; }
-    .news-msg { margin: 0 600px; }
+    .news-msg { margin: 0 60px; }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
 
-    div.stButton > button[key*="card_"] { background: white !important; color: black !important; border-right: 12px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 150px !important; font-weight: 900 !important; font-size: 1.1rem !important; white-space: pre-wrap !important; }
+    /* الكروت */
+    div.stButton > button[key*="card_"] { background: white !important; color: black !important; border-right: 12px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 150px !important; font-weight: 900 !important; font-size: 1.1rem !important; white-space: pre-wrap !important; line-height: 1.6 !important; }
     div.stButton > button[key*="linked_"] { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; border: 1px solid #f59e0b !important; font-weight: bold !important; border-radius: 10px !important; }
+    
     .detail-card { background: rgba(30, 30, 30, 0.95); padding: 20px; border-radius: 15px; border: 1px solid #444; border-top: 6px solid #f59e0b; margin-bottom: 15px; }
     .label-gold { color: #f59e0b; font-weight: 900; font-size: 1rem; }
     .val-white { color: white; font-size: 1.25rem; font-weight: 700; }
@@ -44,13 +48,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. إدارة الجلسة والبيانات ---
+# --- 3. إدارة البيانات والوظائف التقنية ---
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
-
-if 'auth' not in st.session_state:
-    st.session_state.auth = "u_session" in st.query_params
-    st.session_state.current_user = st.query_params.get("u_session", "Guest")
-if 'view' not in st.session_state: st.session_state.view = "grid"
 
 def format_price_millions(val):
     try:
@@ -71,7 +70,7 @@ def load_data():
         for u in urls:
             df = pd.read_csv(u)
             df.columns = [c.strip() for c in df.columns]
-            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'السعر': 'Price', 'سعر': 'Price', 'المالك': 'Owner', 'صاحب الشركة': 'Owner'}, inplace=True, errors="ignore")
+            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'السعر': 'Price', 'المالك': 'Owner', 'صاحب الشركة': 'Owner', 'الاونر': 'Owner'}, inplace=True, errors="ignore")
             if 'Price' in df.columns:
                 df['Price'] = pd.to_numeric(df['Price'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
                 df['Price'] = df['Price'].apply(lambda x: x * 1_000_000 if 0 < x < 1000 else x)
@@ -81,7 +80,42 @@ def load_data():
 
 df_p, df_d, df_l = load_data()
 
-# --- 4. دالة العرض الرئيسية (المعدلة للمطورين) ---
+# --- 4. بوابة الدخول ---
+if 'auth' not in st.session_state:
+    st.session_state.auth = False
+    st.session_state.current_user = "Guest"
+
+if not st.session_state.auth:
+    st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
+    if st.button("SIGN IN 🚀", use_container_width=True):
+        if p == "2026": # كلمة السر السريعة للتجربة
+            st.session_state.auth, st.session_state.current_user = True, "Admin"
+            st.rerun()
+        else: st.error("بيانات الدخول غير صحيحة")
+    st.stop()
+
+# --- 5. الهيدر وشريط الأخبار ---
+st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+
+st.markdown("""
+    <div class="ticker-wrap"><div class="ticker">
+        <span class="news-msg">🏗️ عقارات: أسعار المشاريع الجديدة تبدأ من 4.5 مليون ج.م في العاصمة الإدارية</span>
+        <span class="news-msg">🟡 الذهب: عيار 21 يسجل استقراراً عند 3,640 ج.م اليوم</span>
+        <span class="news-msg">🏢 تطوير: إطلاق المرحلة الجديدة من كمبوند "تاج سيتي" بمقدم 5%</span>
+        <span class="news-msg">💵 العملات: استقرار سعر صرف الدولار مقابل الجنيه في البنك المركزي</span>
+    </div></div>
+""", unsafe_allow_html=True)
+
+# --- 6. القائمة الرئيسية ---
+menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
+    icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
+    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000", "font-weight": "900"}})
+
+if 'view' not in st.session_state: st.session_state.view = "grid"
+
+# --- 7. دالة العرض الموحدة ---
 def render_grid(dataframe, prefix):
     pg_key = f"pg_{prefix}"
     if pg_key not in st.session_state: st.session_state[pg_key] = 0
@@ -100,6 +134,7 @@ def render_grid(dataframe, prefix):
                 val = format_price_millions(item[col_name]) if col_name == 'Price' else item[col_name]
                 st.markdown(f'<div class="detail-card"><p class="label-gold">{col_name}</p><p class="val-white">{val}</p></div>', unsafe_allow_html=True)
         
+        # ربط المطور بمشاريعه
         if prefix == "d":
             st.markdown("<h3 style='color:#f59e0b; border-right:5px solid #f59e0b; padding-right:10px; margin-top:30px;'>🏗️ مشاريع المطور</h3>", unsafe_allow_html=True)
             all_p = pd.concat([df_p, df_l]).drop_duplicates().reset_index(drop=True)
@@ -110,6 +145,7 @@ def render_grid(dataframe, prefix):
                     with r_grid[r_idx % 2]:
                         st.button(f"🏢 {r_row.iloc[0]} | 📍 {r_row.get('Location','---')}", key=f"linked_{idx}", use_container_width=True)
     else:
+        # البحث والفلاتر
         st.markdown('<div class="filter-box">', unsafe_allow_html=True)
         f1, f2 = st.columns([2, 1])
         with f1: search = st.text_input("🔍 ابحث...", key=f"s_{prefix}")
@@ -128,11 +164,10 @@ def render_grid(dataframe, prefix):
         grid = st.columns(2)
         for i, (idx, r) in enumerate(disp.iterrows()):
             with grid[i%2]:
-                # --- تعديل محتوى الكارت بناءً على النوع ---
-                if prefix == "d": # كارت المطور
+                if prefix == "d": # كارت المطور (اسم المطور + الاونر)
                     owner = r.get('Owner', '---')
                     label = f"🏗️ المطور: {r[0]}\n👤 الاونر: {owner}"
-                else: # كارت المشروع
+                else: # كارت المشروع (الاسم + لوكيشن + سعر بالملايين)
                     p_v = format_price_millions(r['Price']) if 'Price' in r else ""
                     label = f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {p_v}"
                 
@@ -140,7 +175,6 @@ def render_grid(dataframe, prefix):
                     st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
         
         # أزرار التنقل
-        st.write("")
         p1, px, p2 = st.columns([1, 1, 1])
         with p1: 
             if st.session_state[pg_key] > 0 and st.button("⬅ السابق", key=f"prev_{prefix}"): st.session_state[pg_key] -= 1; st.rerun()
@@ -148,39 +182,39 @@ def render_grid(dataframe, prefix):
         with p2:
             if (start + 6) < len(filt) and st.button("التالي ➡", key=f"next_{prefix}"): st.session_state[pg_key] += 1; st.rerun()
 
-# --- 5. التطبيق والواجهة ---
-if not st.session_state.get('auth', False):
-    # (كود صفحة تسجيل الدخول يوضع هنا كما في النسخ السابقة)
-    st.markdown("<div style='text-align:center; padding-top:100px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
-    if st.button("SIGN IN"):
-        if p == "2026": st.session_state.auth = True; st.rerun()
-    st.stop()
-
-st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
-
-st.markdown("""
-    <div class="ticker-wrap"><div class="ticker">
-        <span class="news-msg">🏗️ عقارات: أسعار المشاريع الجديدة تبدأ من 4.5 مليون ج.م في العاصمة الإدارية</span>
-        <span class="news-msg">🟡 الذهب: عيار 21 يسجل استقراراً عند 3,640 ج.م اليوم</span>
-        <span class="news-msg">🏢 تطوير: إطلاق المرحلة الجديدة من كمبوند "تاج سيتي" بمقدم 5%</span>
-    </div></div>
-""", unsafe_allow_html=True)
-
-menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
-    icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
-    styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "#000", "font-weight": "900"}})
-
-if 'last_m' not in st.session_state or menu != st.session_state.last_m:
-    st.session_state.view, st.session_state.last_m = "grid", menu
-
+# --- 8. التحكم في الصفحات من المنيو ---
 if menu == "المشاريع":
     t1, t2 = st.tabs(["🏗️ جميع المشاريع", "🚀 المشاريع الجديدة"])
     with t1: render_grid(df_p, "p")
     with t2: render_grid(df_l, "l")
+
 elif menu == "المطورين":
     render_grid(df_d, "d")
+
 elif menu == "أدوات الحساب":
     st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
-    # (كود الحاسبة يوضع هنا)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("<div class='detail-card'><h3>💰 حاسبة القسط</h3>", unsafe_allow_html=True)
+        pr = st.number_input("السعر الإجمالي", value=5000000)
+        dp = st.number_input("المقدم (%)", value=10)
+        yr = st.number_input("عدد السنين", value=8)
+        rem = pr - (pr * dp/100)
+        res = rem / (yr * 12) if yr > 0 else 0
+        st.markdown(f"<p class='label-gold'>القسط الشهري:</p><p class='val-white'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='detail-card'><h3>📊 حاسبة العمولة</h3>", unsafe_allow_html=True)
+        deal = st.number_input("قيمة الصفقة", value=5000000)
+        pct = st.number_input("نسبة العمولة (%)", value=2.5)
+        st.markdown(f"<p class='label-gold'>عمولتك الصافية:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='detail-card'><h3>📈 العائد ROI</h3>", unsafe_allow_html=True)
+        buy = st.number_input("سعر الشراء", value=5000000)
+        rent = st.number_input("الإيجار الشهري المتوقع", value=40000)
+        roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
+        st.markdown(f"<p class='label-gold'>العائد السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
+
+elif menu == "المساعد الذكي":
+    st.info("نظام تحليل البيانات العقارية AI 2026 قيد التطوير.")
+
+st.markdown("<p style='text-align:center; color:#555; margin-top:50px; font-weight:bold;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
