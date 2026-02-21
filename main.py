@@ -7,26 +7,27 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة الأساسية ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. إخفاء رسائل التحميل (Loading) والعناصر غير المرغوبة عبر CSS ---
+# --- 2. إخفاء رسائل التحميل والتحسين البصري ---
 st.markdown("""
     <style>
-    /* إخفاء أيقونة التحميل الافتراضية لستريمليت */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stStatusWidget"] {display: none !important;}
     
-    /* تحسين سرعة ظهور العناصر */
-    .stApp {
-        animation: fadeIn 0.5s;
-    }
-    @keyframes fadeIn {
-        0% {opacity: 0;}
-        100% {opacity: 1;}
+    .stApp { animation: fadeIn 0.5s; }
+    @keyframes fadeIn { 0% {opacity: 0;} 100% {opacity: 1;} }
+
+    /* ستايل زر الخروج العلوي */
+    .logout-container {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1001;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. إدارة حالة الجلسة (Session State) ---
+# --- 3. إدارة حالة الجلسة ---
 if 'auth' not in st.session_state:
     if "u_session" in st.query_params:
         st.session_state.auth = True
@@ -36,6 +37,13 @@ if 'auth' not in st.session_state:
 
 if 'view' not in st.session_state: st.session_state.view = "grid"
 if 'current_index' not in st.session_state: st.session_state.current_index = 0
+
+# دالة تسجيل الخروج
+def logout():
+    st.session_state.auth = False
+    st.session_state.current_user = None
+    st.query_params.clear()
+    st.rerun()
 
 # --- 4. الروابط والثوابت ---
 URL_PROJECTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
@@ -47,10 +55,10 @@ HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
 ITEMS_PER_PAGE = 6
 
-# --- 5. الوظائف التقنية (محسنة السرعة) ---
+# --- 5. الوظائف التقنية ---
 def login_user(user_input, pwd_input):
     try:
-        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}", timeout=5) # تقليل التايم آوت للسرعة
+        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}", timeout=5)
         if response.status_code == 200:
             users_list = response.json()
             user_input = str(user_input).strip().lower()
@@ -62,7 +70,7 @@ def login_user(user_input, pwd_input):
         return None
     except: return None
 
-@st.cache_data(ttl=300, show_spinner=False) # إخفاء سبينر التحميل وزيادة وقت الكاش لـ 5 دقائق
+@st.cache_data(ttl=300, show_spinner=False)
 def load_data():
     try:
         p = pd.read_csv(URL_PROJECTS)
@@ -156,7 +164,7 @@ st.markdown(f"""
     .auth-wrapper {{ display: flex; flex-direction: column; align-items: center; padding-top: 50px; }}
     .oval-header {{ background-color: #000; border: 3px solid #f59e0b; border-radius: 60px; padding: 15px 50px; color: #f59e0b; font-size: 24px; font-weight: 900; text-align: center; margin-bottom: -30px; min-width: 360px; z-index: 10; }}
     .auth-card {{ background-color: #ffffff; width: 380px; padding: 55px 35px 30px 35px; border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }}
-    .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 15px; }}
+    .royal-header {{ background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{HEADER_IMG}'); background-size: cover; background-position: center; border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 15px; position: relative; }}
     .royal-header h1 {{ color: #f59e0b; font-size: 3rem; font-weight: 900; margin: 0; }}
     div.stButton > button[key*="card_"] {{ background: white !important; color: black !important; border-right: 12px solid #f59e0b !important; border-radius: 15px !important; text-align: right !important; min-height: 150px !important; font-weight: 900 !important; font-size: 1.1rem !important; }}
     .detail-card {{ background: rgba(30, 30, 30, 0.95); padding: 20px; border-radius: 15px; border: 1px solid #444; border-top: 6px solid #f59e0b; margin-bottom: 15px; }}
@@ -176,18 +184,25 @@ if not st.session_state.get('auth', False):
             st.session_state.auth, st.session_state.current_user = True, "Admin"
             st.query_params["u_session"] = "Admin"; st.rerun()
         else:
-            with st.empty(): # استخدام empty container لتجنب "اللودينج" الطويل في الواجهة
-                user = login_user(u, p)
-                if user:
-                    st.session_state.auth, st.session_state.current_user = True, user
-                    st.query_params["u_session"] = user; st.rerun()
-                else: st.error("بيانات خاطئة")
+            user = login_user(u, p)
+            if user:
+                st.session_state.auth, st.session_state.current_user = True, user
+                st.query_params["u_session"] = user; st.rerun()
+            else: st.error("بيانات خاطئة")
     st.markdown("</div></div>", unsafe_allow_html=True); st.stop()
 
-# --- 9. تحميل البيانات والتشغيل ---
-df_p, df_d, df_l = load_data()
+# --- 9. الهيدر وزر تسجيل الخروج ---
+# إضافة زر الخروج في الركن العلوي
+with st.container():
+    c_out1, c_out2 = st.columns([0.1, 0.9])
+    with c_out1:
+        if st.button("🚪 خروج", key="logout_btn"):
+            logout()
 
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+
+# --- 10. القائمة والتشغيل ---
+df_p, df_d, df_l = load_data()
 
 menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
