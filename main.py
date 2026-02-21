@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. التصميم البصري الكامل (CSS) ---
+# --- 2. التصميم البصري (CSS) - النسخة الفاخرة ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
@@ -16,46 +16,55 @@ st.markdown("""
     [data-testid="stStatusWidget"] {display: none !important;}
     
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80');
-        background-size: cover; background-attachment: fixed;
+        background: #0a0a0a;
         direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }
 
-    /* هيدر ملكي */
+    /* هيدر ملكي فخم بصورة ناطحات سحاب ليلية */
     .royal-header { 
-        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'); 
-        border-bottom: 3px solid #f59e0b; padding: 45px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 0px;
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=2070&auto=format&fit=crop'); 
+        background-size: cover; background-position: center;
+        border-bottom: 4px solid #f59e0b; padding: 60px 20px; text-align: center; border-radius: 0 0 50px 50px; 
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);
     }
-    .royal-header h1 { color: #f59e0b; font-size: 3rem; font-weight: 900; margin: 0; }
+    .royal-header h1 { color: #f59e0b; font-size: 3.5rem; font-weight: 900; margin: 0; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
 
-    /* شريط الأخبار تحت الهيدر */
+    /* شريط الأخبار */
     .ticker-wrap {
-        width: 100%; background: rgba(245, 158, 11, 0.15); border-bottom: 1px solid #f59e0b;
-        overflow: hidden; white-space: nowrap; padding: 12px 0; margin-bottom: 20px;
+        width: 100%; background: #1a1a1a; border-bottom: 1px solid #333;
+        overflow: hidden; white-space: nowrap; padding: 15px 0; margin-bottom: 25px;
     }
-    .ticker { display: inline-block; animation: ticker 40s linear infinite; color: #f59e0b; font-weight: bold; font-size: 1.1rem; }
-    .news-msg { margin: 0 60px; }
+    .ticker { display: inline-block; animation: ticker 45s linear infinite; color: #f59e0b; font-weight: bold; font-size: 1.1rem; }
+    .news-msg { margin: 0 80px; }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
 
-    /* الكروت */
+    /* الكروت الرئيسية (البيضاء) */
     div.stButton > button[key*="card_"] { 
-        background: white !important; color: black !important; border-right: 12px solid #f59e0b !important; 
+        background: white !important; color: #111 !important; border-right: 15px solid #f59e0b !important; 
         border-radius: 15px !important; text-align: right !important; min-height: 140px !important; 
-        font-weight: 900 !important; font-size: 1.1rem !important; white-space: pre-wrap !important; 
+        font-weight: 900 !important; font-size: 1.2rem !important; white-space: pre-wrap !important; 
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3) !important; transition: 0.3s;
     }
+    
+    /* كروت الجانب (الذهبية المختصرة) */
+    div.stButton > button[key*="side_"] {
+        background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; 
+        border: 1px solid #f59e0b !important; border-radius: 10px !important; margin-bottom: 5px !important;
+        font-weight: bold !important; font-size: 0.9rem !important;
+    }
+
     .detail-card { 
-        background: rgba(30, 30, 30, 0.95); padding: 20px; border-radius: 15px; 
-        border: 1px solid #444; border-top: 6px solid #f59e0b; margin-bottom: 15px; 
+        background: #1e1e1e; padding: 25px; border-radius: 20px; 
+        border: 1px solid #333; border-top: 8px solid #f59e0b; margin-bottom: 20px; 
     }
-    .label-gold { color: #f59e0b; font-weight: 900; font-size: 1rem; }
-    .val-white { color: white; font-size: 1.25rem; font-weight: 700; }
-    .filter-box { background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; }
+    .label-gold { color: #f59e0b; font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
+    .val-white { color: white; font-size: 1.3rem; font-weight: 700; }
+    
+    .filter-box { background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 20px; border: 1px solid #222; margin-bottom: 25px; }
     </style>
 """, unsafe_allow_html=True)
 
 # --- 3. الوظائف والبيانات ---
-SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
-
 def format_price_millions(val):
     try:
         v = float(val)
@@ -75,7 +84,7 @@ def load_data():
         for url in urls:
             df = pd.read_csv(url)
             df.columns = [c.strip() for c in df.columns]
-            df.rename(columns={'Area':'Location','الموقع':'Location','السعر':'Price','المالك':'Owner','الاونر':'Owner'}, inplace=True, errors="ignore")
+            df.rename(columns={'Area':'Location','الموقع':'Location','السعر':'Price','المالك':'Owner','الاونر':'Owner','صاحب الشركة':'Owner'}, inplace=True, errors="ignore")
             if 'Price' in df.columns:
                 df['Price'] = pd.to_numeric(df['Price'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
                 df['Price'] = df['Price'].apply(lambda x: x * 1_000_000 if 0 < x < 1000 else x)
@@ -85,28 +94,25 @@ def load_data():
 
 df_p, df_d, df_l = load_data()
 
-# --- 4. بوابة الدخول ---
+# --- 4. الدخول ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 if not st.session_state.auth:
     st.markdown("<div style='text-align:center; padding-top:80px;'><h1 style='color:#f59e0b;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
-    if st.button("SIGN IN 🚀", use_container_width=True):
-        if p == "2026": # كلمة السر السريعة
-            st.session_state.auth, st.session_state.current_user = True, u if u else "Admin"
-            st.rerun()
+    u = st.text_input("اسم المستخدم")
+    p = st.text_input("كلمة المرور", type="password")
+    if st.button("دخول الملكي 🚀"):
+        if p == "2026": st.session_state.auth = True; st.session_state.current_user = u if u else "Admin"; st.rerun()
     st.stop()
 
-# --- 5. الهيكل الرئيسي ---
-st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#f59e0b; font-weight:bold;">مرحباً {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+# --- 5. الهيكل العلوي ---
+st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO | 2026</h1><p style="color:#f59e0b; font-size:1.2rem;">نظام إدارة البيانات العقارية الاحترافي</p></div>', unsafe_allow_html=True)
 
 st.markdown("""
     <div class="ticker-wrap"><div class="ticker">
-        <span class="news-msg">🔥 عاجل: ارتفاع الطلب على الساحل الشمالي بنسبة 20% في صيف 2026</span>
-        <span class="news-msg">🏢 تطوير: إطلاق مشاريع جديدة بمقدم يبدأ من 5% وأقساط حتى 10 سنوات</span>
-        <span class="news-msg">🟡 الذهب: سعر عيار 21 يسجل استقراراً ملحوظاً عند 3,640 ج.م اليوم</span>
-        <span class="news-msg">🏗️ تنويه: تحديث قوائم أسعار مشاريع أورا وسوديك في القائمة الرئيسية</span>
+        <span class="news-msg">🏗️ السوق: استقرار أسعار التجمع الخامس عند 45,000 ج للمتر في المتوسط</span>
+        <span class="news-msg">📍 جديد: إطلاق مشروع "سولاري" رأس الحكمة بمقدم 5% فقط</span>
+        <span class="news-msg">💹 استثمار: العائد الإيجاري في العاصمة الإدارية يصل لـ 12% سنوياً</span>
     </div></div>
 """, unsafe_allow_html=True)
 
@@ -116,74 +122,99 @@ menu = option_menu(None, ["أدوات الحساب", "المطورين", "الم
 
 if 'view' not in st.session_state: st.session_state.view = "grid"
 
-# --- 6. دالة العرض المخصصة ---
-def render_page(dataframe, prefix):
+# --- 6. دالة العرض (التقسيم 70/30) ---
+def render_main_ui(dataframe, prefix):
     pg_key = f"pg_{prefix}"
     if pg_key not in st.session_state: st.session_state[pg_key] = 0
 
-    if st.session_state.view == f"details_{prefix}":
-        if st.button("⬅ عودة", key=f"back_{prefix}"): st.session_state.view = "grid"; st.rerun()
-        item = dataframe.iloc[st.session_state.current_index]
-        st.markdown(f"<h2 style='color:#f59e0b; text-align:right;'>💎 {item.iloc[0]}</h2>", unsafe_allow_html=True)
-        cols = st.columns(3)
-        for i, col in enumerate(dataframe.columns):
-            with cols[i%3]:
-                val = format_price_millions(item[col]) if col == 'Price' else item[col]
-                st.markdown(f'<div class="detail-card"><p class="label-gold">{col}</p><p class="val-white">{val}</p></div>', unsafe_allow_html=True)
-    else:
-        # فلاتر
-        st.markdown('<div class="filter-box">', unsafe_allow_html=True)
-        c1, c2 = st.columns([2, 1])
-        with c1: search = st.text_input("🔍 بحث...", key=f"search_{prefix}")
-        with c2: 
-            loc_list = ["الكل"] + sorted(list(dataframe['Location'].unique())) if 'Location' in dataframe.columns else ["الكل"]
-            sel_loc = st.selectbox("📍 الموقع", loc_list, key=f"loc_{prefix}")
-        st.markdown('</div>', unsafe_allow_html=True)
+    col_main, col_side = st.columns([0.7, 0.3]) # التقسيمة المطلوبة
 
-        filt = dataframe.copy()
-        if search: filt = filt[filt.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
-        if sel_loc != "الكل" and 'Location' in filt.columns: filt = filt[filt['Location'] == sel_loc]
+    with col_main:
+        if st.session_state.view == f"details_{prefix}":
+            if st.button("⬅ عودة للقائمة الرئيسية", key=f"back_{prefix}"): 
+                st.session_state.view = "grid"; st.rerun()
+            item = dataframe.iloc[st.session_state.current_index]
+            st.markdown(f"<h2 style='color:#f59e0b;'>💎 {item.iloc[0]}</h2>", unsafe_allow_html=True)
+            d_cols = st.columns(2)
+            for i, c in enumerate(dataframe.columns):
+                with d_cols[i%2]:
+                    v = format_price_millions(item[c]) if c == 'Price' else item[c]
+                    st.markdown(f'<div class="detail-card"><p class="label-gold">{c}</p><p class="val-white">{v}</p></div>', unsafe_allow_html=True)
+        else:
+            # الفلاتر والشبكة
+            st.markdown('<div class="filter-box">', unsafe_allow_html=True)
+            f1, f2 = st.columns([2, 1])
+            with f1: search = st.text_input("🔍 ابحث عن أي شيء...", key=f"search_{prefix}")
+            with f2:
+                locs = ["الكل"] + sorted(list(dataframe['Location'].unique())) if 'Location' in dataframe.columns else ["الكل"]
+                sel_loc = st.selectbox("📍 تصفية حسب الموقع", locs, key=f"loc_{prefix}")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        start = st.session_state[pg_key] * 6
-        disp = filt.iloc[start : start + 6]
+            filt = dataframe.copy()
+            if search: filt = filt[filt.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)]
+            if sel_loc != "الكل" and 'Location' in filt.columns: filt = filt[filt['Location'] == sel_loc]
+
+            start = st.session_state[pg_key] * 6
+            disp = filt.iloc[start : start + 6]
+            
+            grid = st.columns(2)
+            for i, (idx, r) in enumerate(disp.iterrows()):
+                with grid[i%2]:
+                    if prefix == "d":
+                        lbl = f"🏗️ المطور: {r[0]}\n👤 الاونر: {r.get('Owner', '---')}"
+                    else:
+                        p_txt = format_price_millions(r['Price']) if 'Price' in r else ""
+                        lbl = f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {p_txt}"
+                    
+                    if st.button(lbl, key=f"card_{prefix}_{idx}", use_container_width=True):
+                        st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
+            
+            # التنقل
+            st.write("")
+            p1, px, p2 = st.columns([1, 1, 1])
+            with p1: 
+                if st.session_state[pg_key] > 0:
+                    if st.button("السابق", key=f"prev_{prefix}"): st.session_state[pg_key]-=1; st.rerun()
+            with px: st.markdown(f"<p style='text-align:center; color:#f59e0b;'>صفحة {st.session_state[pg_key]+1}</p>", unsafe_allow_html=True)
+            with p2:
+                if (start + 6) < len(filt):
+                    if st.button("التالي", key=f"next_{prefix}"): st.session_state[pg_key]+=1; st.rerun()
+
+    with col_side:
+        st.markdown("<h3 style='color:#f59e0b; border-bottom:2px solid #333; padding-bottom:10px;'>⭐ مقترحات سريعة</h3>", unsafe_allow_html=True)
+        for s_idx, s_row in dataframe.head(10).iterrows():
+            if st.button(f"📌 {s_row.iloc[0]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
+                st.session_state.current_index, st.session_state.view = s_idx, f"details_{prefix}"; st.rerun()
         
-        grid = st.columns(2)
-        for i, (idx, r) in enumerate(disp.iterrows()):
-            with grid[i%2]:
-                if prefix == "d": # كارت المطور: الاسم + الأونر
-                    lbl = f"🏗️ المطور: {r[0]}\n👤 الاونر: {r.get('Owner', '---')}"
-                else: # كارت المشروع: الاسم + الموقع + السعر بالملايين
-                    p_txt = format_price_millions(r['Price']) if 'Price' in r else ""
-                    lbl = f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {p_txt}"
-                
-                if st.button(lbl, key=f"card_{prefix}_{idx}", use_container_width=True):
-                    st.session_state.current_index, st.session_state.view = idx, f"details_{prefix}"; st.rerun()
+        st.markdown("<br><div style='background:#111; padding:15px; border-radius:15px; border:1px solid #f59e0b; color:#f59e0b; text-align:center;'><b>إحصائية سريعة:</b><br>إجمالي السجلات: " + str(len(dataframe)) + "</div>", unsafe_allow_html=True)
 
-# --- 7. عرض الأقسام ---
+# --- 7. الأقسام ---
 if menu == "المشاريع":
-    render_page(df_p, "p")
+    render_main_ui(df_p, "p")
 elif menu == "المطورين":
-    render_page(df_d, "d")
+    render_main_ui(df_d, "d")
 elif menu == "أدوات الحساب":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات البروكر</h2>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("<div class='detail-card'><h3>💰 القسط</h3>", unsafe_allow_html=True)
-        pr = st.number_input("السعر", value=5000000, step=100000)
-        dp = st.number_input("المقدم (%)", value=10)
-        yr = st.number_input("السنين", value=8)
-        res = (pr - (pr * dp/100)) / (yr * 12) if yr > 0 else 0
-        st.markdown(f"<p class='label-gold'>الشهري:</p><p class='val-white'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='detail-card'><h3>📊 العمولة</h3>", unsafe_allow_html=True)
-        deal = st.number_input("الصفقة", value=5000000, step=100000)
-        pct = st.number_input("النسبة (%)", value=2.5)
-        st.markdown(f"<p class='label-gold'>العمولة:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown("<div class='detail-card'><h3>📈 ROI</h3>", unsafe_allow_html=True)
-        buy = st.number_input("الشراء", value=5000000, step=100000)
-        rent = st.number_input("الإيجار", value=40000, step=1000)
-        roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
-        st.markdown(f"<p class='label-gold'>العائد السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
+    # الأدوات تظهر في مساحة الـ 70% أيضاً
+    c_main, c_side = st.columns([0.7, 0.3])
+    with c_main:
+        st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ حاسبات البروكر الذكية</h2>", unsafe_allow_html=True)
+        t1, t2, t3 = st.tabs(["💰 القسط", "📊 العمولة", "📈 ROI"])
+        with t1:
+            pr = st.number_input("سعر الوحدة الكامل", value=10000000)
+            dp = st.number_input("المقدم %", value=10)
+            yr = st.number_input("السنوات", value=8)
+            res = (pr - (pr * dp/100)) / (yr * 12) if yr > 0 else 0
+            st.markdown(f"<div class='detail-card'><p class='label-gold'>القسط الشهري:</p><p class='val-white'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
+        with t2:
+            deal = st.number_input("قيمة البيعة", value=5000000)
+            pct = st.number_input("نسبة عمولتك %", value=2.5)
+            st.markdown(f"<div class='detail-card'><p class='label-gold'>عمولتك الصافية:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
+        with t3:
+            buy = st.number_input("سعر الشراء الكلي", value=8000000)
+            rent = st.number_input("الإيجار الشهري", value=50000)
+            roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
+            st.markdown(f"<div class='detail-card'><p class='label-gold'>العائد السنوي (%):</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
+    with c_side:
+        st.info("استخدم هذه الحاسبات لتقديم عرض سريع لعميلك أثناء المكالمة.")
 
-st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align:center; color:#444;'>MA3LOMATI PRO © 2026 - All Rights Reserved</p>", unsafe_allow_html=True)
