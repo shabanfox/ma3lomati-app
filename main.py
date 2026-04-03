@@ -2,194 +2,196 @@ import streamlit as st
 import pandas as pd
 import requests
 import feedparser
+import urllib.parse
+from datetime import datetime
+import pytz
 import time
 from streamlit_option_menu import option_menu
 
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="MA3LOMATI PRO | 2026", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. روابط الداتا والصور ---
+# --- 2. الروابط الأساسية ---
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2bZa-5WpgxRyhwe5506qnu9WTB6oUwlCVAeqy4EwN3wLFA5OZ3_LfoYXCwW8eq6M2qw/exec"
+HEADER_IMG = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
 BG_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80"
+ITEMS_PER_PAGE = 6
 
-# --- 3. جلب البيانات ---
-@st.cache_data(ttl=60)
-def load_data():
-    U_P = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?output=csv"
-    U_D = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7AlPjwOSyd2JIH646Ie8lzHKwin6LIB8DciEuzaUb2Wo3sbzVK3w6LSRmvE4t0Oe9B7HTw-8fJCu1/pub?gid=732423049&single=true&output=csv"
+# --- 3. إدارة الحالة ---
+if 'auth' not in st.session_state: st.session_state.auth = False
+if 'current_user' not in st.session_state: st.session_state.current_user = None
+if 'view' not in st.session_state: st.session_state.view = "grid"
+if 'current_index' not in st.session_state: st.session_state.current_index = 0
+if 'page_num' not in st.session_state: st.session_state.page_num = 0
+if 'messages' not in st.session_state: st.session_state.messages = []
+
+# --- 4. وظائف الربط (مبسطة) ---
+def signup_user(name, pwd, email, wa, comp):
+    payload = {"name": name, "password": pwd, "email": email, "whatsapp": wa, "company": comp}
+    try: response = requests.post(SCRIPT_URL, json=payload, timeout=10); return response.text == "Success"
+    except: return False
+
+def login_user(user_input, pwd_input):
     try:
-        p, d = pd.read_csv(U_P), pd.read_csv(U_D)
-        for df in [p, d]: 
-            df.columns = [c.strip() for c in df.columns]
-            df.rename(columns={'Area': 'Location', 'الموقع': 'Location', 'Project Name': 'ProjectName'}, inplace=True, errors="ignore")
-        return p.fillna("---"), d.fillna("---")
-    except: return pd.DataFrame(), pd.DataFrame()
+        response = requests.get(f"{SCRIPT_URL}?nocache={time.time()}", timeout=15)
+        if response.status_code == 200:
+            users_list = response.json()
+            user_input = str(user_input).strip().lower()
+            for user_data in users_list:
+                name_s = str(user_data.get('Name', user_data.get('name', ''))).strip()
+                email_s = str(user_data.get('Email', user_data.get('email', ''))).strip()
+                pass_s = str(user_data.get('Password', user_data.get('password', ''))).strip()
+                if (user_input == name_s.lower() or user_input == email_s.lower()) and str(pwd_input) == pass_s: return name_s
+        return None
+    except: return None
 
-df_p, df_d = load_data()
+@st.cache_data(ttl=1800)
+def get_real_news():
+    try:
+        feed = feedparser.parse("https://www.youm7.com/rss/SectionRss?SectionID=297")
+        news = [item.title for item in feed.entries[:10]]
+        return "  •  ".join(news) if news else "سوق العقارات المصري: متابعة مستمرة لآخر المستجدات."
+    except: return "MA3LOMATI PRO: منصتك العقارية الأولى في مصر لعام 2026."
 
-# --- 4. الـ CSS الاحترافي (ضبط الكروت والتقسيمة) ---
+news_text = get_real_news()
+
+# --- 5. التصميم الجمالي المطور (تعديل الألوان) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     
+    /* الخلفية العامة */
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(rgba(0,0,0,0.98), rgba(0,0,0,0.98)), url('{BG_IMG}');
+        background: linear-gradient(rgba(0,0,0,0.97), rgba(0,0,0,0.97)), url('{BG_IMG}');
         background-size: cover; background-attachment: fixed;
-        direction: rtl !important; font-family: 'Cairo', sans-serif;
+        direction: rtl !important; text-align: right !important; font-family: 'Cairo', sans-serif;
     }}
 
-    /* كرت المشروع: أبيض، مسطرة، وكلام أسود عريض */
+    /* تصميم الكروت (أبيض + نص أسود عريض) */
     div.stButton > button[key*="card_"] {{
-        background-color: #FFFFFF !important;
+        background-color: #FFFFFF !important; 
         color: #000000 !important;
-        border-right: 15px solid #f59e0b !important;
-        border-radius: 20px !important;
-        padding: 25px !important;
-        height: 200px !important; /* ارتفاع ثابت لضمان التناسق */
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
+        border-right: 12px solid #f59e0b !important; /* الخط الذهبي الجانبي */
+        border-radius: 15px !important;
+        padding: 20px !important;
+        min-height: 160px !important;
         text-align: right !important;
-        box-shadow: 0 12px 25px rgba(0,0,0,0.6) !important;
+        font-weight: 900 !important; /* عريض جداً */
+        font-size: 18px !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
         border: none !important;
-        margin-bottom: 25px !important;
+        display: block !important;
+        width: 100% !important;
+        line-height: 1.6 !important;
     }}
-    
     div.stButton > button[key*="card_"]:hover {{
-        transform: translateY(-8px) !important;
-        box-shadow: 0 20px 40px rgba(245,158,11,0.25) !important;
+        transform: translateY(-5px) !important;
+        background-color: #f8f9fa !important;
+        box-shadow: 0 12px 25px rgba(245,158,11,0.3) !important;
     }}
 
-    .card-title {{ font-size: 24px; font-weight: 900; color: #111; margin-bottom: 10px; line-height: 1.2; }}
-    .card-info {{ font-size: 17px; color: #444; font-weight: 700; }}
+    /* الهيدر الملكي */
+    .royal-header {{
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('{HEADER_IMG}');
+        background-size: cover; background-position: center; border-bottom: 4px solid #f59e0b;
+        padding: 40px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 25px;
+    }}
 
-    /* شريط الأخبار والهيدر */
-    .ticker-bar {{ background: #f59e0b; color: #000; padding: 12px; font-weight: 900; text-align: center; border-radius: 0 0 25px 25px; font-size: 20px; }}
-    header {{ visibility: hidden; }}
-    
-    /* ستايل الأدوات الحسابية */
-    .stNumberInput label {{ color: #f59e0b !important; font-weight: 900 !important; font-size: 16px !important; }}
+    /* تفاصيل البيانات (Detail Card) */
+    .detail-card {{ 
+        background: rgba(30, 30, 30, 0.95); 
+        padding: 25px; border-radius: 20px; 
+        border-top: 5px solid #f59e0b; 
+        color: white; border: 1px solid #444; 
+    }}
+    .label-gold {{ color: #f59e0b; font-weight: 900; font-size: 16px; margin-top: 10px; }}
+    .val-white {{ color: #FFFFFF; font-size: 20px; font-weight: 700; border-bottom: 1px solid #444; padding-bottom:5px; }}
+
+    /* شريط الأخبار */
+    .ticker-wrap {{ background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid #f59e0b; padding: 8px 0; margin-bottom: 20px; }}
+    .ticker {{ color: #f59e0b; font-weight: 700; font-size: 15px; }}
+
+    /* الأزرار العامة */
+    div.stButton > button {{ border-radius: 10px !important; font-weight: 700 !important; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. منطق الدخول ---
-if 'auth' not in st.session_state: st.session_state.auth = False
+# --- 6. صفحة الدخول ---
 if not st.session_state.auth:
-    _, center, _ = st.columns([1,1.5,1])
-    with center:
-        st.markdown("<div style='background:white; padding:50px; border-radius:35px; text-align:center; margin-top:80px;'><h1 style='color:black;'>MA3LOMATI PRO</h1>", unsafe_allow_html=True)
-        pwd = st.text_input("كلمة السر الخاصة بك", type="password")
-        if st.button("دخول المنصة 🚀", use_container_width=True):
-            if pwd == "2026": st.session_state.auth = True; st.rerun()
+    _, center_col, _ = st.columns([1, 1.2, 1])
+    with center_col:
+        st.markdown("<div style='background:white; padding:40px; border-radius:30px; margin-top:50px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color:black; font-weight:900;'>MA3LOMATI PRO</h2>", unsafe_allow_html=True)
+        tab_login, tab_signup = st.tabs(["🔐 دخول", "📝 اشتراك"])
+        with tab_login:
+            u = st.text_input("User", placeholder="الاسم أو الإيميل", key="log_u")
+            p = st.text_input("Pass", type="password", placeholder="كلمة السر", key="log_p")
+            if st.button("دخول آمن 🚀", use_container_width=True):
+                if p == "2026": st.session_state.auth, st.session_state.current_user = True, "Admin"; st.rerun()
+                else:
+                    res = login_user(u, p)
+                    if res: st.session_state.auth, st.session_state.current_user = True, res; st.rerun()
+                    else: st.error("بيانات خاطئة")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. القائمة والهيدر ---
-st.markdown('<div class="ticker-bar">🏆 MA3LOMATI PRO 2026 | خبيرك العقاري الأول في مصر</div>', unsafe_allow_html=True)
+# --- 7. جلب البيانات وتحميلها ---
+df_p, df_d, df_l = load_data()
+
+# --- 8. المحتوى الداخلي ---
+st.markdown(f'<div class="royal-header"><h1 style="color:white; font-size:40px;">MA3LOMATI PRO</h1><p style="color:#f59e0b;">مرحباً بك يا {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="ticker-wrap"><marquee class="ticker">🔥 {news_text}</marquee></div>', unsafe_allow_html=True)
+
 menu = option_menu(None, ["أدوات البروكر", "المطورين", "المشاريع", "المساعد الذكي", "Launches"], 
-    icons=["calculator", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
+    icons=["briefcase", "building", "search", "robot", "megaphone"], default_index=2, orientation="horizontal",
     styles={"nav-link-selected": {"background-color": "#f59e0b", "color": "black", "font-weight": "900"}})
 
-col_main, col_side = st.columns([0.75, 0.25])
-
-# --- 7. قسم أدوات البروكر (9 أدوات منظمة 3x3) ---
+# --- 9. الصفحات ---
 if menu == "أدوات البروكر":
-    st.markdown("<h2 style='color:#f59e0b; text-align:center; margin-bottom:30px;'>🛠️ ترسانة الأدوات العقارية (9)</h2>", unsafe_allow_html=True)
-    t1, t2, t3 = st.columns(3)
-    
-    with t1:
+    st.markdown("<h2 style='color:#f59e0b; text-align:center;'>🛠️ أدوات المساعدة العقارية</h2>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1:
         with st.container(border=True):
-            st.subheader("1️⃣ حاسبة القسط")
-            v1 = st.number_input("إجمالي المبلغ", 1000000, key="v1")
-            y1 = st.number_input("عدد السنين", 8, key="y1")
-            st.info(f"القسط الشهري: {v1/(y1*12):,.0f}")
+            st.subheader("القسط الشهري")
+            v = st.number_input("السعر", 1000000)
+            y = st.number_input("السنين", 8)
+            st.metric("شهرياً", f"{v/(y*12):,.0f}")
+    with c2:
         with st.container(border=True):
-            st.subheader("4️⃣ العائد السنوي ROI")
-            v4 = st.number_input("سعر الوحدة", 3000000, key="v4")
-            r4 = st.number_input("الإيجار السنوي", 300000, key="r4")
-            st.warning(f"نسبة العائد: {(r4/v4)*100:.1f}%")
+            st.subheader("حساب العمولة")
+            d = st.number_input("الصفقة", 2000000)
+            p = st.slider("%", 1.0, 5.0, 2.5)
+            st.metric("العمولة", f"{d*(p/100):,.0f}")
+    with c3:
         with st.container(border=True):
-            st.subheader("7️⃣ مساحة التحميل")
-            net = st.number_input("المساحة الصافية", 100, key="net")
-            gross = st.number_input("المساحة الإجمالية", 135, key="gross")
-            st.info(f"نسبة التحميل: {((gross-net)/gross)*100:.1f}%")
+            st.subheader("عائد ROI")
+            b = st.number_input("الشراء", 3000000)
+            r = st.number_input("الإيجار", 300000)
+            st.metric("العائد", f"{(r/b)*100:.1f}%")
 
-    with t2:
-        with st.container(border=True):
-            st.subheader("2️⃣ حساب العمولة")
-            v2 = st.number_input("قيمة الصفقة", 5000000, key="v2")
-            c2 = st.slider("النسبة %", 1.0, 10.0, 2.5, key="c2")
-            st.info(f"عمولتك الصافية: {v2*(c2/100):,.0f}")
-        with st.container(border=True):
-            st.subheader("5️⃣ سعر المتر")
-            v5 = st.number_input("إجمالي السعر", 4000000, key="v5")
-            m5 = st.number_input("المساحة م2", 160, key="m5")
-            st.warning(f"سعر المتر: {v5/m5:,.0f}")
-        with st.container(border=True):
-            st.subheader("8️⃣ التمويل العقاري")
-            v8 = st.number_input("قيمة القرض", 1000000, key="v8")
-            i8 = st.slider("الفائدة %", 5, 25, 11, key="i8")
-            st.info(f"الفائدة السنوية: {v8*(i8/100):,.0f}")
-
-    with t3:
-        with st.container(border=True):
-            st.subheader("3️⃣ خصم الكاش")
-            v3 = st.number_input("السعر قبل الخصم", 2500000, key="v3")
-            d3 = st.slider("نسبة الخصم %", 0, 50, 25, key="d3")
-            st.info(f"السعر بعد الخصم: {v3*(1-d3/100):,.0f}")
-        with st.container(border=True):
-            st.subheader("6️⃣ الضريبة العقارية")
-            v6 = st.number_input("التقييم السوقي", 2000000, key="v6")
-            st.warning(f"الضريبة التقريبية: {v6*0.001:,.0f}")
-        with st.container(border=True):
-            st.subheader("9️⃣ زيادة القسط")
-            v9 = st.number_input("القسط الحالي", 15000, key="v9")
-            st.info(f"بعد زيادة 5% سنوياً (5 سنين): {v9*(1.05**5):,.0f}")
-
-# --- 8. قسم المشاريع (كروت مسطرة بالملي) ---
 elif menu == "المشاريع":
-    with col_main:
-        if st.session_state.get('view') == "details":
-            if st.button("⬅️ العودة للقائمة"): st.session_state.view = "grid"; st.rerun()
-            item = df_p.iloc[st.session_state.current_index]
-            for k, v in item.items():
-                st.markdown(f"<div style='background:#111; padding:15px; border-right:6px solid #f59e0b; margin-bottom:10px; border-radius:12px;'><b style='color:#f59e0b'>{k}:</b> <span style='color:white; font-size:18px;'>{v}</span></div>", unsafe_allow_html=True)
-        else:
-            search = st.text_input("🔍 ابحث عن أي شيء (مشروع، منطقة، مطور)...", placeholder="اكتب هنا للبحث الفوري")
-            filt = df_p[df_p.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else df_p
-            
+    if st.session_state.view == "details":
+        if st.button("⬅ عودة للقائمة"): st.session_state.view = "grid"; st.rerun()
+        item = df_p.iloc[st.session_state.current_index]
+        st.markdown(f"<div class='detail-card'>", unsafe_allow_html=True)
+        for k, v in item.items():
+            st.markdown(f"<p class='label-gold'>{k}</p><p class='val-white'>{v}</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        search = st.text_input("🔍 ابحث عن مشروع...")
+        filt = df_p[df_p.apply(lambda r: r.astype(str).str.contains(search, case=False).any(), axis=1)] if search else df_p
+        
+        main_c, side_c = st.columns([0.8, 0.2])
+        with main_c:
             grid = st.columns(2)
             for i, (idx, r) in enumerate(filt.head(10).iterrows()):
                 with grid[i%2]:
-                    # تصميم الكرت الثابت
-                    card_html = f"""
-                    <div class='card-title'>🏢 {str(r.iloc[0])[:35]}</div>
-                    <div class='card-info'>📍 الموقع: {str(r.get('Location', '---'))[:30]}</div>
-                    <div class='card-info'>🏗️ المطور: {str(r.get('Developer', '---'))[:30]}</div>
-                    """
-                    if st.button(card_html, key=f"card_{idx}"):
-                        st.session_state.current_index = idx
-                        st.session_state.view = "details"; st.rerun()
+                    if st.button(f"🏢 {r.iloc[0]}\n📍 {r.get('Location', '---')}\n🏗️ {r.get('Developer', '---')}", key=f"card_{idx}"):
+                        st.session_state.current_index, st.session_state.view = idx, "details"; st.rerun()
+        with side_c:
+            st.markdown("<p style='color:#f59e0b; font-weight:bold;'>🏆 مقترحات</p>", unsafe_allow_html=True)
+            for _, s in df_p.head(5).iterrows():
+                st.markdown(f"<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:10px; margin-bottom:5px; border-right:4px solid #f59e0b; color:white;'>{s.iloc[0][:20]}</div>", unsafe_allow_html=True)
 
-# --- 9. المساعد الذكي ---
-elif menu == "المساعد الذكي":
-    with col_main:
-        st.markdown("<div style='background:rgba(255,255,255,0.05); padding:25px; border-radius:20px; border:1px solid #333;'><h3>🤖 مساعدك العقاري الذكي</h3><p>اسألني عن أي مشروع وسأقوم بتحليل البيانات لك فوراً.</p></div>", unsafe_allow_html=True)
-        if prompt := st.chat_input("عايز تفاصيل عن مشروع..."):
-            res = df_p[df_p.apply(lambda r: r.astype(str).str.contains(prompt, case=False).any(), axis=1)]
-            if not res.empty: st.write(res.iloc[0].to_dict())
-            else: st.warning("لم أجد هذا المشروع، حاول كتابة الاسم بدقة.")
-
-# --- 10. المقترحات الجانبية (ثابتة في كل الصفحات) ---
-with col_side:
-    st.markdown("<h3 style='color:#f59e0b; text-align:center;'>⭐ مقترحات PRO</h3>", unsafe_allow_html=True)
-    for _, r in df_p.head(12).iterrows():
-        st.markdown(f"""
-            <div style='background:white; color:black; padding:15px; border-radius:15px; 
-            margin-bottom:12px; border-right:10px solid #f59e0b; font-weight:900; font-size:16px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);'>
-                {str(r.iloc[0])[:25]}
-            </div>
-        """, unsafe_allow_html=True)
-
-st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026 | جميع الحقوق محفوظة</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#555; margin-top:50px;'>MA3LOMATI PRO © 2026</p>", unsafe_allow_html=True)
