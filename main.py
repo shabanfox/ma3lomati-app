@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import requests
 import time
-import pytz
-from datetime import datetime
 from streamlit_option_menu import option_menu
 
 # --- 1. إعدادات الصفحة الأساسية ---
@@ -59,7 +57,7 @@ def load_data():
     except:
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 5. دالة العرض الذكية المصلحة (تمنع تداخل التابات وتحمي من الـ KeyError) ---
+# --- 5. دالة العرض الذكية المصلحة خطأ الـ KeyError والخط المحدث ---
 def render_grid(dataframe, prefix):
     pg_key = f"pg_{prefix}"
     v_key = f"view_{prefix}"
@@ -74,7 +72,7 @@ def render_grid(dataframe, prefix):
         
         try:
             item = dataframe.iloc[st.session_state.current_index]
-            st.markdown(f"<h2 style='color:#e5a93c; text-align:right; font-weight:700; margin:20px 0;'>🏢 {item.iloc[0]}</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='color:#000000; text-align:right; font-weight:900; margin:20px 0;'>🏢 {item.iloc[0]}</h2>", unsafe_allow_html=True)
             
             cols = st.columns(3)
             for i, col_name in enumerate(dataframe.columns):
@@ -84,7 +82,7 @@ def render_grid(dataframe, prefix):
                     st.markdown(f"""
                     <div class="detail-card">
                         <p class="label-gold">{col_name}</p>
-                        <p class="val-white">{val}</p>
+                        <p class="val-black">{val}</p>
                     </div>
                     """, unsafe_allow_html=True)
         except:
@@ -107,7 +105,7 @@ def render_grid(dataframe, prefix):
         start = st.session_state[pg_key] * ITEMS_PER_PAGE
         disp = filt.iloc[start : start + ITEMS_PER_PAGE]
         
-        m_c, s_c = st.columns([0.78, 0.22])
+        m_c, s_c = st.columns([0.75, 0.25])
         with m_c:
             if filt.empty: 
                 st.warning("لا توجد نتائج تطابق خيارات البحث الحالية.")
@@ -116,7 +114,6 @@ def render_grid(dataframe, prefix):
                 for i, (idx, r) in enumerate(disp.iterrows()):
                     with grid[i%2]:
                         price_val = f"{int(r['Price']):,}" if ('Price' in r and r['Price'] > 0) else "اتصل للسعر"
-                        # تم الإصلاح هنا باستخدام iloc لجلب القيمة بالترتيب الرقمي وتجنب الـ KeyError
                         card_content = f"🏢 {r.iloc[0]}\n📍 {r.get('Location','---')}\n💰 {price_val} ج.م"
                         if st.button(card_content, key=f"btn_card_{prefix}_{idx}", use_container_width=True):
                             st.session_state.current_index = idx
@@ -129,7 +126,7 @@ def render_grid(dataframe, prefix):
             with p1: 
                 if st.session_state[pg_key] > 0:
                     if st.button("⬅ السابق", key=f"prev_{prefix}", use_container_width=True): st.session_state[pg_key] -= 1; st.rerun()
-            with px: st.markdown(f"<p style='text-align:center; color:#e5a93c; font-weight:bold; margin-top:5px;'>صفحة {st.session_state[pg_key]+1}</p>", unsafe_allow_html=True)
+            with px: st.markdown(f"<p style='text-align:center; color:#000000; font-weight:900; font-size:16px; margin-top:5px;'>صفحة {st.session_state[pg_key]+1}</p>", unsafe_allow_html=True)
             with p2:
                 if (start + ITEMS_PER_PAGE) < len(filt):
                     if st.button("التالي ➡", key=f"next_{prefix}", use_container_width=True): st.session_state[pg_key] += 1; st.rerun()
@@ -137,96 +134,118 @@ def render_grid(dataframe, prefix):
         with s_c:
             st.markdown("<p class='side-title'>⭐ مقترحات المنصة</p>", unsafe_allow_html=True)
             for s_idx, s_row in dataframe.head(6).iterrows():
-                # تم الإصلاح هنا أيضاً لضمان الاستقرار الكامل
                 if st.button(f"📌 {str(s_row.iloc[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
                     st.session_state.current_index = s_idx
                     st.session_state[v_key] = "details"
                     st.rerun()
 
-# --- 6. قوالب الـ CSS الفاخرة (Premium Dark Concept) ---
+# --- 6. قوالب الـ CSS المحدثة بالكامل (وضع فاتح فائق الوضوح - خطوط سوداء عريضة) ---
 st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap');
     
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     .block-container {{ padding-top: 1rem !important; padding-bottom: 1rem !important; }}
     
+    /* خلفية بيضاء ناصعة وواضحة جداً */
     [data-testid="stAppViewContainer"] {{
-        background-color: #0b0f19 !important;
-        background-image: radial-gradient(at 0% 0%, rgba(229, 169, 60, 0.08) 0px, transparent 50%), 
-                          radial-gradient(at 100% 100%, rgba(17, 24, 39, 0.7) 0px, transparent 50%) !important;
+        background-color: #f8fafc !important;
         direction: rtl !important; text-align: right !important; 
-        font-family: 'IBM Plex Sans Arabic', sans-serif !important; color: #f3f4f6 !important;
+        font-family: 'Cairo', sans-serif !important; color: #000000 !important;
     }}
     
+    /* إجبار جميع النصوص الافتراضية في ستريمليت لتصبح سوداء عريضة */
+    p, span, label, h1, h2, h3, h4, h5, h6 {{
+        color: #000000 !important;
+        font-weight: 900 !important;
+    }}
+    
+    /* صندوق تسجيل الدخول الفاخر الواضح */
     .login-box {{
-        background: #111827; border: 1px solid #1f2937; padding: 40px 30px; 
-        border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-top: 30px;
+        background: #ffffff; border: 3px solid #000000; padding: 40px 30px; 
+        border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-top: 40px;
     }}
     .oval-header {{
-        background: linear-gradient(135deg, #1f2937, #111827); border: 2px solid #e5a93c;
-        border-radius: 20px; padding: 15px; color: #e5a93c; font-size: 24px; font-weight: 700;
-        text-align: center; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        background: #000000; border: 2px solid #000000;
+        border-radius: 12px; padding: 15px; color: #ffffff !important; font-size: 26px; font-weight: 900;
+        text-align: center; margin-bottom: 25px;
     }}
+    .oval-header p {{ color: #ffffff !important; }}
 
+    /* هيدر المنصة العلوي */
     .royal-header {{ 
-        background: linear-gradient(rgba(11,15,25,0.8), rgba(11,15,25,0.95)), url('{HEADER_IMG}'); 
-        background-size: cover; background-position: center; border-bottom: 2px solid #e5a93c; 
-        padding: 50px 20px; text-align: center; border-radius: 20px; margin-bottom: 25px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95)), url('{HEADER_IMG}'); 
+        background-size: cover; background-position: center; border-bottom: 4px solid #000000; 
+        padding: 45px 20px; text-align: center; border-radius: 15px; margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }}
-    .royal-header h1 {{ color: #ffffff; font-size: 2.8rem; font-weight: 700; margin: 0; }}
+    .royal-header h1 {{ color: #000000 !important; font-size: 3rem; font-weight: 900; margin: 0; }}
     
-    .filter-box {{ background: #111827; padding: 15px; border-radius: 14px; border: 1px solid #1f2937; margin-bottom: 20px; }}
+    /* صناديق الفلاتر والبحث */
+    .filter-box {{ background: #ffffff; padding: 18px; border-radius: 12px; border: 3px solid #000000; margin-bottom: 25px; }}
     
+    /* كروت الأزرار الرئيسية - نص أسود غامق عريض وخلفية بيضاء صريحة */
     div.stButton > button {{
-        font-family: 'IBM Plex Sans Arabic', sans-serif !important;
-        border-radius: 12px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        font-family: 'Cairo', sans-serif !important; font-weight: 900 !important;
+        border-radius: 12px !important; transition: all 0.2s ease !important;
     }}
     
     div.stButton > button[id*="btn_card_"] {{
-        background: #111827 !important; color: #f3f4f6 !important;
-        border: 1px solid #1f2937 !important; border-right: 6px solid #e5a93c !important;
+        background: #ffffff !important; color: #000000 !important;
+        border: 3px solid #000000 !important; border-right: 15px solid #e5a93c !important;
         text-align: right !important; min-height: 140px !important; 
-        font-size: 15px !important; line-height: 1.7 !important; font-weight: 500 !important;
+        font-size: 17px !important; line-height: 1.8 !important;
         white-space: pre-line !important; display: block !important; width: 100% !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
     }}
     div.stButton > button[id*="btn_card_"]:hover {{
-        transform: translateY(-5px) !important; background: #1f2937 !important;
-        box-shadow: 0 12px 25px rgba(0,0,0,0.5), 0 0 10px rgba(229,169,60,0.1) !important;
-        border-color: #e5a93c !important;
+        background: #f1f5f9 !important; transform: scale(1.01) !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
     }}
     
+    /* كروت تفاصيل المشروع من الداخل */
     .detail-card {{ 
-        background: #111827; padding: 22px; border-radius: 14px; 
-        border: 1px solid #1f2937; border-top: 4px solid #e5a93c; margin-bottom: 15px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        background: #ffffff; padding: 22px; border-radius: 14px; 
+        border: 3px solid #000000; border-top: 8px solid #e5a93c; margin-bottom: 15px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }}
-    .label-gold {{ color: #e5a93c; font-weight: 600; font-size: 13.5px; margin: 0 0 8px 0; }}
-    .val-white {{ color: #ffffff; font-size: 16.5px; font-weight: 400; margin: 0; }}
+    .label-gold {{ color: #a16207 !important; font-weight: 900 !important; font-size: 15px; margin: 0 0 6px 0; }}
+    .val-black {{ color: #000000 !important; font-size: 19px; font-weight: 900 !important; margin: 0; }}
     
-    .side-title {{ color: #e5a93c; font-weight: 600; border-bottom: 1px solid #1f2937; padding-bottom: 8px; margin-bottom: 12px; font-size: 15px; }}
-    div.stButton > button[id*="side_"] {{ background: #111827 !important; color: #f3f4f6 !important; border: 1px solid #1f2937 !important; font-size: 13px !important; text-align: right !important; margin-bottom: 8px !important; }}
-    div.stButton > button[id*="side_"]:hover {{ border-color: #e5a93c !important; background: #1f2937 !important; }}
-    
-    div.stTextInput input {{ background-color: #1f2937 !important; color: white !important; border: 1px solid #374151 !important; border-radius: 10px !important; height: 46px !important; text-align: center !important; }}
-    div.stTextInput input:focus {{ border-color: #e5a93c !important; }}
-    
-    div.stButton > button[id*="btn_submit_login"] {{
-        background: linear-gradient(135deg, #e5a93c, #b88125) !important; color: #0b0f19 !important;
-        font-weight: 700 !important; border: none !important; height: 46px !important; font-size: 16px !important;
-        box-shadow: 0 4px 15px rgba(229,169,60,0.2) !important;
+    /* القوائم الجانبية والمقترحات */
+    .side-title {{ color: #000000 !important; font-weight: 900; border-bottom: 3px solid #000000; padding-bottom: 8px; margin-bottom: 15px; font-size: 17px; }}
+    div.stButton > button[id*="side_"] {{ 
+        background: #ffffff !important; color: #000000 !important; 
+        border: 2px solid #000000 !important; font-size: 14px !important; 
+        text-align: right !important; margin-bottom: 8px !important; font-weight: 900 !important;
     }}
-    div.stButton > button[id*="btn_submit_login"]:hover {{ transform: translateY(-2px) !important; box-shadow: 0 6px 20px rgba(229,169,60,0.4) !important; }}
+    div.stButton > button[id*="side_"]:hover {{ background: #f1f5f9 !important; border-color: #e5a93c !important; }}
+    
+    /* تعديل مدخلات النصوص لتصبح واضحة جداً بقلم عريض */
+    div.stTextInput input, div.stNumberInput input {{ 
+        background-color: #ffffff !important; color: #000000 !important; 
+        border: 3px solid #000000 !important; border-radius: 10px !important; 
+        height: 48px !important; text-align: center !important; font-weight: 900 !important; font-size: 16px !important;
+    }}
+    
+    /* تعديل أزرار التنقل والرجوع واللوجين */
+    div.stButton > button[id*="btn_submit_login"], div.stButton > button[id*="back_"], div.stButton > button[id*="prev_"], div.stButton > button[id*="next_"] {{
+        background: #000000 !important; color: #ffffff !important;
+        font-weight: 900 !important; border: 3px solid #000000 !important; height: 48px !important; font-size: 16px !important;
+    }}
+    div.stButton > button[id*="btn_submit_login"]:hover, div.stButton > button[id*="back_"]:hover {{ background: #222222 !important; }}
+    
+    /* التابات (Tabs) */
+    .stTabs [data-baseweb="tab"] {{ color: #000000 !important; font-weight: 900 !important; font-size: 16px !important; }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 7. بوابة الدخول الآمنة ---
 if not st.session_state.get('auth', False):
-    _, auth_col, _ = st.columns([1.2, 1.2, 1.2])
+    _, auth_col, _ = st.columns([1.1, 1.3, 1.1])
     with auth_col:
         st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-        st.markdown("<div class='oval-header'>MA3LOMATI PRO</div>", unsafe_allow_html=True)
+        st.markdown("<div class='oval-header'><p style='margin:0; color:#fff;'>MA3LOMATI PRO</p></div>", unsafe_allow_html=True)
         u = st.text_input("User", placeholder="اسم المستخدم", key="log_u", label_visibility="collapsed")
         p = st.text_input("Pass", type="password", placeholder="كلمة السر الأمانية", key="log_p", label_visibility="collapsed")
         st.write("")
@@ -246,18 +265,18 @@ if not st.session_state.get('auth', False):
 # --- 8. تحميل البيانات والتشغيل الداخلي بعد النجاح ---
 df_p, df_d, df_l = load_data()
 
-st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#e5a93c; font-weight:500; font-size:16px; margin-top:10px;">مرحباً بك يا خبير العقارات: {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#000000; font-weight:900; font-size:18px; margin-top:10px;">مرحباً بك يا خبير العقارات: {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
 
 menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={
-        "container": {"background-color": "#111827", "border": "1px solid #1f2937", "border-radius": "12px", "padding": "3px"},
-        "nav-link": {"color": "#9ca3af", "font-family": "IBM Plex Sans Arabic", "font-weight": "500"},
-        "nav-link-selected": {"background-color": "#e5a93c", "color": "#0b0f19", "font-weight": "700"}
+        "container": {"background-color": "#ffffff", "border": "3px solid #000000", "border-radius": "12px", "padding": "3px"},
+        "nav-link": {"color": "#000000", "font-family": "Cairo", "font-weight": "900", "font-size": "15px"},
+        "nav-link-selected": {"background-color": "#000000", "color": "#ffffff", "font-weight": "900"}
     })
 
 if menu == "أدوات الحساب":
-    st.markdown("<h3 style='color:#e5a93c; text-align:center; font-weight:600; margin-bottom:25px;'>🛠️ حزمة أدوات البروكر الحسابية</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#000000; text-align:center; font-weight:900; margin-bottom:25px;'>🛠️ حزمة أدوات البروكر الحسابية</h3>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("<div class='detail-card'><h3>💳 حساب القسط</h3>", unsafe_allow_html=True)
@@ -265,18 +284,18 @@ if menu == "أدوات الحساب":
         dp = st.number_input("نسبة مقدم الحجز %", value=10)
         yr = st.number_input("سنوات التقسيط", value=8)
         res = (pr - (pr * dp/100)) / (yr * 12) if yr > 0 else 0
-        st.markdown(f"<p class='label-gold'>القسط الشهري المتوقع:</p><p class='val-white'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العائد الاستثماري السنوي:</p><p class='val-black'>{res:,.0f} ج.م</p></div>", unsafe_allow_html=True)
     with c2:
         st.markdown("<div class='detail-card'><h3>📊 حساب نسبة السعي / العمولة</h3>", unsafe_allow_html=True)
         deal = st.number_input("قيمة الصفقة البيعية", value=5000000)
         pct = st.number_input("نسبة عمولة البروكر %", value=2.5)
-        st.markdown(f"<p class='label-gold'>صافي العمولة المستحقة:</p><p class='val-white'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>صافي العمولة المستحقة:</p><p class='val-black'>{deal*(pct/100):,.0f} ج.م</p></div>", unsafe_allow_html=True)
     with c3:
         st.markdown("<div class='detail-card'><h3>📈 حساب معدل العائد ROI</h3>", unsafe_allow_html=True)
         buy = st.number_input("سعر شراء العقار كاش", value=5000000)
         rent = st.number_input("الإيجار الشهري المتوقع للوحدة", value=40000)
         roi = ((rent * 12) / buy) * 100 if buy > 0 else 0
-        st.markdown(f"<p class='label-gold'>العائد الاستثماري السنوي:</p><p class='val-white'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
+        st.markdown(f"<p class='label-gold'>العائد الاستثماري السنوي:</p><p class='val-black'>{roi:.2f} %</p></div>", unsafe_allow_html=True)
 
 elif menu == "المشاريع":
     t1, t2 = st.tabs(["🏗️ دليل المشاريع الشامل", "🚀 إطلاقات اللونشات الحالية"])
@@ -287,6 +306,6 @@ elif menu == "المطورين":
     render_grid(df_d, "d")
 
 elif menu == "المساعد الذكي":
-    st.markdown("<div class='detail-card'><h3>🤖 مستشار معلوماتي العقاري AI</h3><p style='color:#9ca3af;'>قاعدة بيانات تحليل الأسعار وتوقعات عام 2026 قيد الصيانة السريعة لتوفير أدق التفاصيل لعملائك.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='detail-card'><h3>🤖 مستشار معلوماتي العقاري AI</h3><p style='color:#000000; font-weight:900;'>قاعدة بيانات تحليل الأسعار وتوقعات عام 2026 قيد الصيانة السريعة لتوفير أدق التفاصيل لعملائك.</p></div>", unsafe_allow_html=True)
 
-st.markdown("<p style='text-align:center; color:#4b5563; margin-top:50px; font-size:12px;'>MA3LOMATI PRO © 2026 | نظام العرض والتحليل العقاري المتقدم</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#000000; margin-top:50px; font-size:14px; font-weight:900;'>MA3LOMATI PRO © 2026 | نظام العرض والتحليل العقاري المتقدم</p>", unsafe_allow_html=True)
