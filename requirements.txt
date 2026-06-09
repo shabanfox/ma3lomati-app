@@ -28,9 +28,10 @@ streamlit-autorefresh
 streamlit-autorefresh
 pip install streamlit
 pytz
-
+pandas
 feedparser
-
+pandas
+requests
 pandas
 
 requests
