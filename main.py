@@ -144,7 +144,7 @@ def render_grid(dataframe, prefix):
 # --- 6. حزمة قوالب الـ CSS الفاخرة لـ (Takwen Corporate Design) والتحركات ---
 st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght=700;900&display=swap');
     
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     .block-container {{ padding-top: 0px !important; padding-bottom: 2rem !important; }}
@@ -227,7 +227,7 @@ st.markdown(f"""
     }}
     div.stButton > button[id*="btn_card_"]:hover {{
         background: #ffffff !important; 
-        transform: translateY(-5px) !important; /* التحرك الجميل للأعلى */
+        transform: translateY(-5px) !important; 
         border-color: #fab818 !important; border-right-color: #fab818 !important;
         box-shadow: 0 15px 30px rgba(52,41,87,0.15) !important;
     }}
@@ -251,7 +251,7 @@ st.markdown(f"""
     }}
     div.stButton > button[id*="side_"]:hover {{ 
         background: #fafafa !important; border-color: #fab818 !important; color: #342957 !important;
-        transform: translateX(-3px) !important; /* تحرك جانبي خفيف */
+        transform: translateX(-3px) !important; 
     }}
     
     /* مدخلات البحث والنصوص */
@@ -344,7 +344,7 @@ with st.sidebar:
     
     st.write("---")
     st.markdown("<p style='font-size:15px; margin-bottom:5px;'>📱 تواصل مباشر سريع:</p>", unsafe_allow_html=True)
-    if st.button("💬 تواصل واتساب فوري", id="whatsapp_btn", use_container_width=True):
+    if st.button("💬 تواصل واتساب فوري", key="whatsapp_btn", use_container_width=True):
         st.success("جاري فتح محادثة الدعم الفني...")
 
 # الهيدر الانسيابي المائل للمنصة
