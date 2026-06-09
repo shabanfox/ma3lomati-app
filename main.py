@@ -59,7 +59,7 @@ def load_data():
     except:
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-# --- 5. دالة العرض الذكية المصلحة (فصل الـ View لكل قسم بشكل مستقل لمنع التداخل) ---
+# --- 5. دالة العرض الذكية المصلحة (تمنع تداخل التابات وتحمي من الـ KeyError) ---
 def render_grid(dataframe, prefix):
     pg_key = f"pg_{prefix}"
     v_key = f"view_{prefix}"
@@ -116,7 +116,8 @@ def render_grid(dataframe, prefix):
                 for i, (idx, r) in enumerate(disp.iterrows()):
                     with grid[i%2]:
                         price_val = f"{int(r['Price']):,}" if ('Price' in r and r['Price'] > 0) else "اتصل للسعر"
-                        card_content = f"🏢 {r[0]}\n📍 {r.get('Location','---')}\n💰 {price_val} ج.م"
+                        # تم الإصلاح هنا باستخدام iloc لجلب القيمة بالترتيب الرقمي وتجنب الـ KeyError
+                        card_content = f"🏢 {r.iloc[0]}\n📍 {r.get('Location','---')}\n💰 {price_val} ج.م"
                         if st.button(card_content, key=f"btn_card_{prefix}_{idx}", use_container_width=True):
                             st.session_state.current_index = idx
                             st.session_state[v_key] = "details"
@@ -136,12 +137,13 @@ def render_grid(dataframe, prefix):
         with s_c:
             st.markdown("<p class='side-title'>⭐ مقترحات المنصة</p>", unsafe_allow_html=True)
             for s_idx, s_row in dataframe.head(6).iterrows():
-                if st.button(f"📌 {str(s_row[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
+                # تم الإصلاح هنا أيضاً لضمان الاستقرار الكامل
+                if st.button(f"📌 {str(s_row.iloc[0])[:25]}", key=f"side_{prefix}_{s_idx}", use_container_width=True):
                     st.session_state.current_index = s_idx
                     st.session_state[v_key] = "details"
                     st.rerun()
 
-# --- 6. قوالب الـ CSS الفاخرة والمصلحة (Premium Dark Concept) ---
+# --- 6. قوالب الـ CSS الفاخرة (Premium Dark Concept) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
@@ -149,7 +151,6 @@ st.markdown(f"""
     header, [data-testid="stHeader"] {{ visibility: hidden; display: none; }}
     .block-container {{ padding-top: 1rem !important; padding-bottom: 1rem !important; }}
     
-    /* خلفية سينمائية فخمة للمنصة بالكامل */
     [data-testid="stAppViewContainer"] {{
         background-color: #0b0f19 !important;
         background-image: radial-gradient(at 0% 0%, rgba(229, 169, 60, 0.08) 0px, transparent 50%), 
@@ -158,7 +159,6 @@ st.markdown(f"""
         font-family: 'IBM Plex Sans Arabic', sans-serif !important; color: #f3f4f6 !important;
     }}
     
-    /* تنسيق صفحة تسجيل الدخول الممتازة */
     .login-box {{
         background: #111827; border: 1px solid #1f2937; padding: 40px 30px; 
         border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-top: 30px;
@@ -169,7 +169,6 @@ st.markdown(f"""
         text-align: center; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }}
 
-    /* هيدر المنصة الداخلية الملكي */
     .royal-header {{ 
         background: linear-gradient(rgba(11,15,25,0.8), rgba(11,15,25,0.95)), url('{HEADER_IMG}'); 
         background-size: cover; background-position: center; border-bottom: 2px solid #e5a93c; 
@@ -178,16 +177,13 @@ st.markdown(f"""
     }}
     .royal-header h1 {{ color: #ffffff; font-size: 2.8rem; font-weight: 700; margin: 0; }}
     
-    /* فلتر البحث */
     .filter-box {{ background: #111827; padding: 15px; border-radius: 14px; border: 1px solid #1f2937; margin-bottom: 20px; }}
     
-    /* إصلاح واستهداف كروت المشاريع (الـ CSS يراها الآن بالكامل) */
     div.stButton > button {{
         font-family: 'IBM Plex Sans Arabic', sans-serif !important;
         border-radius: 12px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
     
-    /* كروت الشبكة الكبيرة */
     div.stButton > button[id*="btn_card_"] {{
         background: #111827 !important; color: #f3f4f6 !important;
         border: 1px solid #1f2937 !important; border-right: 6px solid #e5a93c !important;
@@ -201,7 +197,6 @@ st.markdown(f"""
         border-color: #e5a93c !important;
     }}
     
-    /* كروت التفاصيل الزجاجية الفاخرة */
     .detail-card {{ 
         background: #111827; padding: 22px; border-radius: 14px; 
         border: 1px solid #1f2937; border-top: 4px solid #e5a93c; margin-bottom: 15px; 
@@ -210,16 +205,13 @@ st.markdown(f"""
     .label-gold {{ color: #e5a93c; font-weight: 600; font-size: 13.5px; margin: 0 0 8px 0; }}
     .val-white {{ color: #ffffff; font-size: 16.5px; font-weight: 400; margin: 0; }}
     
-    /* التابات الفخمة والمقترحات الجانبية */
     .side-title {{ color: #e5a93c; font-weight: 600; border-bottom: 1px solid #1f2937; padding-bottom: 8px; margin-bottom: 12px; font-size: 15px; }}
     div.stButton > button[id*="side_"] {{ background: #111827 !important; color: #f3f4f6 !important; border: 1px solid #1f2937 !important; font-size: 13px !important; text-align: right !important; margin-bottom: 8px !important; }}
     div.stButton > button[id*="side_"]:hover {{ border-color: #e5a93c !important; background: #1f2937 !important; }}
     
-    /* مدخلات النصوص لصفحة اللوجين */
     div.stTextInput input {{ background-color: #1f2937 !important; color: white !important; border: 1px solid #374151 !important; border-radius: 10px !important; height: 46px !important; text-align: center !important; }}
     div.stTextInput input:focus {{ border-color: #e5a93c !important; }}
     
-    /* زر تسجيل الدخول الرئيسي */
     div.stButton > button[id*="btn_submit_login"] {{
         background: linear-gradient(135deg, #e5a93c, #b88125) !important; color: #0b0f19 !important;
         font-weight: 700 !important; border: none !important; height: 46px !important; font-size: 16px !important;
@@ -229,7 +221,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 7. بوابة الدخول الآمنة (بدون تاقات مكسورة وبشكل كارت فخم وعالمي) ---
+# --- 7. بوابة الدخول الآمنة ---
 if not st.session_state.get('auth', False):
     _, auth_col, _ = st.columns([1.2, 1.2, 1.2])
     with auth_col:
@@ -256,7 +248,6 @@ df_p, df_d, df_l = load_data()
 
 st.markdown(f'<div class="royal-header"><h1>MA3LOMATI PRO</h1><p style="color:#e5a93c; font-weight:500; font-size:16px; margin-top:10px;">مرحباً بك يا خبير العقارات: {st.session_state.current_user}</p></div>', unsafe_allow_html=True)
 
-# المنيو الفاخر المدمج بالتصميم الجديد
 menu = option_menu(None, ["أدوات الحساب", "المطورين", "المشاريع", "المساعد الذكي"], 
     icons=["calculator", "building", "search", "robot"], default_index=2, orientation="horizontal",
     styles={
